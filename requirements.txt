@@ -60,9 +60,11 @@ uritemplate==4.2.0
 urllib3==2.5.0
 vine==5.1.0
 wcwidth==0.2.13
+langchain-openai==1.1.6
+django-simpleui==2025.6.24
 
 # UI自动化测试依赖包
-playwright==1.40.0
+playwright>=1.40.0
 selenium==4.15.2
 webdriver-manager==4.0.1
 browser-use==0.10.1

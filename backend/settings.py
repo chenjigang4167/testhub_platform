@@ -1,3 +1,5 @@
+# https://newpanjing.github.io/simpleui_docs/
+
 from pathlib import Path
 from decouple import config
 import os
@@ -8,9 +10,15 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-your-secret-key-here'
 
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['*']
+# 根据DEBUG模式设置ALLOWED_HOSTS，生产环境不应使用通配符
+if DEBUG:
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1',
+                           cast=lambda v: [s.strip() for s in v.split(',')])
 
 DJANGO_APPS = [
+    'simpleui',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -83,8 +91,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': config('DB_NAME', default='testhub'),
         'USER': config('DB_USER', default='root'),
-        'PASSWORD': config('DB_PASSWORD', default='12345678'),
-        'HOST': config('DB_HOST', default='192.168.31.205'),
+        'PASSWORD': config('DB_PASSWORD', default=''),  # 移除硬编码默认密码
+        'HOST': config('DB_HOST', default='127.0.0.1'),
         'PORT': config('DB_PORT', default='3306'),
         'OPTIONS': {
             'charset': 'utf8mb4',
@@ -111,10 +119,10 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'zh-hans'
 TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
-USE_TZ = True
+USE_TZ = True  # 移除重复定义
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -152,10 +160,10 @@ from datetime import timedelta
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # access_token 30分钟
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # refresh_token 7天
-    'ROTATE_REFRESH_TOKENS': True,                   # 刷新时轮换refresh_token
-    'BLACKLIST_AFTER_ROTATION': True,                # 旧的refresh_token加入黑名单
-    'UPDATE_LAST_LOGIN': True,                       # 更新最后登录时间
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # refresh_token 7天
+    'ROTATE_REFRESH_TOKENS': True,  # 刷新时轮换refresh_token
+    'BLACKLIST_AFTER_ROTATION': True,  # 旧的refresh_token加入黑名单
+    'UPDATE_LAST_LOGIN': True,  # 更新最后登录时间
 
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
@@ -182,30 +190,31 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
-# 完全禁用CSRF（开发环境）
-USE_TZ = True
-CSRF_COOKIE_SECURE = False
-CSRF_USE_SESSIONS = False
-CSRF_COOKIE_HTTPONLY = False
-
-# 新增：完全禁用CSRF保护
-CSRF_FAILURE_VIEW = 'django.views.csrf.csrf_failure'
-CSRF_EXEMPT_URLS = [
-    r'^/api/',  # 所有API请求都免除CSRF
-]
+# CSRF Settings - 根据DEBUG模式设置
+if DEBUG:
+    CSRF_COOKIE_SECURE = False
+    CSRF_USE_SESSIONS = False
+    CSRF_COOKIE_HTTPONLY = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
+else:
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_HTTPONLY = True
+    CSRF_COOKIE_SAMESITE = 'Strict'
 
 # CORS Settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-CORS_ALLOW_CREDENTIALS = True
-# CORS_ALLOW_ALL_ORIGINS = True  # 开发环境临时设置
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+    CORS_ALLOW_CREDENTIALS = True
+else:
+    CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000',
+                                  cast=lambda v: [s.strip() for s in v.split(',')])
 
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = [
@@ -214,10 +223,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
-
-# For API requests, disable CSRF
-CSRF_COOKIE_SECURE = False
-CSRF_COOKIE_SAMESITE = 'Lax'
 
 # Spectacular Settings
 SPECTACULAR_SETTINGS = {
@@ -228,8 +233,8 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Celery Configuration
-CELERY_BROKER_URL = config('REDIS_URL', default='redis://192.168.31.55:6379/0')
-CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://192.168.31.55:6379/0')
+CELERY_BROKER_URL = config('REDIS_URL', default='redis://:123456@127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://:123456@127.0.0.1:6379/0')
 
 # Email Configuration
 EMAIL_BACKEND = 'apps.api_testing.custom_email_backend.CustomEmailBackend'
@@ -243,6 +248,10 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='webmaster@localhost')
 
 # For 163 email with SSL, you might need this setting
 EMAIL_TIMEOUT = 30
+
+# 确保日志目录存在
+log_dir = os.path.join(BASE_DIR, 'logs')
+os.makedirs(log_dir, exist_ok=True)
 
 # Logging
 LOGGING = {
@@ -280,3 +289,32 @@ LOGGING = {
         },
     },
 }
+
+# 指定simpleui默认的主题,指定一个文件名，相对路径就从simpleui的theme目录读取
+SIMPLEUI_DEFAULT_THEME = 'admin.lte.css'
+# 是否显示图标
+SIMPLEUI_DEFAULT_ICON = True
+# 是否关闭登录页粒子效果
+SIMPLEUI_LOGIN_PARTICLES = True
+# 后台管理首页，可以是url或者html文件
+SIMPLEUI_HOME_PAGE = 'https://www.baidu.com/'  # 后面可以扩展为大屏显示做统计
+# 自定义首页标题
+SIMPLEUI_HOME_TITLE = 'Dashboard'
+# 自定义首页图标 首页图标,支持element-ui和fontawesome的图标，参考https://fontawesome.com/icons图标
+SIMPLEUI_HOME_ICON = 'fa fa-gauge'
+# 设置simpleui 点击首页图标跳转的地址
+SIMPLEUI_INDEX = 'http://localhost:3000'
+# 自定义后台的Logo
+SIMPLEUI_LOGO = 'https://static.djangoproject.com/img/favicon.6dbf28c0650e.ico'
+# 是否显示首页信息
+SIMPLEUI_HOME_INFO = False
+# 是否显示快捷入口
+SIMPLEUI_HOME_QUICK = True
+# 是否显示最近动作
+SIMPLEUI_HOME_ACTION = True
+# 使用分析
+SIMPLEUI_ANALYSIS = False
+# 离线模式
+SIMPLEUI_STATIC_OFFLINE = True
+# True或None 默认显示加载遮罩层，指定为False 不显示遮罩层。默认显示
+SIMPLEUI_LOADING = True
