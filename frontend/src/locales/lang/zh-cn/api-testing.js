@@ -50,17 +50,24 @@ export default {
 
   // 仪表板
   dashboard: {
-    stats: {
-      apiProjects: '接口项目',
-      interfaceCount: '接口数量',
-      testSuites: '测试套件',
-      executionRecords: '执行记录'
-    },
+    apiProjects: '接口项目',
+    interfaceCount: '接口数量',
+    testSuites: '测试套件',
+    executionRecords: '执行记录',
     operationLogs: '操作日志',
-    noOperationRecords: '暂无操作记录',
+    noLogs: '暂无操作记录',
+    loading: '加载中...',
     system: '系统',
-    quickActions: '快速操作',
     coreFeatures: '核心功能',
+    quickActions: {
+      title: '快速操作',
+      projectManagement: '项目管理',
+      interfaceManagement: '接口管理',
+      automationTesting: '自动化测试',
+      requestHistory: '请求历史',
+      environmentManagement: '环境管理',
+      testReport: '测试报告'
+    },
     features: {
       interfaceManagement: {
         title: '接口管理',
@@ -70,7 +77,7 @@ export default {
         title: '自动化测试',
         description: '可视化的测试流程编排，支持断言、提取变量、前置/后置脚本等高级功能。'
       },
-      scheduledTasks: {
+      scheduledTask: {
         title: '定时任务',
         description: '灵活的定时任务配置，支持Crontab表达式，实现无人值守的自动化回归测试。'
       },
@@ -79,7 +86,7 @@ export default {
         description: '生成详细的测试报告，包含成功率、响应时间趋势等多维度数据分析。'
       }
     },
-    timeAgo: {
+    timeFormat: {
       justNow: '刚刚',
       minutesAgo: '{n}分钟前',
       hoursAgo: '{n}小时前',

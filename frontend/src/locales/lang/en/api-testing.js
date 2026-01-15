@@ -50,17 +50,24 @@ export default {
 
   // Dashboard
   dashboard: {
-    stats: {
-      apiProjects: 'API Projects',
-      interfaceCount: 'Interfaces',
-      testSuites: 'Test Suites',
-      executionRecords: 'Executions'
-    },
+    apiProjects: 'API Projects',
+    interfaceCount: 'Interfaces',
+    testSuites: 'Test Suites',
+    executionRecords: 'Executions',
     operationLogs: 'Operation Logs',
-    noOperationRecords: 'No operation records',
+    noLogs: 'No operation records',
+    loading: 'Loading...',
     system: 'System',
-    quickActions: 'Quick Actions',
     coreFeatures: 'Core Features',
+    quickActions: {
+      title: 'Quick Actions',
+      projectManagement: 'Project Management',
+      interfaceManagement: 'Interface Management',
+      automationTesting: 'Automation Testing',
+      requestHistory: 'Request History',
+      environmentManagement: 'Environment Management',
+      testReport: 'Test Reports'
+    },
     features: {
       interfaceManagement: {
         title: 'Interface Management',
@@ -70,7 +77,7 @@ export default {
         title: 'Automation Testing',
         description: 'Visual test flow orchestration with assertions, variable extraction, pre/post scripts and more.'
       },
-      scheduledTasks: {
+      scheduledTask: {
         title: 'Scheduled Tasks',
         description: 'Flexible scheduled task configuration with Crontab expressions for unattended automated regression testing.'
       },
@@ -79,7 +86,7 @@ export default {
         description: 'Generate detailed test reports with success rates, response time trends and multi-dimensional analysis.'
       }
     },
-    timeAgo: {
+    timeFormat: {
       justNow: 'Just now',
       minutesAgo: '{n} min ago',
       hoursAgo: '{n} hours ago',

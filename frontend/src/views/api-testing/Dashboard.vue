@@ -62,7 +62,7 @@
     <el-row :gutter="20" class="content-section">
       <!-- 最近活动 -->
       <el-col :span="12">
-      <el-card class="recent-activities" title="操作日志" shadow="hover">
+      <el-card class="recent-activities" :title="$t('apiTesting.dashboard.operationLogs')" shadow="hover">
         <div v-if="loading" class="loading-container">
           <el-empty :description="$t('apiTesting.dashboard.loading')" />
         </div>
@@ -92,7 +92,7 @@
       
       <!-- 快速操作 -->
       <el-col :span="12">
-        <el-card class="quick-actions" title="快速操作" shadow="hover">
+        <el-card class="quick-actions" :title="$t('apiTesting.dashboard.quickActions.title')" shadow="hover">
           <div class="actions-grid">
             <div class="action-item" @click="goToProjects">
               <div class="action-icon bg-blue">
