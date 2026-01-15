@@ -25,6 +25,19 @@ class DifyConfigViewSet(viewsets.ModelViewSet):
                 del data['api_key']
             return Response(data)
         return Response({'message': '未找到激活的配置'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['get'])
+    def options(self, request):
+        """获取所有可用配置列表（用于下拉选择）"""
+        configs = DifyConfig.objects.all()
+        serializer = self.get_serializer(configs, many=True)
+        data = serializer.data
+        # Mask API keys
+        for item in data:
+            if 'api_key' in item and item['api_key']:
+                item['api_key_masked'] = item['api_key'][:8] + '****'
+                del item['api_key']
+        return Response(data)
     
     def create(self, request):
         """创建新配置"""

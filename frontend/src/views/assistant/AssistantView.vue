@@ -61,7 +61,7 @@
             <h1>AI 评测师</h1>
             <p>我是您的专业测试助手，有什么可以帮您？</p>
           </div>
-          
+
           <div class="center-input-wrapper">
             <el-input
               v-model="inputMessage"
@@ -73,6 +73,19 @@
               @keydown.enter.exact.prevent="handleEnter"
             />
             <div class="input-actions">
+              <el-select 
+                v-model="selectedModelId" 
+                placeholder="AI 模型" 
+                size="small" 
+                style="width: 120px; margin-right: 12px;"
+                class="model-select-mini"
+              >
+                <el-option label="智能路由" value="" />
+                <el-option v-for="model in availableModels" :key="model.id" :label="model.name" :value="model.id">
+                  <span style="float: left">{{ model.name }}</span>
+                  <span style="float: right; color: #8492a6; font-size: 13px; margin-left: 10px">{{ model.type }}</span>
+                </el-option>
+              </el-select>
               <el-button 
                 type="primary" 
                 circle 
@@ -95,8 +108,19 @@
       <!-- 场景2：对话界面 -->
       <div v-else class="chat-screen">
         <div class="chat-header">
-          <span class="chat-title">{{ currentSession?.title || '新会话' }}</span>
-          <span class="chat-time" v-if="currentSession">{{ formatDate(currentSession.updated_at) }}</span>
+          <div class="header-left">
+            <span class="chat-title">{{ currentSession?.title || '新会话' }}</span>
+            <span class="chat-time" v-if="currentSession">{{ formatDate(currentSession.updated_at) }}</span>
+          </div>
+          <div class="header-right">
+            <el-select v-model="selectedModelId" placeholder="AI 模型" style="width: 160px" size="small">
+               <el-option label="智能路由 (自动)" value="" />
+               <el-option v-for="model in availableModels" :key="model.id" :label="model.name" :value="model.id">
+                 <span style="float: left">{{ model.name }}</span>
+                 <span style="float: right; color: #8492a6; font-size: 13px; margin-left: 10px">{{ model.type }}</span>
+               </el-option>
+            </el-select>
+          </div>
         </div>
         
         <div class="messages-container" ref="messagesContainer">
@@ -166,6 +190,10 @@ const messages = ref([])
 const inputMessage = ref('')
 const sending = ref(false)
 const messagesContainer = ref(null)
+
+// 模型相关
+const availableModels = ref([])
+const selectedModelId = ref('') // 空字符串表示默认/智能路由
 
 const handleCommand = (command) => {
   if (command === 'logout') {
@@ -331,10 +359,22 @@ const sendMessage = async () => {
     }
     
     // 3. 发送请求
-    const response = await api.post('/assistant/chat/send_message/', {
+    const payload = {
       session_id: sessionId,
-      message: text
-    }, {
+      message: text,
+      model_id: null,
+      dify_config_id: null
+    }
+    
+    if (selectedModelId.value) {
+      if (selectedModelId.value.startsWith('model:')) {
+        payload.model_id = selectedModelId.value.split(':')[1]
+      } else if (selectedModelId.value.startsWith('dify:')) {
+        payload.dify_config_id = selectedModelId.value.split(':')[1]
+      }
+    }
+
+    const response = await api.post('/assistant/chat/send_message/', payload, {
       timeout: 60000
     })
     
@@ -382,9 +422,36 @@ const loadHistory = async () => {
   }
 }
 
+// 获取可用模型
+const fetchModels = async () => {
+  try {
+    const [aiRes, difyRes] = await Promise.all([
+      api.get('/requirement-analysis/api/ai-models/?is_active=true'),
+      api.get('/assistant/config/dify/options/')
+    ])
+
+    const aiModels = (Array.isArray(aiRes.data) ? aiRes.data : (aiRes.data.results || [])).map(m => ({
+      id: `model:${m.id}`,
+      name: m.name,
+      type: 'AI Model'
+    }))
+
+    const difyConfigs = (Array.isArray(difyRes.data) ? difyRes.data : (difyRes.data.results || [])).map(c => ({
+      id: `dify:${c.id}`,
+      name: `Dify Knowledge (${c.api_url})`,
+      type: 'Dify'
+    }))
+
+    availableModels.value = [...aiModels, ...difyConfigs]
+  } catch (error) {
+    console.error('获取模型列表失败:', error)
+  }
+}
+
 onMounted(() => {
   loadHistory()
   startNewChat()
+  fetchModels()
 })
 </script>
 
@@ -629,6 +696,37 @@ onMounted(() => {
       position: absolute;
       right: 10px;
       bottom: 10px;
+      display: flex;
+      align-items: center;
+      
+      .model-select-mini {
+        opacity: 0.8;
+        transition: opacity 0.2s;
+        
+        &:hover {
+          opacity: 1;
+        }
+        
+        :deep(.el-input__wrapper) {
+          box-shadow: none !important;
+          background: transparent;
+          padding-left: 0;
+          
+          &:hover {
+            box-shadow: none !important;
+          }
+          
+          &.is-focus {
+             box-shadow: none !important;
+          }
+        }
+        
+        :deep(.el-input__inner) {
+          color: #909399;
+          font-size: 12px;
+          text-align: right;
+        }
+      }
     }
   }
   
@@ -670,6 +768,12 @@ onMounted(() => {
     justify-content: space-between;
     padding: 0 24px;
     flex-shrink: 0;
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
     
     .chat-title {
       font-size: 16px;
