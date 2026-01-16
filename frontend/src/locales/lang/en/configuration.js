@@ -136,7 +136,7 @@ export default {
 
   // AI Model Configuration (Test Case Generation)
   aiModel: {
-    title: 'AI Test Case Model Config',
+    title: '🤖 AI Test Case Model Config',
     description: 'Configure AI models for test case generation and review',
     configList: 'Model Configuration List',
     addConfig: 'Add Config',

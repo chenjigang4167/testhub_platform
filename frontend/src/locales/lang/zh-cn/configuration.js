@@ -136,7 +136,7 @@ export default {
 
   // AI 模型配置 (测试用例生成)
   aiModel: {
-    title: 'AI用例生成模型配置',
+    title: '🤖 AI用例生成模型配置',
     description: '配置用于测试用例生成和评审的AI模型',
     configList: '模型配置列表',
     addConfig: '添加配置',
