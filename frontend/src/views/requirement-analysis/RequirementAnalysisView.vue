@@ -1,51 +1,51 @@
 <template>
   <div class="requirement-analysis">
     <div class="page-header">
-      <h1>智能测试用例生成</h1>
-      <p>基于需求描述或文档，AI将直接为您生成高质量的测试用例</p>
+      <h1>{{ $t('requirementAnalysis.title') }}</h1>
+      <p>{{ $t('requirementAnalysis.subtitle') }}</p>
     </div>
 
     <div class="main-content">
       <!-- 手动输入需求描述区域 -->
       <div class="manual-input-section" v-if="!isGenerating && !showResults">
         <div class="manual-input-card">
-          <h2>✍️ 手动输入需求描述</h2>
+          <h2>{{ $t('requirementAnalysis.manualInputTitle') }}</h2>
           <div class="input-form">
             <div class="form-group">
-              <label>需求标题 <span class="required">*</span></label>
-              <input 
-                v-model="manualInput.title" 
-                type="text" 
+              <label>{{ $t('requirementAnalysis.requirementTitle') }} <span class="required">*</span></label>
+              <input
+                v-model="manualInput.title"
+                type="text"
                 class="form-input"
-                placeholder="请输入需求标题，如：用户登录功能需求">
+                :placeholder="$t('requirementAnalysis.titlePlaceholder')">
             </div>
-            
+
             <div class="form-group">
-              <label>需求描述 <span class="required">*</span></label>
-              <textarea 
-                v-model="manualInput.description" 
+              <label>{{ $t('requirementAnalysis.requirementDescription') }} <span class="required">*</span></label>
+              <textarea
+                v-model="manualInput.description"
                 class="form-textarea"
                 rows="8"
-                placeholder="请详细描述您的需求，包括功能描述、使用场景、业务流程等。例如：&#10;&#10;1. 用户可以通过用户名和密码登录系统&#10;2. 系统需要验证用户身份&#10;3. 登录成功后跳转到主页面&#10;4. 支持记住登录状态&#10;5. 登录失败要给出明确提示..."></textarea>
+                :placeholder="$t('requirementAnalysis.descriptionPlaceholder')"></textarea>
               <div class="char-count">{{ manualInput.description.length }}/2000</div>
             </div>
-            
+
             <div class="form-group">
-              <label>关联项目（可选）</label>
+              <label>{{ $t('requirementAnalysis.associatedProject') }}</label>
               <select v-model="manualInput.selectedProject" class="form-select">
-                <option value="">请选择项目</option>
+                <option value="">{{ $t('requirementAnalysis.selectProject') }}</option>
                 <option v-for="project in projects" :key="project.id" :value="project.id">
                   {{ project.name }}
                 </option>
               </select>
             </div>
 
-            <button 
-              class="generate-manual-btn" 
+            <button
+              class="generate-manual-btn"
               @click="generateFromManualInput"
               :disabled="!canGenerateManual || isGenerating">
-              <span v-if="isGenerating">🔄 生成中...</span>
-              <span v-else>🚀 生成测试用例</span>
+              <span v-if="isGenerating">{{ $t('requirementAnalysis.generating') }}</span>
+              <span v-else>{{ $t('requirementAnalysis.generateButton') }}</span>
             </button>
           </div>
         </div>
@@ -53,34 +53,34 @@
 
       <!-- 分隔线 -->
       <div class="divider" v-if="!isGenerating && !showResults">
-        <span>或</span>
+        <span>{{ $t('requirementAnalysis.dividerOr') }}</span>
       </div>
 
       <!-- 文档上传区域 -->
       <div class="upload-section" v-if="!isGenerating && !showResults">
         <div class="upload-card">
-          <h2>📄 上传需求文档</h2>
-          <div class="upload-area" 
-               @dragover.prevent 
+          <h2>{{ $t('requirementAnalysis.uploadTitle') }}</h2>
+          <div class="upload-area"
+               @dragover.prevent
                @drop="handleDrop"
                :class="{ 'drag-over': isDragOver }"
                @dragenter="isDragOver = true"
                @dragleave="isDragOver = false">
             <div v-if="!selectedFile" class="upload-placeholder">
               <i class="upload-icon">📁</i>
-              <p>拖拽文件到此处或点击选择文件</p>
-              <p class="upload-hint">支持 PDF、Word、TXT 格式</p>
-              <input 
-                type="file" 
-                ref="fileInput" 
+              <p>{{ $t('requirementAnalysis.dragDropText') }}</p>
+              <p class="upload-hint">{{ $t('requirementAnalysis.supportedFormats') }}</p>
+              <input
+                type="file"
+                ref="fileInput"
                 @change="handleFileSelect"
                 accept=".pdf,.doc,.docx,.txt"
                 style="display: none;">
               <button class="select-file-btn" @click="$refs.fileInput.click()">
-                选择文件
+                {{ $t('requirementAnalysis.selectFile') }}
               </button>
             </div>
-            
+
             <div v-else class="file-selected">
               <div class="file-info">
                 <i class="file-icon">📄</i>
@@ -95,30 +95,30 @@
 
           <div v-if="selectedFile" class="document-info">
             <div class="form-group">
-              <label>文档标题</label>
-              <input 
-                v-model="documentTitle" 
-                type="text" 
+              <label>{{ $t('requirementAnalysis.documentTitle') }}</label>
+              <input
+                v-model="documentTitle"
+                type="text"
                 class="form-input"
-                placeholder="请输入文档标题">
+                :placeholder="$t('requirementAnalysis.documentPlaceholder')">
             </div>
-            
+
             <div class="form-group">
-              <label>关联项目（可选）</label>
+              <label>{{ $t('requirementAnalysis.associatedProject') }}</label>
               <select v-model="selectedProject" class="form-select">
-                <option value="">请选择项目</option>
+                <option value="">{{ $t('requirementAnalysis.selectProject') }}</option>
                 <option v-for="project in projects" :key="project.id" :value="project.id">
                   {{ project.name }}
                 </option>
               </select>
             </div>
 
-            <button 
-              class="generate-btn" 
+            <button
+              class="generate-btn"
               @click="generateFromDocument"
               :disabled="!documentTitle || isGenerating">
-              <span v-if="isGenerating">🔄 生成中...</span>
-              <span v-else>🚀 生成测试用例</span>
+              <span v-if="isGenerating">{{ $t('requirementAnalysis.generating') }}</span>
+              <span v-else>{{ $t('requirementAnalysis.generateButton') }}</span>
             </button>
           </div>
         </div>
@@ -127,37 +127,37 @@
       <!-- 生成进度 -->
       <div v-if="isGenerating" class="generation-progress">
         <div class="progress-card">
-          <h3>🤖 AI正在为您生成测试用例</h3>
+          <h3>{{ $t('requirementAnalysis.aiGeneratingTitle') }}</h3>
           <div class="progress-info">
             <div class="progress-item">
-              <span class="label">任务ID:</span>
-              <span class="value">{{ currentTaskId || '准备中...' }}</span>
+              <span class="label">{{ $t('requirementAnalysis.taskId') }}</span>
+              <span class="value">{{ currentTaskId || $t('requirementAnalysis.preparing') }}</span>
             </div>
             <div class="progress-item">
-              <span class="label">当前状态:</span>
+              <span class="label">{{ $t('requirementAnalysis.currentStatus') }}</span>
               <span class="value">{{ progressText }}</span>
             </div>
           </div>
           <div class="progress-steps">
             <div class="step" :class="{ active: currentStep >= 1 }">
               <span class="step-number">1</span>
-              <span class="step-text">需求分析</span>
+              <span class="step-text">{{ $t('requirementAnalysis.stepAnalysis') }}</span>
             </div>
             <div class="step" :class="{ active: currentStep >= 2 }">
               <span class="step-number">2</span>
-              <span class="step-text">用例编写</span>
+              <span class="step-text">{{ $t('requirementAnalysis.stepWriting') }}</span>
             </div>
             <div class="step" :class="{ active: currentStep >= 3 }">
               <span class="step-number">3</span>
-              <span class="step-text">用例评审</span>
+              <span class="step-text">{{ $t('requirementAnalysis.stepReview') }}</span>
             </div>
             <div class="step" :class="{ active: currentStep >= 4 }">
               <span class="step-number">4</span>
-              <span class="step-text">完成</span>
+              <span class="step-text">{{ $t('requirementAnalysis.stepComplete') }}</span>
             </div>
           </div>
           <button class="cancel-generation-btn" @click="cancelGeneration">
-            取消生成
+            {{ $t('requirementAnalysis.cancelGeneration') }}
           </button>
         </div>
       </div>
@@ -165,23 +165,23 @@
       <!-- 生成结果 -->
       <div v-if="showResults && generationResult" class="generation-result">
         <div class="result-header">
-          <h2>✅ 测试用例生成完成</h2>
+          <h2>{{ $t('requirementAnalysis.generationComplete') }}</h2>
           <div class="result-summary">
             <span class="summary-item">
-              📊 任务ID: {{ generationResult.task_id }}
+              {{ $t('requirementAnalysis.summaryTaskId', { taskId: generationResult.task_id }) }}
             </span>
             <span class="summary-item">
-              ⏱️ 生成时间: {{ formatDateTime(generationResult.completed_at) }}
+              {{ $t('requirementAnalysis.summaryGenerationTime', { time: formatDateTime(generationResult.completed_at) }) }}
             </span>
           </div>
           <button class="new-generation-btn" @click="resetGeneration">
-            📝 生成新的测试用例
+            {{ $t('requirementAnalysis.newGeneration') }}
           </button>
         </div>
 
         <!-- AI编写的测试用例 -->
         <div class="generated-testcases-section">
-          <h3>📋 AI编写的测试用例</h3>
+          <h3>{{ $t('requirementAnalysis.aiGeneratedTestCases') }}</h3>
           <div class="testcase-content">
             <div v-html="generationResult.generated_test_cases"></div>
           </div>
@@ -189,7 +189,7 @@
 
         <!-- AI评审意见 -->
         <div v-if="generationResult.review_feedback" class="review-feedback-section">
-          <h3>🔍 AI评审意见</h3>
+          <h3>{{ $t('requirementAnalysis.aiReviewFeedback') }}</h3>
           <div class="review-content">
             <pre>{{ generationResult.review_feedback }}</pre>
           </div>
@@ -197,7 +197,7 @@
 
         <!-- 最终测试用例 -->
         <div v-if="generationResult.final_test_cases" class="final-testcases-section">
-          <h3>🎯 最终测试用例</h3>
+          <h3>{{ $t('requirementAnalysis.finalTestCases') }}</h3>
           <div class="testcase-content">
             <div v-html="generationResult.final_test_cases"></div>
           </div>
@@ -206,10 +206,10 @@
         <!-- 操作按钮 -->
         <div v-if="generationResult.final_test_cases" class="actions-section">
           <button class="download-btn" @click="downloadTestCases">
-            <span>📥 下载测试用例(.xlsx)</span>
+            <span>{{ $t('requirementAnalysis.downloadExcel') }}</span>
           </button>
           <button class="save-btn" @click="saveToTestCaseRecords">
-            <span>💾 保存到用例记录</span>
+            <span>{{ $t('requirementAnalysis.saveToRecords') }}</span>
           </button>
         </div>
       </div>
@@ -277,7 +277,7 @@ export default {
         const response = await api.get('/projects/')
         this.projects = response.data.results || response.data
       } catch (error) {
-        console.error('加载项目失败:', error)
+        console.error(this.$t('requirementAnalysis.loadProjectsFailed'), error)
       }
     },
 
@@ -300,12 +300,12 @@ export default {
           'text/plain'
         ]
         
-        if (allowedTypes.includes(file.type) || 
+        if (allowedTypes.includes(file.type) ||
             file.name.match(/\.(pdf|doc|docx|txt)$/i)) {
           this.selectedFile = file
           this.documentTitle = file.name.replace(/\.[^/.]+$/, "")
         } else {
-          ElMessage.error('请选择 PDF、Word 或 TXT 格式的文件')
+          ElMessage.error(this.$t('requirementAnalysis.invalidFileFormat'))
         }
       }
     },
@@ -326,18 +326,18 @@ export default {
 
     async generateFromManualInput() {
       if (!this.canGenerateManual) {
-        ElMessage.error('请填写完整的需求信息')
+        ElMessage.error(this.$t('requirementAnalysis.fillRequiredInfo'))
         return
       }
 
-      const requirementText = `需求标题: ${this.manualInput.title}\n\n需求描述:\n${this.manualInput.description}`
-      
+      const requirementText = `${this.$t('requirementAnalysis.requirementTitle')}: ${this.manualInput.title}\n\n${this.$t('requirementAnalysis.requirementDescription')}:\n${this.manualInput.description}`
+
       await this.startGeneration(this.manualInput.title, requirementText, this.manualInput.selectedProject)
     },
 
     async generateFromDocument() {
       if (!this.selectedFile || !this.documentTitle) {
-        ElMessage.error('请选择文件并输入文档标题')
+        ElMessage.error(this.$t('requirementAnalysis.selectFileAndTitle'))
         return
       }
 
@@ -350,7 +350,7 @@ export default {
           formData.append('project', this.selectedProject)
         }
 
-        ElMessage.info('正在提取文档内容...')
+        ElMessage.info(this.$t('requirementAnalysis.extractingContent'))
         const uploadResponse = await api.post('/requirement-analysis/api/documents/', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
@@ -362,24 +362,24 @@ export default {
         const extractedText = extractResponse.data.extracted_text
 
         if (!extractedText || extractedText.trim().length === 0) {
-          ElMessage.error('无法从文档中提取到有效内容，请检查文档格式')
+          ElMessage.error(this.$t('requirementAnalysis.extractionFailed'))
           return
         }
 
-        const requirementText = `文档标题: ${this.documentTitle}\n\n文档内容:\n${extractedText}`
-        
+        const requirementText = `${this.$t('requirementAnalysis.documentTitle')}: ${this.documentTitle}\n\n${this.$t('requirementAnalysis.documentContent')}:\n${extractedText}`
+
         await this.startGeneration(this.documentTitle, requirementText, this.selectedProject)
 
       } catch (error) {
-        console.error('文档处理失败:', error)
-        ElMessage.error('文档处理失败: ' + (error.response?.data?.error || error.message))
+        console.error(this.$t('requirementAnalysis.documentProcessingFailed'), error)
+        ElMessage.error(this.$t('requirementAnalysis.documentProcessingFailed') + ': ' + (error.response?.data?.error || error.message))
       }
     },
 
     async startGeneration(title, requirementText, projectId) {
       this.isGenerating = true
       this.currentStep = 1
-      this.progressText = '正在创建生成任务...'
+      this.progressText = this.$t('requirementAnalysis.creatingTask')
 
       try {
         // 调用新的生成API
@@ -389,25 +389,25 @@ export default {
           use_writer_model: true,
           use_reviewer_model: true
         }
-        
+
         // 如果选择了项目，添加到请求中
         if (projectId) {
           requestData.project = projectId
         }
-        
+
         const response = await api.post('/requirement-analysis/api/testcase-generation/generate/', requestData)
 
         this.currentTaskId = response.data.task_id
-        this.progressText = '任务已创建，正在处理中...'
-        
-        ElMessage.success('测试用例生成任务已启动')
-        
+        this.progressText = this.$t('requirementAnalysis.taskCreated')
+
+        ElMessage.success(this.$t('requirementAnalysis.generateSuccess'))
+
         // 开始轮询任务进度
         this.startPolling()
 
       } catch (error) {
-        console.error('创建生成任务失败:', error)
-        ElMessage.error('创建任务失败: ' + (error.response?.data?.error || error.message))
+        console.error(this.$t('requirementAnalysis.createTaskFailed'), error)
+        ElMessage.error(this.$t('requirementAnalysis.createTaskFailed') + ': ' + (error.response?.data?.error || error.message))
         this.isGenerating = false
       }
     },
@@ -417,43 +417,43 @@ export default {
         try {
           const response = await api.get(`/requirement-analysis/api/testcase-generation/${this.currentTaskId}/progress/`)
           const task = response.data
-          
-          console.log(`任务状态: ${task.status}, 进度: ${task.progress}%`)
-          
+
+          console.log(`${this.$t('requirementAnalysis.taskStatus')}: ${task.status}, ${this.$t('requirementAnalysis.progress')}: ${task.progress}%`)
+
           // 更新进度显示
           if (task.status === 'generating') {
             this.currentStep = 2
-            this.progressText = '正在编写测试用例...'
+            this.progressText = this.$t('requirementAnalysis.statusGenerating')
           } else if (task.status === 'reviewing') {
             this.currentStep = 3
-            this.progressText = '正在评审测试用例...'
+            this.progressText = this.$t('requirementAnalysis.statusReviewing')
           } else if (task.status === 'completed') {
             this.currentStep = 4
-            this.progressText = '生成完成！'
-            
+            this.progressText = this.$t('requirementAnalysis.statusCompleted')
+
             // 任务完成，显示结果
             this.generationResult = task
             this.showResults = true
             this.isGenerating = false
-            
+
             clearInterval(this.pollInterval)
             this.pollInterval = null
-            
-            ElMessage.success('测试用例生成完成！')
+
+            ElMessage.success(this.$t('requirementAnalysis.generateCompleteSuccess'))
             return
           } else if (task.status === 'failed') {
-            this.progressText = '生成失败'
+            this.progressText = this.$t('requirementAnalysis.statusFailed')
             this.isGenerating = false
-            
+
             clearInterval(this.pollInterval)
             this.pollInterval = null
-            
-            ElMessage.error('测试用例生成失败: ' + (task.error_message || '未知错误'))
+
+            ElMessage.error(this.$t('requirementAnalysis.generateFailed') + ': ' + (task.error_message || this.$t('requirementAnalysis.unknownError')))
             return
           }
-          
+
         } catch (error) {
-          console.error('检查任务进度失败:', error)
+          console.error(this.$t('requirementAnalysis.checkProgressFailed'), error)
           // 继续轮询，不中断
         }
       }, 3000) // 每3秒检查一次
@@ -466,7 +466,7 @@ export default {
       }
       this.isGenerating = false
       this.currentTaskId = null
-      ElMessage.info('已取消生成任务')
+      ElMessage.info(this.$t('requirementAnalysis.generationCancelled'))
     },
 
     // 下载测试用例为xlsx文件
@@ -552,18 +552,18 @@ export default {
         }
 
         // 将工作表添加到工作簿
-        XLSX.utils.book_append_sheet(workbook, worksheet, '测试用例');
+        XLSX.utils.book_append_sheet(workbook, worksheet, this.$t('requirementAnalysis.testCaseSheetName'));
 
         // 生成文件名（包含任务ID和日期）
-        const fileName = `测试用例_${taskId}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        const fileName = this.$t('requirementAnalysis.excelFileName', { taskId: taskId, date: new Date().toISOString().slice(0, 10) });
 
         // 导出文件
         XLSX.writeFile(workbook, fileName);
 
-        ElMessage.success('测试用例下载成功');
+        ElMessage.success(this.$t('requirementAnalysis.downloadSuccess'));
       } catch (error) {
-        console.error('下载测试用例失败:', error);
-        ElMessage.error('下载测试用例失败: ' + (error.message || '未知错误'));
+        console.error(this.$t('requirementAnalysis.downloadFailed'), error);
+        ElMessage.error(this.$t('requirementAnalysis.downloadFailed') + ': ' + (error.message || this.$t('requirementAnalysis.unknownError')));
       }
     },
 
@@ -572,19 +572,19 @@ export default {
       try {
         // 调用后端API保存到记录
         const response = await api.post(`/requirement-analysis/api/testcase-generation/${this.generationResult.task_id}/save_to_records/`)
-        
+
         if (response.data.already_saved) {
-          ElMessage.info('测试用例已经保存过了')
+          ElMessage.info(this.$t('requirementAnalysis.alreadySaved'))
         } else {
           const importedCount = response.data.imported_count || 0
-          ElMessage.success(`测试用例已保存！已导入 ${importedCount} 条测试用例到测试用例管理系统`)
+          ElMessage.success(this.$t('requirementAnalysis.saveSuccess', { count: importedCount }))
         }
 
         // 不跳转，留在当前页面
         // this.$router.push('/generated-testcases')
       } catch (error) {
-        console.error('保存测试用例失败:', error)
-        ElMessage.error('保存测试用例失败: ' + (error.response?.data?.error || error.message))
+        console.error(this.$t('requirementAnalysis.saveFailed'), error)
+        ElMessage.error(this.$t('requirementAnalysis.saveFailed') + ': ' + (error.response?.data?.error || error.message))
       }
     },
 
@@ -592,7 +592,7 @@ export default {
       // 重置生成状态
       this.isGenerating = false;
       this.currentTaskId = null;
-      this.progressText = '准备开始生成...';
+      this.progressText = this.$t('requirementAnalysis.preparing');
       this.currentStep = 0;
       this.showResults = false;
       this.generationResult = null;
@@ -679,9 +679,17 @@ export default {
       
       const lines = content.split('\n').filter(line => line.trim());
       const worksheetData = [];
-      
+
+
       // 添加表头
-      worksheetData.push(['测试用例编号', '测试场景', '前置条件', '操作步骤', '预期结果', '优先级']);
+      worksheetData.push([
+        this.$t('requirementAnalysis.excelTestCaseNumber'),
+        this.$t('requirementAnalysis.excelTestScenario'),
+        this.$t('requirementAnalysis.excelPrecondition'),
+        this.$t('requirementAnalysis.excelTestSteps'),
+        this.$t('requirementAnalysis.excelExpectedResult'),
+        this.$t('requirementAnalysis.excelPriority')
+      ]);
       
       let currentTestCase = {};
       let testCaseNumber = 1;
@@ -815,7 +823,7 @@ export default {
       // 如果没有解析到结构化数据，则按原格式输出
       if (worksheetData.length <= 1) {
         worksheetData.length = 0; // 清空
-        worksheetData.push(['测试用例内容']);
+        worksheetData.push([this.$t('requirementAnalysis.testCaseContent')]);
         content.split('\n').forEach((line, index) => {
           if (line.trim()) {
             worksheetData.push([line.trim()]);

@@ -1,12 +1,12 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">执行记录</h1>
+      <h1 class="page-title">{{ $t('execution.title') }}</h1>
     </div>
-    
+
     <div class="card-container">
       <div class="empty-state">
-        <el-empty description="执行记录功能开发中..." />
+        <el-empty :description="$t('execution.inDevelopment')" />
       </div>
     </div>
   </div>

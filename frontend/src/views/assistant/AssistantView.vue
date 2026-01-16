@@ -4,12 +4,12 @@
     <div class="sidebar">
       <div class="new-chat-btn-wrapper">
         <el-button type="primary" class="new-chat-btn" @click="startNewChat" :icon="Plus">
-          新会话
+          {{ $t('assistant.newChat') }}
         </el-button>
       </div>
       
       <div class="history-list">
-        <div class="history-label">历史会话</div>
+        <div class="history-label">{{ $t('assistant.historyChat') }}</div>
         <div class="session-scroll-area">
           <div 
             v-for="session in historySessionsDescending" 
@@ -19,10 +19,10 @@
           >
             <div class="session-title-wrapper">
               <el-icon class="chat-icon"><ChatDotRound /></el-icon>
-              <span class="session-title" :title="session.title">{{ session.title || '新会话' }}</span>
+              <span class="session-title" :title="session.title">{{ session.title || $t('assistant.newChat') }}</span>
             </div>
             <div class="session-actions" @click.stop>
-              <el-popconfirm title="确定删除此会话吗？" @confirm="deleteSession(session.id)">
+              <el-popconfirm :title="$t('assistant.deleteSessionConfirm')" @confirm="deleteSession(session.id)">
                 <template #reference>
                   <el-icon class="delete-icon"><Delete /></el-icon>
                 </template>
@@ -36,13 +36,13 @@
         <el-dropdown trigger="click" @command="handleCommand">
           <div class="user-info">
             <el-avatar :size="32" :icon="UserFilled" />
-            <span class="username">{{ userStore.user?.username || '用户' }}</span>
+            <span class="username">{{ userStore.user?.username || $t('assistant.user') }}</span>
             <el-icon class="el-icon--right"><ArrowDown /></el-icon>
           </div>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="home">返回首页</el-dropdown-item>
-              <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+              <el-dropdown-item command="home">{{ $t('assistant.goHome') }}</el-dropdown-item>
+              <el-dropdown-item command="logout" divided>{{ $t('assistant.logout') }}</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -58,8 +58,8 @@
             <div class="logo-circle">
               <el-icon><Cpu /></el-icon>
             </div>
-            <h1>AI 评测师</h1>
-            <p>我是您的专业测试助手，有什么可以帮您？</p>
+            <h1>{{ $t('assistant.title') }}</h1>
+            <p>{{ $t('assistant.subtitle') }}</p>
           </div>
           
           <div class="center-input-wrapper">
@@ -67,7 +67,7 @@
               v-model="inputMessage"
               type="textarea"
               :rows="3"
-              placeholder="输入您的问题，按回车发送..."
+              :placeholder="$t('assistant.inputPlaceholder')"
               class="center-input"
               resize="none"
               @keydown.enter.exact.prevent="handleEnter"
@@ -84,10 +84,10 @@
           </div>
           
           <div class="suggestion-chips">
-            <div class="chip" @click="useSuggestion('如何设计登录接口的测试用例？')">接口测试用例</div>
-            <div class="chip" @click="useSuggestion('帮我生成一份性能测试计划模板')">性能测试计划</div>
-            <div class="chip" @click="useSuggestion('解释一下边界值分析法')">测试理论</div>
-            <div class="chip" @click="useSuggestion('Python Selenium 元素定位失败怎么办？')">自动化调试</div>
+            <div class="chip" @click="useSuggestion($t('assistant.suggestions.apiTestQuestion'))">{{ $t('assistant.suggestions.apiTest') }}</div>
+            <div class="chip" @click="useSuggestion($t('assistant.suggestions.performancePlanQuestion'))">{{ $t('assistant.suggestions.performancePlan') }}</div>
+            <div class="chip" @click="useSuggestion($t('assistant.suggestions.testTheoryQuestion'))">{{ $t('assistant.suggestions.testTheory') }}</div>
+            <div class="chip" @click="useSuggestion($t('assistant.suggestions.automationDebugQuestion'))">{{ $t('assistant.suggestions.automationDebug') }}</div>
           </div>
         </div>
       </div>
@@ -95,7 +95,7 @@
       <!-- 场景2：对话界面 -->
       <div v-else class="chat-screen">
         <div class="chat-header">
-          <span class="chat-title">{{ currentSession?.title || '新会话' }}</span>
+          <span class="chat-title">{{ currentSession?.title || $t('assistant.newChat') }}</span>
           <span class="chat-time" v-if="currentSession">{{ formatDate(currentSession.updated_at) }}</span>
         </div>
         
@@ -112,7 +112,7 @@
             <div class="message-bubble">
               <div class="message-content" v-html="formatMessageContent(message.content)"></div>
               <div class="message-status" v-if="message.isPending">
-                <el-icon class="is-loading"><Loading /></el-icon> 思考中...
+                <el-icon class="is-loading"><Loading /></el-icon> {{ $t('assistant.thinking') }}
               </div>
             </div>
           </div>
@@ -128,7 +128,7 @@
               type="textarea"
               :rows="1"
               :autosize="{ minRows: 1, maxRows: 5 }"
-              placeholder="输入消息..."
+              :placeholder="$t('assistant.chatInputPlaceholder')"
               resize="none"
               @keydown.enter.exact.prevent="handleEnter"
             />
@@ -141,7 +141,7 @@
               <el-icon><Promotion /></el-icon>
             </el-button>
           </div>
-          <div class="footer-tip">内容由 AI 生成，请仔细甄别</div>
+          <div class="footer-tip">{{ $t('assistant.aiDisclaimer') }}</div>
         </div>
       </div>
     </div>
@@ -151,6 +151,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, ChatDotRound, User, Cpu, Promotion, Loading, UserFilled, ArrowDown } from '@element-plus/icons-vue'
@@ -158,6 +159,7 @@ import api from '@/utils/api'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t, locale } = useI18n()
 
 // 状态
 const historySessions = ref([])
@@ -176,14 +178,14 @@ const handleCommand = (command) => {
 }
 
 const handleLogout = () => {
-  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('assistant.logoutConfirm'), t('assistant.logoutTitle'), {
+    confirmButtonText: t('assistant.confirm'),
+    cancelButtonText: t('assistant.cancel'),
     type: 'warning'
   }).then(() => {
     userStore.logout()
     router.push('/login')
-    ElMessage.success('已退出登录')
+    ElMessage.success(t('assistant.loggedOut'))
   }).catch(() => {})
 }
 
@@ -204,11 +206,12 @@ const formatDate = (dateString) => {
   if (!dateString) return ''
   const date = new Date(dateString)
   const now = new Date()
+  const localeCode = locale.value === 'zh-cn' ? 'zh-CN' : 'en-US'
   // 如果是今天，只显示时间
   if (date.toDateString() === now.toDateString()) {
-    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+    return date.toLocaleTimeString(localeCode, { hour: '2-digit', minute: '2-digit' })
   }
-  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+  return date.toLocaleDateString(localeCode, { month: '2-digit', day: '2-digit' })
 }
 
 const formatMessageContent = (content) => {
@@ -230,7 +233,7 @@ const scrollToBottom = () => {
 
 // 开启新会话
 const startNewChat = () => {
-  currentSession.value = { title: '新会话' } // 临时会话对象
+  currentSession.value = { title: t('assistant.newChat') } // 临时会话对象
   messages.value = []
   inputMessage.value = ''
 }
@@ -245,8 +248,8 @@ const switchToSession = async (session) => {
     messages.value = response.data
     scrollToBottom()
   } catch (error) {
-    console.error('加载消息失败:', error)
-    ElMessage.error('加载消息失败')
+    console.error('Load messages failed:', error)
+    ElMessage.error(t('assistant.messages.loadMessageFailed'))
   }
 }
 
@@ -259,10 +262,10 @@ const deleteSession = async (sessionId) => {
     if (currentSession.value?.id === sessionId) {
       startNewChat()
     }
-    ElMessage.success('会话已删除')
+    ElMessage.success(t('assistant.messages.sessionDeleted'))
   } catch (error) {
-    console.error('删除会话失败:', error)
-    ElMessage.error('删除会话失败')
+    console.error('Delete session failed:', error)
+    ElMessage.error(t('assistant.messages.deleteSessionFailed'))
   }
 }
 
@@ -362,10 +365,10 @@ const sendMessage = async () => {
     }
     
   } catch (error) {
-    console.error('发送失败:', error)
+    console.error('Send failed:', error)
     // 移除临时消息，显示错误
     messages.value.pop() // 移除思考中
-    ElMessage.error(error.response?.data?.error || '发送失败，请重试')
+    ElMessage.error(error.response?.data?.error || t('assistant.messages.sendFailed'))
   } finally {
     sending.value = false
     scrollToBottom()
@@ -378,7 +381,7 @@ const loadHistory = async () => {
     const response = await api.get('/assistant/sessions/')
     historySessions.value = response.data.results || response.data || []
   } catch (error) {
-    console.error('加载历史失败:', error)
+    console.error('Load history failed:', error)
   }
 }
 

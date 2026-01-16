@@ -2,10 +2,10 @@
   <div class="register-container">
     <div class="register-form">
       <div class="form-header">
-        <h2>注册 TestHub</h2>
-        <p>创建您的测试管理账号</p>
+        <h2>{{ $t('auth.registerTitle') }}</h2>
+        <p>{{ $t('auth.registerSubtitle') }}</p>
       </div>
-      
+
       <el-form
         ref="formRef"
         :model="form"
@@ -15,28 +15,28 @@
         <el-form-item prop="username">
           <el-input
             v-model="form.username"
-            placeholder="用户名"
+            :placeholder="$t('auth.username')"
             size="large"
             :prefix-icon="User"
           />
         </el-form-item>
-        
+
         <el-form-item prop="email">
           <el-input
             v-model="form.email"
             type="email"
-            placeholder="邮箱"
+            :placeholder="$t('auth.email')"
             size="large"
             :prefix-icon="Message"
           />
         </el-form-item>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item prop="first_name">
               <el-input
                 v-model="form.first_name"
-                placeholder="姓"
+                :placeholder="$t('auth.firstName')"
                 size="large"
               />
             </el-form-item>
@@ -45,41 +45,41 @@
             <el-form-item prop="last_name">
               <el-input
                 v-model="form.last_name"
-                placeholder="名"
+                :placeholder="$t('auth.lastName')"
                 size="large"
               />
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-form-item prop="password">
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="密码"
+            :placeholder="$t('auth.password')"
             size="large"
             :prefix-icon="Lock"
             show-password
           />
         </el-form-item>
-        
+
         <el-form-item prop="password_confirm">
           <el-input
             v-model="form.password_confirm"
             type="password"
-            placeholder="确认密码"
+            :placeholder="$t('auth.confirmPassword')"
             size="large"
             :prefix-icon="Lock"
             show-password
           />
         </el-form-item>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item prop="department">
               <el-input
                 v-model="form.department"
-                placeholder="部门"
+                :placeholder="$t('auth.department')"
                 size="large"
               />
             </el-form-item>
@@ -88,13 +88,13 @@
             <el-form-item prop="position">
               <el-input
                 v-model="form.position"
-                placeholder="职位"
+                :placeholder="$t('auth.position')"
                 size="large"
               />
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-form-item>
           <el-button
             type="primary"
@@ -103,12 +103,12 @@
             @click="handleRegister"
             style="width: 100%"
           >
-            注册
+            {{ $t('auth.register') }}
           </el-button>
         </el-form-item>
-        
+
         <div class="form-footer">
-          <router-link to="/login">已有账号？立即登录</router-link>
+          <router-link to="/login">{{ $t('auth.hasAccount') }}</router-link>
         </div>
       </el-form>
     </div>
@@ -116,14 +116,16 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Message } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 const formRef = ref()
 const loading = ref(false)
 
@@ -140,23 +142,23 @@ const form = reactive({
 
 const rules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' }
+    { required: true, message: computed(() => t('auth.usernameRequired')), trigger: 'blur' },
+    { min: 3, max: 20, message: computed(() => t('auth.usernameLength')), trigger: 'blur' }
   ],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { required: true, message: computed(() => t('auth.emailRequired')), trigger: 'blur' },
+    { type: 'email', message: computed(() => t('auth.emailFormat')), trigger: 'blur' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    { required: true, message: computed(() => t('auth.passwordRequired')), trigger: 'blur' },
+    { min: 6, message: computed(() => t('auth.passwordLength')), trigger: 'blur' }
   ],
   password_confirm: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
+    { required: true, message: computed(() => t('auth.confirmPasswordRequired')), trigger: 'blur' },
     {
       validator: (rule, value, callback) => {
         if (value !== form.password) {
-          callback(new Error('两次输入的密码不一致'))
+          callback(new Error(t('auth.passwordMismatch')))
         } else {
           callback()
         }
@@ -168,16 +170,16 @@ const rules = {
 
 const handleRegister = async () => {
   if (!formRef.value) return
-  
+
   await formRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
       try {
         await userStore.register(form)
-        ElMessage.success('注册成功，请登录')
+        ElMessage.success(t('auth.registerSuccess'))
         router.push('/login')
       } catch (error) {
-        ElMessage.error(error.response?.data?.error || '注册失败')
+        ElMessage.error(error.response?.data?.error || t('auth.registerFailed'))
       } finally {
         loading.value = false
       }

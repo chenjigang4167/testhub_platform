@@ -1,49 +1,49 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">用例详情</h1>
+      <h1 class="page-title">{{ $t('testcase.detail') }}</h1>
       <div>
-        <el-button @click="$router.back()">返回</el-button>
-        <el-button type="primary" @click="editTestCase">编辑</el-button>
+        <el-button @click="$router.back()">{{ $t('common.back') }}</el-button>
+        <el-button type="primary" @click="editTestCase">{{ $t('common.edit') }}</el-button>
       </div>
     </div>
-    
+
     <div class="card-container" v-if="testcase">
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="用例标题" :span="2">{{ testcase.title }}</el-descriptions-item>
-        <el-descriptions-item label="优先级">
+        <el-descriptions-item :label="$t('testcase.caseTitle')" :span="2">{{ testcase.title }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('testcase.priority')">
           <el-tag :class="`priority-tag ${testcase.priority}`">{{ getPriorityText(testcase.priority) }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="状态">
+        <el-descriptions-item :label="$t('testcase.status')">
           <el-tag :type="getStatusType(testcase.status)">{{ getStatusText(testcase.status) }}</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="测试类型">{{ getTypeText(testcase.test_type) }}</el-descriptions-item>
-        <el-descriptions-item label="归属项目">{{ testcase.project?.name || '未关联项目' }}</el-descriptions-item>
-        <el-descriptions-item label="关联版本" :span="2">
+        <el-descriptions-item :label="$t('testcase.testType')">{{ getTypeText(testcase.test_type) }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('testcase.project')">{{ testcase.project?.name || $t('testcase.noProject') }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('testcase.relatedVersions')" :span="2">
           <div v-if="testcase.versions && testcase.versions.length > 0" class="version-tags">
-            <el-tag 
-              v-for="version in testcase.versions" 
-              :key="version.id" 
-              size="small" 
+            <el-tag
+              v-for="version in testcase.versions"
+              :key="version.id"
+              size="small"
               :type="version.is_baseline ? 'warning' : 'info'"
               class="version-tag"
             >
               {{ version.name }}
             </el-tag>
           </div>
-          <span v-else class="no-version">未关联版本</span>
+          <span v-else class="no-version">{{ $t('testcase.noVersion') }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="作者">{{ testcase.author?.username }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">{{ formatDate(testcase.created_at) }}</el-descriptions-item>
-        <el-descriptions-item label="用例描述" :span="2">{{ testcase.description || '暂无描述' }}</el-descriptions-item>
-        <el-descriptions-item label="前置条件" :span="2">
-          <div v-html="testcase.preconditions || '无'"></div>
+        <el-descriptions-item :label="$t('testcase.author')">{{ testcase.author?.username }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('testcase.createdAt')" :span="2">{{ formatDate(testcase.created_at) }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('testcase.caseDescription')" :span="2">{{ testcase.description || $t('testcase.noDescription') }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('testcase.preconditions')" :span="2">
+          <div v-html="testcase.preconditions || $t('testcase.none')"></div>
         </el-descriptions-item>
-        <el-descriptions-item label="操作步骤" :span="2">
-          <div class="steps-content" v-html="testcase.steps || '无'"></div>
+        <el-descriptions-item :label="$t('testcase.steps')" :span="2">
+          <div class="steps-content" v-html="testcase.steps || $t('testcase.none')"></div>
         </el-descriptions-item>
-        <el-descriptions-item label="预期结果" :span="2">
-          <div v-html="testcase.expected_result || '无'"></div>
+        <el-descriptions-item :label="$t('testcase.expectedResult')" :span="2">
+          <div v-html="testcase.expected_result || $t('testcase.none')"></div>
         </el-descriptions-item>
       </el-descriptions>
     </div>
@@ -53,10 +53,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import api from '@/utils/api'
 import dayjs from 'dayjs'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const testcase = ref(null)
@@ -66,7 +68,7 @@ const fetchTestCase = async () => {
     const response = await api.get(`/testcases/${route.params.id}/`)
     testcase.value = response.data
   } catch (error) {
-    ElMessage.error('获取用例详情失败')
+    ElMessage.error(t('testcase.fetchDetailFailed'))
   }
 }
 
@@ -76,10 +78,10 @@ const editTestCase = () => {
 
 const getPriorityText = (priority) => {
   const textMap = {
-    low: '低',
-    medium: '中',
-    high: '高',
-    critical: '紧急'
+    low: t('testcase.low'),
+    medium: t('testcase.medium'),
+    high: t('testcase.high'),
+    critical: t('testcase.critical')
   }
   return textMap[priority] || priority
 }
@@ -95,21 +97,21 @@ const getStatusType = (status) => {
 
 const getStatusText = (status) => {
   const textMap = {
-    draft: '草稿',
-    active: '激活',
-    deprecated: '废弃'
+    draft: t('testcase.draft'),
+    active: t('testcase.active'),
+    deprecated: t('testcase.deprecated')
   }
   return textMap[status] || status
 }
 
 const getTypeText = (type) => {
   const textMap = {
-    functional: '功能测试',
-    integration: '集成测试',
-    api: 'API测试',
-    ui: 'UI测试',
-    performance: '性能测试',
-    security: '安全测试'
+    functional: t('testcase.functional'),
+    integration: t('testcase.integration'),
+    api: t('testcase.api'),
+    ui: t('testcase.ui'),
+    performance: t('testcase.performance'),
+    security: t('testcase.security')
   }
   return textMap[type] || '-'
 }

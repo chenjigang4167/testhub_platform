@@ -1,39 +1,39 @@
 <template>
   <div class="dify-config-container">
     <div class="page-header">
-      <h1>🤖 AI评测师配置</h1>
-      <p>配置Dify API以启用AI评测师功能</p>
+      <h1>{{ $t('configuration.dify.title') }}</h1>
+      <p>{{ $t('configuration.dify.description') }}</p>
     </div>
 
     <div class="config-content">
       <el-card class="config-card">
         <template #header>
           <div class="card-header">
-            <span>Dify API配置</span>
-            <el-tag v-if="currentConfig" type="success">已配置</el-tag>
-            <el-tag v-else type="info">未配置</el-tag>
+            <span>{{ $t('configuration.dify.apiConfig') }}</span>
+            <el-tag v-if="currentConfig" type="success">{{ $t('configuration.common.configured') }}</el-tag>
+            <el-tag v-else type="info">{{ $t('configuration.common.notConfigured') }}</el-tag>
           </div>
         </template>
 
         <el-form :model="form" :rules="rules" ref="configForm" label-width="120px">
-          <el-form-item label="API URL" prop="api_url">
+          <el-form-item :label="$t('configuration.dify.apiUrl')" prop="api_url">
             <el-input
               v-model="form.api_url"
-              placeholder="https://api.dify.ai/v1"
+              :placeholder="$t('configuration.dify.apiUrlPlaceholder')"
               clearable
             >
               <template #prepend>
                 <el-icon><Link /></el-icon>
               </template>
             </el-input>
-            <div class="form-tip">Dify API的完整URL地址</div>
+            <div class="form-tip">{{ $t('configuration.dify.apiUrlTip') }}</div>
           </el-form-item>
 
-          <el-form-item label="API Key" prop="api_key">
+          <el-form-item :label="$t('configuration.dify.apiKey')" prop="api_key">
             <el-input
               v-model="form.api_key"
               type="password"
-              :placeholder="currentConfig ? '留空则不修改API Key' : '请输入API Key'"
+              :placeholder="currentConfig ? $t('configuration.dify.apiKeyPlaceholderEdit') : $t('configuration.dify.apiKeyPlaceholder')"
               show-password
               clearable
             >
@@ -41,26 +41,26 @@
                 <el-icon><Key /></el-icon>
               </template>
             </el-input>
-            <div class="form-tip">从Dify平台获取的API密钥</div>
+            <div class="form-tip">{{ $t('configuration.dify.apiKeyTip') }}</div>
           </el-form-item>
 
-          <el-form-item label="启用状态" prop="is_active">
+          <el-form-item :label="$t('configuration.dify.enableStatus')" prop="is_active">
             <el-switch v-model="form.is_active" />
-            <span class="switch-label">{{ form.is_active ? '已启用' : '已禁用' }}</span>
+            <span class="switch-label">{{ form.is_active ? $t('configuration.common.enabled') : $t('configuration.common.disabled') }}</span>
           </el-form-item>
 
           <el-form-item>
             <el-button type="primary" @click="testConnection" :loading="testing">
               <el-icon><Connection /></el-icon>
-              测试连接
+              {{ $t('configuration.dify.testConnection') }}
             </el-button>
             <el-button type="success" @click="saveConfig" :loading="saving">
               <el-icon><Check /></el-icon>
-              保存配置
+              {{ $t('configuration.common.save') }}
             </el-button>
             <el-button @click="resetForm">
               <el-icon><RefreshLeft /></el-icon>
-              重置
+              {{ $t('configuration.common.reset') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -68,24 +68,24 @@
 
       <el-card class="info-card" v-if="currentConfig">
         <template #header>
-          <span>当前配置信息</span>
+          <span>{{ $t('configuration.dify.currentConfig') }}</span>
         </template>
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="API URL">
+          <el-descriptions-item :label="$t('configuration.dify.apiUrl')">
             {{ currentConfig.api_url }}
           </el-descriptions-item>
-          <el-descriptions-item label="API Key">
+          <el-descriptions-item :label="$t('configuration.dify.apiKey')">
             {{ currentConfig.api_key_masked || '****' }}
           </el-descriptions-item>
-          <el-descriptions-item label="状态">
+          <el-descriptions-item :label="$t('configuration.common.status')">
             <el-tag :type="currentConfig.is_active ? 'success' : 'info'">
-              {{ currentConfig.is_active ? '已启用' : '已禁用' }}
+              {{ currentConfig.is_active ? $t('configuration.common.enabled') : $t('configuration.common.disabled') }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="创建时间">
+          <el-descriptions-item :label="$t('configuration.common.createdAt')">
             {{ formatDate(currentConfig.created_at) }}
           </el-descriptions-item>
-          <el-descriptions-item label="更新时间">
+          <el-descriptions-item :label="$t('configuration.common.updatedAt')">
             {{ formatDate(currentConfig.updated_at) }}
           </el-descriptions-item>
         </el-descriptions>
@@ -95,10 +95,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Link, Key, Connection, Check, RefreshLeft } from '@element-plus/icons-vue'
 import api from '@/utils/api'
+
+const { t, locale } = useI18n()
 
 const configForm = ref(null)
 const currentConfig = ref(null)
@@ -111,20 +114,20 @@ const form = ref({
   is_active: true
 })
 
-const rules = {
+const rules = computed(() => ({
   api_url: [
-    { required: true, message: '请输入API URL', trigger: 'blur' },
-    { type: 'url', message: '请输入有效的URL', trigger: 'blur' }
+    { required: true, message: t('configuration.dify.validation.apiUrlRequired'), trigger: 'blur' },
+    { type: 'url', message: t('configuration.dify.validation.apiUrlInvalid'), trigger: 'blur' }
   ],
   api_key: [
-    { min: 8, message: 'API Key长度至少8位', trigger: 'blur' }
+    { min: 8, message: t('configuration.dify.validation.apiKeyMinLength'), trigger: 'blur' }
   ]
-}
+}))
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
-  return date.toLocaleString('zh-CN')
+  return date.toLocaleString(locale.value === 'zh-cn' ? 'zh-CN' : 'en-US')
 }
 
 const loadConfig = async () => {
@@ -138,32 +141,32 @@ const loadConfig = async () => {
     }
   } catch (error) {
     if (error.response?.status !== 404) {
-      console.error('加载配置失败:', error)
+      console.error(t('configuration.dify.messages.loadFailed'), error)
     }
   }
 }
 
 const testConnection = async () => {
   if (!configForm.value) return
-  
+
   await configForm.value.validate(async (valid) => {
     if (!valid) return
-    
+
     testing.value = true
     try {
       const response = await api.post('/assistant/config/dify/test_connection/', {
         api_url: form.value.api_url,
         api_key: form.value.api_key
       })
-      
+
       if (response.data.success) {
-        ElMessage.success('连接测试成功！')
+        ElMessage.success(t('configuration.dify.messages.testSuccess'))
       } else {
-        ElMessage.error(response.data.error || '连接测试失败')
+        ElMessage.error(response.data.error || t('configuration.dify.messages.testFailed'))
       }
     } catch (error) {
-      console.error('测试连接失败:', error)
-      ElMessage.error(error.response?.data?.error || '连接测试失败')
+      console.error(t('configuration.dify.messages.testFailed'), error)
+      ElMessage.error(error.response?.data?.error || t('configuration.dify.messages.testFailed'))
     } finally {
       testing.value = false
     }
@@ -172,44 +175,44 @@ const testConnection = async () => {
 
 const saveConfig = async () => {
   if (!configForm.value) return
-  
+
   await configForm.value.validate(async (valid) => {
     if (!valid) return
-    
+
     saving.value = true
     try {
-      // 准备要保存的数据
+      // Prepare data to save
       const dataToSave = {
         api_url: form.value.api_url,
         is_active: form.value.is_active
       }
-      
-      // 只有当API Key有值时才发送（用户输入了新的API Key）
+
+      // Only send API Key if user entered a new one
       if (form.value.api_key && form.value.api_key.trim()) {
         dataToSave.api_key = form.value.api_key
       }
-      
+
       if (currentConfig.value) {
         // Update existing config
         await api.patch(`/assistant/config/dify/${currentConfig.value.id}/`, dataToSave)
-        ElMessage.success('配置更新成功！')
+        ElMessage.success(t('configuration.dify.messages.updateSuccess'))
       } else {
         // Create new config - API key is required
         if (!form.value.api_key || !form.value.api_key.trim()) {
-          ElMessage.error('创建新配置时API Key是必填项')
+          ElMessage.error(t('configuration.dify.messages.apiKeyRequired'))
           saving.value = false
           return
         }
         await api.post('/assistant/config/dify/', dataToSave)
-        ElMessage.success('配置保存成功！')
+        ElMessage.success(t('configuration.dify.messages.saveSuccess'))
       }
-      
-      // 清空API Key输入框（安全考虑）
+
+      // Clear API Key input for security
       form.value.api_key = ''
       await loadConfig()
     } catch (error) {
-      console.error('保存配置失败:', error)
-      ElMessage.error(error.response?.data?.error || '保存配置失败')
+      console.error(t('configuration.dify.messages.saveFailed'), error)
+      ElMessage.error(error.response?.data?.error || t('configuration.dify.messages.saveFailed'))
     } finally {
       saving.value = false
     }
