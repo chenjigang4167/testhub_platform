@@ -478,7 +478,7 @@ export default {
     async checkConfigStatus() {
       try {
         this.checkingConfig = true
-        const response = await api.get('/requirement-analysis/api/config/check/')
+        const response = await api.get('/requirement-analysis/config/check/')
         this.configStatus = response.data
 
         // 判断逻辑：只有当"用例编写模型"、"用例评审模型"、"用例编写提示词"和"用例评审提示词"都配置且启用时，才不显示弹框
@@ -688,14 +688,14 @@ export default {
         }
 
         ElMessage.info('正在提取文档内容...')
-        const uploadResponse = await api.post('/requirement-analysis/api/documents/', formData, {
+        const uploadResponse = await api.post('/requirement-analysis/documents/', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         })
 
         // 提取文档内容
-        const extractResponse = await api.get(`/requirement-analysis/api/documents/${uploadResponse.data.id}/extract_text/`)
+        const extractResponse = await api.get(`/requirement-analysis/documents/${uploadResponse.data.id}/extract_text/`)
         const extractedText = extractResponse.data.extracted_text
 
         if (!extractedText || extractedText.trim().length === 0) {
@@ -759,7 +759,7 @@ export default {
           requestData.project = projectId
         }
 
-        const response = await api.post('/requirement-analysis/api/testcase-generation/generate/', requestData)
+        const response = await api.post('/requirement-analysis/testcase-generation/generate/', requestData)
 
         this.currentTaskId = response.data.task_id
         this.progressText = '任务已创建，正在处理中...'
@@ -783,10 +783,15 @@ export default {
     startStreamingProgress() {
       // 使用SSE进行流式进度获取
       // 注意：EventSource不使用axios代理，需要直接指向后端服务器
-      // 完整的URL路径: /api/requirement-analysis/api/testcase-generation/{task_id}/stream_progress/
-      const isDev = import.meta.env.DEV
-      const baseUrl = isDev ? 'http://127.0.0.1:8000' : ''
-      const apiUrl = `${baseUrl}/api/requirement-analysis/api/testcase-generation/${this.currentTaskId}/stream_progress/`
+      // 完整的URL路径: /api/requirement-analysis/testcase-generation/{task_id}/stream_progress/
+
+      // 动态获取后端URL：使用当前页面的协议和主机名，端口改为8000
+      // 这样无论通过 localhost、127.0.0.1 还是 IP 地址访问，都能正确连接后端
+      const currentOrigin = window.location.origin  // 如 http://192.168.10.107:3000
+      const url = new URL(currentOrigin)
+      // 将端口改为后端端口 8000
+      const baseUrl = `${url.protocol}//${url.hostname}:8000`
+      const apiUrl = `${baseUrl}/api/requirement-analysis/testcase-generation/${this.currentTaskId}/stream_progress/`
 
       console.log('SSE连接URL:', apiUrl)
 
@@ -901,7 +906,7 @@ export default {
     async fetchFinalResult() {
       try {
         // 修复URL：去掉多余的/api/前缀（axios baseURL已经包含/api）
-        const response = await api.get(`/requirement-analysis/api/testcase-generation/${this.currentTaskId}/progress/`)
+        const response = await api.get(`/requirement-analysis/testcase-generation/${this.currentTaskId}/progress/`)
         const task = response.data
 
         this.generationResult = task
@@ -964,7 +969,7 @@ export default {
       this.pollInterval = setInterval(async () => {
         try {
           // 修复URL：去掉多余的/api/前缀（axios baseURL已经包含/api）
-          const response = await api.get(`/requirement-analysis/api/testcase-generation/${this.currentTaskId}/progress/`)
+          const response = await api.get(`/requirement-analysis/testcase-generation/${this.currentTaskId}/progress/`)
           const task = response.data
 
           console.log(`轮询 - 任务状态: ${task.status}, 进度: ${task.progress}%`)
@@ -1138,7 +1143,7 @@ export default {
     async saveToTestCaseRecords() {
       try {
         // 调用后端API保存到记录
-        const response = await api.post(`/requirement-analysis/api/testcase-generation/${this.generationResult.task_id}/save_to_records/`)
+        const response = await api.post(`/requirement-analysis/testcase-generation/${this.generationResult.task_id}/save_to_records/`)
 
         if (response.data.already_saved) {
           ElMessage.info('测试用例已经保存过了')

@@ -1773,19 +1773,37 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
         """
         try:
             # 记录请求信息（用于调试）
-            logger.info(f"SSE连接请求: task_id={task_id}, user={request.user}, authenticated={request.user.is_authenticated}, path={request.path}, origin={request.META.get('HTTP_ORIGIN', 'unknown')}")
-    
+            request_origin = request.META.get('HTTP_ORIGIN', 'unknown')
+            logger.info(f"SSE连接请求: task_id={task_id}, user={request.user}, authenticated={request.user.is_authenticated}, path={request.path}, origin={request_origin}")
+
+            # 动态获取CORS origin - 支持localhost、127.0.0.1和任意IP地址
+            def get_allowed_origin(origin):
+                """获取允许的CORS origin，支持localhost和任意IP地址"""
+                if not origin:
+                    return 'http://localhost:3000'
+                # 允许localhost和127.0.0.1
+                if origin in ['http://localhost:3000', 'http://127.0.0.1:3000']:
+                    return origin
+                # 允许任意IP地址的3000端口
+                import re
+                if re.match(r'^http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:3000$', origin):
+                    return origin
+                # 默认返回localhost:3000
+                return 'http://localhost:3000'
+
+            cors_origin = get_allowed_origin(request_origin)
+
             # 处理 CORS 预检请求
             if request.method == 'OPTIONS':
                 from django.http import HttpResponse
                 response = HttpResponse()
-                response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+                response['Access-Control-Allow-Origin'] = cors_origin
                 response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
                 response['Access-Control-Allow-Headers'] = 'Content-Type'
                 response['Access-Control-Allow-Credentials'] = 'true'
                 response['Access-Control-Max-Age'] = '86400'
                 return response
-    
+
             # 获取任务对象
             task = TestCaseGenerationTask.objects.filter(task_id=task_id).first()
             if not task:
@@ -1797,7 +1815,7 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                     status=404,
                     content_type='application/json'
                 )
-                response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+                response['Access-Control-Allow-Origin'] = cors_origin
                 response['Access-Control-Allow-Credentials'] = 'true'
                 return response
     
@@ -1928,29 +1946,37 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
             # 设置SSE相关的响应头（注意：不能设置Connection等hop-by-hop头部）
             response['Cache-Control'] = 'no-cache'
             response['X-Accel-Buffering'] = 'no'
-    
-            # 设置CORS头部
-            origin = request.META.get('HTTP_ORIGIN', 'http://localhost:3000')
-            if origin in ['http://localhost:3000', 'http://127.0.0.1:3000']:
-                response['Access-Control-Allow-Origin'] = origin
-            else:
-                response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+
+            # 设置CORS头部 - 使用动态计算的cors_origin
+            response['Access-Control-Allow-Origin'] = cors_origin
             response['Access-Control-Allow-Credentials'] = 'true'
-    
-            logger.info(f"SSE连接建立成功: task_id={task_id}")
+
+            logger.info(f"SSE连接建立成功: task_id={task_id}, cors_origin={cors_origin}")
             return response
-    
+
         except Exception as e:
             logger.error(f"SSE流式推送出错: {e}")
             import traceback
             traceback.print_exc()
             from django.http import HttpResponse
+            # 获取允许的origin
+            request_origin = request.META.get('HTTP_ORIGIN', 'unknown')
+            def get_allowed_origin(origin):
+                if not origin:
+                    return 'http://localhost:3000'
+                if origin in ['http://localhost:3000', 'http://127.0.0.1:3000']:
+                    return origin
+                import re
+                if re.match(r'^http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:3000$', origin):
+                    return origin
+                return 'http://localhost:3000'
+            cors_origin = get_allowed_origin(request_origin)
             response = HttpResponse(
                 json.dumps({'error': f'流式推送失败: {str(e)}'}),
                 status=500,
                 content_type='application/json'
             )
-            response['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+            response['Access-Control-Allow-Origin'] = cors_origin
             response['Access-Control-Allow-Credentials'] = 'true'
             return response
 

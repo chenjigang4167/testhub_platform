@@ -32,9 +32,9 @@ app_name = 'requirement_analysis'
 
 urlpatterns = [
     # DRF路由
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
 
     # 特殊API端点
-    path('api/upload-and-analyze/', upload_and_analyze, name='upload-and-analyze'),
-    path('api/analyze-text/', analyze_text, name='analyze-text'),
+    path('upload-and-analyze/', upload_and_analyze, name='upload-and-analyze'),
+    path('analyze-text/', analyze_text, name='analyze-text'),
 ]

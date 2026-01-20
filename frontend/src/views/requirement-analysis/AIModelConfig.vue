@@ -98,6 +98,7 @@
     <div 
       v-show="shouldShowModal"
       :class="['config-modal', { hidden: !shouldShowModal }]"
+      @click="closeModals" 
       @keydown.esc="closeModals">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
@@ -248,7 +249,7 @@
     </div>
 
     <!-- 连接测试结果弹窗 -->
-    <div v-if="showTestResult" class="test-result-modal" @keydown.esc="closeTestResult">
+    <div v-if="showTestResult" class="test-result-modal" @click="closeTestResult">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>连接测试结果</h3>
@@ -394,7 +395,7 @@ export default {
     async loadConfigs() {
       try {
         console.log('Loading configs...')
-        const response = await api.get('/requirement-analysis/api/ai-models/')
+        const response = await api.get('/requirement-analysis/ai-models/')
         console.log('API response:', response.data)
         
         // 处理分页API响应格式 {count: 1, next: null, previous: null, results: [...]}
@@ -536,7 +537,7 @@ export default {
           ElMessage.success('配置更新成功')
         } else {
           console.log('Creating with data:', this.configForm)
-          await api.post('/requirement-analysis/api/ai-models/', this.configForm)
+          await api.post('/requirement-analysis/ai-models/', this.configForm)
           ElMessage.success('配置添加成功')
         }
         

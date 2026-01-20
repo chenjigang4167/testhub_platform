@@ -83,7 +83,7 @@
     </div>
 
     <!-- 添加/编辑配置弹窗 -->
-    <div v-if="showAddModal || showEditModal" class="config-modal" @keydown.esc="closeModals">
+    <div v-if="showAddModal || showEditModal" class="config-modal" @click="closeModals">
       <div class="modal-content large" @click.stop>
         <div class="modal-header">
           <h3>{{ isEditing ? '编辑' : '添加' }}提示词配置</h3>
@@ -161,7 +161,7 @@
     </div>
 
     <!-- 预览弹窗 -->
-    <div v-if="showPreviewModal" class="preview-modal" @keydown.esc="closePreview">
+    <div v-if="showPreviewModal" class="preview-modal" @click="closePreview">
       <div class="modal-content large" @click.stop>
         <div class="modal-header">
           <h3>提示词预览 - {{ previewConfig.name }}</h3>
@@ -193,7 +193,7 @@
     </div>
 
     <!-- 默认提示词预览弹窗 -->
-    <div v-if="showDefaultsModal" class="defaults-modal" @keydown.esc="closeDefaultsModal">
+    <div v-if="showDefaultsModal" class="defaults-modal" @click="closeDefaultsModal">
       <div class="modal-content large" @click.stop>
         <div class="modal-header">
           <h3>默认提示词预览</h3>
@@ -287,7 +287,7 @@ export default {
     async loadConfigs() {
       try {
         console.log('Loading prompt configs...')
-        const response = await api.get('/requirement-analysis/api/prompts/')
+        const response = await api.get('/requirement-analysis/prompts/')
         console.log('Prompts API response:', response.data)
         
         // 处理分页API响应格式
@@ -319,7 +319,7 @@ export default {
     async loadDefaultPrompts() {
       console.log('loadDefaultPrompts clicked')
       try {
-        const response = await api.get('/requirement-analysis/api/prompts/load_defaults/')
+        const response = await api.get('/requirement-analysis/prompts/load_defaults/')
         console.log('Default prompts response:', response.data)
         this.defaultPrompts = response.data.defaults
         this.showDefaultsModal = true
@@ -336,7 +336,7 @@ export default {
       try {
         // 创建编写提示词配置
         if (this.defaultPrompts.writer) {
-          await api.post('/requirement-analysis/api/prompts/', {
+          await api.post('/requirement-analysis/prompts/', {
             name: '默认用例编写提示词',
             prompt_type: 'writer',
             content: this.defaultPrompts.writer,
@@ -346,7 +346,7 @@ export default {
 
         // 创建评审提示词配置
         if (this.defaultPrompts.reviewer) {
-          await api.post('/requirement-analysis/api/prompts/', {
+          await api.post('/requirement-analysis/prompts/', {
             name: '默认用例评审提示词',
             prompt_type: 'reviewer',
             content: this.defaultPrompts.reviewer,
@@ -399,7 +399,7 @@ export default {
           await api.patch(`/requirement-analysis/prompts/${this.editingConfigId}/`, this.configForm)
           ElMessage.success('配置更新成功')
         } else {
-          await api.post('/requirement-analysis/api/prompts/', this.configForm)
+          await api.post('/requirement-analysis/prompts/', this.configForm)
           ElMessage.success('配置添加成功')
         }
         

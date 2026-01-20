@@ -204,7 +204,7 @@
     </div>
 
     <!-- 测试用例详情弹窗 -->
-    <div v-if="selectedTestCaseDetail" class="testcase-detail-modal" @keydown.esc="closeTestCaseDetail">
+    <div v-if="selectedTestCaseDetail" class="testcase-detail-modal" @click="closeTestCaseDetail">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h3>{{ selectedTestCaseDetail.title }}</h3>
@@ -264,7 +264,7 @@
     </div>
 
     <!-- 采纳用例编辑弹框 -->
-    <div v-if="showAdoptModal" class="testcase-detail-modal" @keydown.esc="closeAdoptModal">
+    <div v-if="showAdoptModal" class="testcase-detail-modal" @click="closeAdoptModal">
       <div class="modal-content large-modal" @click.stop>
         <div class="modal-header">
           <h3>采纳测试用例</h3>
@@ -470,7 +470,7 @@ export default {
     async loadTasks() {
       this.isLoading = true
       try {
-        let url = '/requirement-analysis/api/testcase-generation/'
+        let url = '/requirement-analysis/testcase-generation/'
         const params = new URLSearchParams()
         
         // 添加分页参数
@@ -568,7 +568,7 @@ export default {
         // 逐个删除选中的任务
         for (const taskId of this.selectedTasks) {
           try {
-            await api.delete(`/requirement-analysis/api/testcase-generation/${taskId}/`)
+            await api.delete(`/requirement-analysis/testcase-generation/${taskId}/`)
             successCount++
           } catch (error) {
             console.error(`删除任务 ${taskId} 失败:`, error)
@@ -604,7 +604,7 @@ export default {
     async loadAllStats() {
       try {
         // 构建统计请求URL
-        let url = '/requirement-analysis/api/testcase-generation/'
+        let url = '/requirement-analysis/testcase-generation/'
         const params = new URLSearchParams()
         
         // 获取所有数据来进行统计
@@ -734,7 +734,7 @@ export default {
 
       try {
         // 调用后端API批量采纳该任务的所有测试用例
-        await api.post(`/requirement-analysis/api/testcase-generation/${task.task_id}/batch-adopt/`)
+        await api.post(`/requirement-analysis/testcase-generation/${task.task_id}/batch-adopt/`)
         ElMessage.success('一键采纳成功！所有测试用例已导入到测试用例列表')
         this.loadTasks()
       } catch (error) {
@@ -761,7 +761,7 @@ export default {
 
       try {
         // 调用后端API批量删除该任务的所有测试用例
-        await api.post(`/requirement-analysis/api/testcase-generation/${task.task_id}/batch-discard/`)
+        await api.post(`/requirement-analysis/testcase-generation/${task.task_id}/batch-discard/`)
         ElMessage.success('一键弃用成功！该任务的所有测试用例已删除')
         this.loadTasks()
       } catch (error) {
