@@ -8,9 +8,6 @@ export const useUserStore = defineStore('user', () => {
   const refreshToken = ref(localStorage.getItem('refresh_token') || '')
   const tokenExpiresAt = ref(parseInt(localStorage.getItem('token_expires_at') || '0'))
 
-  // token刷新定时器
-  let refreshTimer = null
-
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
 
   // 检查token是否即将过期（5分钟内）
@@ -26,36 +23,6 @@ export const useUserStore = defineStore('user', () => {
     if (!tokenExpiresAt.value) return false
     return Date.now() > tokenExpiresAt.value
   })
-
-  // 启动自动刷新token定时器
-  const startAutoRefresh = () => {
-    // 清除现有定时器
-    if (refreshTimer) {
-      clearInterval(refreshTimer)
-    }
-
-    // 每2分钟检查一次token是否需要刷新
-    refreshTimer = setInterval(async () => {
-      if (refreshToken.value && isTokenExpiringSoon.value && accessToken.value) {
-        console.log('自动刷新token...')
-        try {
-          await refreshAccessToken()
-          console.log('自动刷新token成功')
-        } catch (error) {
-          console.error('自动刷新token失败:', error)
-          // 刷新失败会自动logout，不需要额外处理
-        }
-      }
-    }, 2 * 60 * 1000) // 2分钟检查一次
-  }
-
-  // 停止自动刷新定时器
-  const stopAutoRefresh = () => {
-    if (refreshTimer) {
-      clearInterval(refreshTimer)
-      refreshTimer = null
-    }
-  }
 
   const login = async (credentials) => {
     try {
@@ -75,9 +42,6 @@ export const useUserStore = defineStore('user', () => {
       localStorage.setItem('refresh_token', refreshToken.value)
       localStorage.setItem('token_expires_at', expiresAt.toString())
       localStorage.setItem('user', JSON.stringify(user.value))
-
-      // 启动自动刷新
-      startAutoRefresh()
 
       return response.data
     } catch (error) {
@@ -107,9 +71,6 @@ export const useUserStore = defineStore('user', () => {
       return
     }
     isLoggingOut = true
-
-    // 停止自动刷新定时器
-    stopAutoRefresh()
 
     try {
       // 只有当access token未过期时，才尝试调用logout API将refresh token加入黑名单
@@ -243,9 +204,6 @@ export const useUserStore = defineStore('user', () => {
       } else {
         console.log('用户信息已存在，跳过获取')
       }
-
-      // 启动自动刷新定时器
-      startAutoRefresh()
     } else {
       console.log('没有access token，跳过认证初始化')
     }
@@ -264,8 +222,6 @@ export const useUserStore = defineStore('user', () => {
     logout,
     refreshAccessToken,
     fetchProfile,
-    initAuth,
-    startAutoRefresh,
-    stopAutoRefresh
+    initAuth
   }
 })

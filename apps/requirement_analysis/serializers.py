@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from .models import (
-    RequirementDocument, RequirementAnalysis, BusinessRequirement,
-    GeneratedTestCase, AnalysisTask, AIModelConfig, PromptConfig, TestCaseGenerationTask,
-    GenerationConfig
+    RequirementDocument, RequirementAnalysis, BusinessRequirement, 
+    GeneratedTestCase, AnalysisTask, AIModelConfig, PromptConfig, TestCaseGenerationTask
 )
 
 
@@ -110,8 +109,6 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             validated_data['document_type'] = 'docx'
         elif file.name.lower().endswith('.txt'):
             validated_data['document_type'] = 'txt'
-        elif file.name.lower().endswith('.md'):
-            validated_data['document_type'] = 'md'
         
         # 设置文件大小
         validated_data['file_size'] = file.size
@@ -137,8 +134,8 @@ class TestCaseGenerationRequestSerializer(serializers.Serializer):
     )
     test_case_count = serializers.IntegerField(
         min_value=1,
-        max_value=200,
-        default=50,
+        max_value=50,
+        default=10,
         help_text="生成测试用例数量"
     )
 
@@ -272,17 +269,4 @@ class TestCaseGenerationRequestSerializer(serializers.Serializer):
     requirement_text = serializers.CharField(help_text="需求描述")
     use_writer_model = serializers.BooleanField(default=True, help_text="是否使用编写模型")
     use_reviewer_model = serializers.BooleanField(default=True, help_text="是否使用评审模型")
-
-
-class GenerationConfigSerializer(serializers.ModelSerializer):
-    """生成行为配置序列化器"""
-    default_output_mode_display = serializers.CharField(source='get_default_output_mode_display', read_only=True)
-
-    class Meta:
-        model = GenerationConfig
-        fields = [
-            'id', 'name', 'default_output_mode', 'default_output_mode_display',
-            'enable_auto_review', 'review_timeout',
-            'is_active', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['created_at', 'updated_at']
+    project = serializers.IntegerField(required=False, allow_null=True, help_text="关联项目ID")

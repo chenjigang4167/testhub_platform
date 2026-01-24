@@ -1,17 +1,17 @@
 <template>
   <div class="environment-management">
     <div class="header">
-      <h3>环境管理</h3>
+      <h3>{{ $t('apiTesting.environment.title') }}</h3>
       <el-button type="primary" @click="showCreateDialog = true">
         <el-icon><Plus /></el-icon>
-        新建环境
+        {{ $t('apiTesting.environment.createEnvironment') }}
       </el-button>
     </div>
 
     <el-tabs v-model="activeTab" @tab-change="onTabChange">
-      <el-tab-pane label="全局环境变量" name="GLOBAL">
-        <EnvironmentTable 
-          :data="globalEnvironments" 
+      <el-tab-pane :label="$t('apiTesting.environment.scopeTypes.global')" name="GLOBAL">
+        <EnvironmentTable
+          :data="globalEnvironments"
           :loading="loading"
           scope="GLOBAL"
           @edit="editEnvironment"
@@ -20,11 +20,11 @@
           @duplicate="duplicateEnvironment"
         />
       </el-tab-pane>
-      <el-tab-pane label="局部环境变量" name="LOCAL">
+      <el-tab-pane :label="$t('apiTesting.environment.scopeTypes.local')" name="LOCAL">
         <div class="local-env-header">
-          <el-select 
-            v-model="selectedProject" 
-            placeholder="选择项目"
+          <el-select
+            v-model="selectedProject"
+            :placeholder="$t('apiTesting.common.selectProject')"
             @change="loadLocalEnvironments"
             style="width: 200px;"
           >
@@ -36,8 +36,8 @@
             />
           </el-select>
         </div>
-        <EnvironmentTable 
-          :data="localEnvironments" 
+        <EnvironmentTable
+          :data="localEnvironments"
           :loading="loading"
           scope="LOCAL"
           @edit="editEnvironment"
@@ -51,11 +51,7 @@
     <!-- 创建/编辑环境对话框 -->
     <el-dialog
       v-model="showCreateDialog"
-      :title="editingEnvironment ? '编辑环境' : '新建环境'"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
+      :title="editingEnvironment ? $t('apiTesting.environment.editEnvironment') : $t('apiTesting.environment.createEnvironment')"
       width="800px"
       @close="resetForm"
     >
@@ -65,28 +61,28 @@
         :rules="rules"
         label-width="120px"
       >
-        <el-form-item label="环境名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入环境名称" />
+        <el-form-item :label="$t('apiTesting.environment.environmentName')" prop="name">
+          <el-input v-model="form.name" :placeholder="$t('apiTesting.environment.inputEnvironmentName')" />
         </el-form-item>
-        
-        <el-form-item label="作用域" prop="scope">
+
+        <el-form-item :label="$t('apiTesting.environment.scope')" prop="scope">
           <el-radio-group v-model="form.scope" @change="onScopeChange">
-            <el-radio value="GLOBAL">全局环境变量</el-radio>
-            <el-radio value="LOCAL">局部环境变量</el-radio>
+            <el-radio value="GLOBAL">{{ $t('apiTesting.environment.scopeTypes.global') }}</el-radio>
+            <el-radio value="LOCAL">{{ $t('apiTesting.environment.scopeTypes.local') }}</el-radio>
           </el-radio-group>
           <div class="scope-help">
             <el-text size="small" type="info">
-              全局环境变量对所有项目生效，局部环境变量仅对关联项目生效
+              {{ $t('apiTesting.environment.scopeHelp') }}
             </el-text>
           </div>
         </el-form-item>
-        
-        <el-form-item 
-          v-if="form.scope === 'LOCAL'" 
-          label="关联项目" 
+
+        <el-form-item
+          v-if="form.scope === 'LOCAL'"
+          :label="$t('apiTesting.environment.relatedProject')"
           prop="project"
         >
-          <el-select v-model="form.project" placeholder="请选择关联项目">
+          <el-select v-model="form.project" :placeholder="$t('apiTesting.environment.selectRelatedProject')">
             <el-option
               v-for="project in projects"
               :key="project.id"
@@ -95,16 +91,16 @@
             />
           </el-select>
         </el-form-item>
-        
-        <el-form-item label="环境变量" prop="variables">
+
+        <el-form-item :label="$t('apiTesting.environment.environmentVariables')" prop="variables">
           <div class="variables-editor">
             <div class="variables-header">
-              <div class="column">变量名</div>
-              <div class="column">初始值</div>
-              <div class="column">当前值</div>
-              <div class="column">操作</div>
+              <div class="column">{{ $t('apiTesting.environment.variableName') }}</div>
+              <div class="column">{{ $t('apiTesting.environment.initialValue') }}</div>
+              <div class="column">{{ $t('apiTesting.environment.currentValue') }}</div>
+              <div class="column">{{ $t('apiTesting.common.operation') }}</div>
             </div>
-            
+
             <div class="variables-body">
               <div
                 v-for="(variable, index) in form.variables"
@@ -114,21 +110,21 @@
                 <div class="column">
                   <el-input
                     v-model="variable.key"
-                    placeholder="变量名"
+                    :placeholder="$t('apiTesting.environment.variableName')"
                     size="small"
                   />
                 </div>
                 <div class="column">
                   <el-input
                     v-model="variable.initialValue"
-                    placeholder="初始值"
+                    :placeholder="$t('apiTesting.environment.initialValue')"
                     size="small"
                   />
                 </div>
                 <div class="column">
                   <el-input
                     v-model="variable.currentValue"
-                    placeholder="当前值"
+                    :placeholder="$t('apiTesting.environment.currentValue')"
                     size="small"
                   />
                 </div>
@@ -143,21 +139,21 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="variables-footer">
               <el-button size="small" @click="addVariable">
                 <el-icon><Plus /></el-icon>
-                添加变量
+                {{ $t('apiTesting.environment.addVariable') }}
               </el-button>
             </div>
           </div>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button @click="showCreateDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
         <el-button type="primary" @click="submitForm" :loading="submitting">
-          {{ editingEnvironment ? '更新' : '创建' }}
+          {{ editingEnvironment ? $t('apiTesting.common.update') : $t('apiTesting.common.create') }}
         </el-button>
       </template>
     </el-dialog>
@@ -165,20 +161,19 @@
     <!-- 查看变量对话框 -->
     <el-dialog
       v-model="showViewDialog"
-      title="环境变量详情"
-      :close-on-click-modal="false"
+      :title="$t('apiTesting.environment.environmentVariableDetail')"
       width="600px"
     >
       <div v-if="viewingEnvironment" class="view-variables">
         <el-table :data="viewVariables" style="width: 100%">
-          <el-table-column prop="key" label="变量名" width="150" />
-          <el-table-column prop="initialValue" label="初始值" />
-          <el-table-column prop="currentValue" label="当前值" />
+          <el-table-column prop="key" :label="$t('apiTesting.environment.variableName')" width="150" />
+          <el-table-column prop="initialValue" :label="$t('apiTesting.environment.initialValue')" />
+          <el-table-column prop="currentValue" :label="$t('apiTesting.environment.currentValue')" />
         </el-table>
       </div>
-      
+
       <template #footer>
-        <el-button @click="showViewDialog = false">关闭</el-button>
+        <el-button @click="showViewDialog = false">{{ $t('apiTesting.common.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -187,10 +182,12 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import api from '@/utils/api'
 import EnvironmentTable from './components/EnvironmentTable.vue'
 
+const { t } = useI18n()
 const activeTab = ref('GLOBAL')
 const globalEnvironments = ref([])
 const localEnvironments = ref([])
@@ -217,26 +214,26 @@ const form = reactive({
   ]
 })
 
-const rules = {
+const rules = computed(() => ({
   name: [
-    { required: true, message: '请输入环境名称', trigger: 'blur' }
+    { required: true, message: t('apiTesting.environment.inputEnvironmentName'), trigger: 'blur' }
   ],
   scope: [
-    { required: true, message: '请选择作用域', trigger: 'change' }
+    { required: true, message: t('apiTesting.common.pleaseSelect'), trigger: 'change' }
   ],
   project: [
-    { 
+    {
       validator: (rule, value, callback) => {
         if (form.scope === 'LOCAL' && !value) {
-          callback(new Error('请选择关联项目'))
+          callback(new Error(t('apiTesting.environment.selectRelatedProject')))
         } else {
           callback()
         }
-      }, 
-      trigger: 'change' 
+      },
+      trigger: 'change'
     }
   ]
-}
+}))
 
 const viewVariables = computed(() => {
   if (!viewingEnvironment.value?.variables) return []
@@ -257,7 +254,7 @@ const loadProjects = async () => {
       selectedProject.value = projects.value[0].id
     }
   } catch (error) {
-    ElMessage.error('加载项目列表失败')
+    ElMessage.error(t('apiTesting.messages.error.projectListLoadFailed'))
   }
 }
 
@@ -269,7 +266,7 @@ const loadGlobalEnvironments = async () => {
     })
     globalEnvironments.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('加载全局环境失败')
+    ElMessage.error(t('apiTesting.messages.error.globalEnvLoadFailed'))
   } finally {
     loading.value = false
   }
@@ -277,18 +274,18 @@ const loadGlobalEnvironments = async () => {
 
 const loadLocalEnvironments = async () => {
   if (!selectedProject.value) return
-  
+
   loading.value = true
   try {
     const response = await api.get('/api-testing/environments/', {
-      params: { 
+      params: {
         scope: 'LOCAL',
         project: selectedProject.value
       }
     })
     localEnvironments.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('加载局部环境失败')
+    ElMessage.error(t('apiTesting.messages.error.localEnvLoadFailed'))
   } finally {
     loading.value = false
   }
@@ -361,18 +358,18 @@ const editEnvironment = (environment) => {
 const deleteEnvironment = async (environment) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除环境 "${environment.name}" 吗？`,
-      '确认删除',
+      t('apiTesting.environment.confirmDeleteEnv', { name: environment.name }),
+      t('apiTesting.messages.confirm.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('apiTesting.common.confirm'),
+        cancelButtonText: t('apiTesting.common.cancel'),
         type: 'warning'
       }
     )
-    
+
     await api.delete(`/api-testing/environments/${environment.id}/`)
-    ElMessage.success('删除成功')
-    
+    ElMessage.success(t('apiTesting.messages.success.delete'))
+
     if (activeTab.value === 'GLOBAL') {
       await loadGlobalEnvironments()
     } else {
@@ -380,7 +377,7 @@ const deleteEnvironment = async (environment) => {
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('apiTesting.messages.error.deleteFailed'))
     }
   }
 }
@@ -388,39 +385,39 @@ const deleteEnvironment = async (environment) => {
 const activateEnvironment = async (environment) => {
   try {
     await api.post(`/api-testing/environments/${environment.id}/activate/`)
-    ElMessage.success('环境已激活')
-    
+    ElMessage.success(t('apiTesting.messages.success.environmentActivated'))
+
     if (activeTab.value === 'GLOBAL') {
       await loadGlobalEnvironments()
     } else {
       await loadLocalEnvironments()
     }
   } catch (error) {
-    ElMessage.error('激活失败')
+    ElMessage.error(t('apiTesting.messages.error.activateFailed'))
   }
 }
 
 const duplicateEnvironment = async (environment) => {
   const newEnv = {
-    name: `${environment.name} - 副本`,
+    name: `${environment.name} - Copy`,
     scope: environment.scope,
-    project: environment.scope === 'LOCAL' ? 
-      (typeof environment.project === 'object' ? environment.project.id : environment.project) : 
+    project: environment.scope === 'LOCAL' ?
+      (typeof environment.project === 'object' ? environment.project.id : environment.project) :
       null,
     variables: environment.variables || {}
   }
-  
+
   try {
     await api.post('/api-testing/environments/', newEnv)
-    ElMessage.success('复制成功')
-    
+    ElMessage.success(t('apiTesting.messages.success.copy'))
+
     if (activeTab.value === 'GLOBAL') {
       await loadGlobalEnvironments()
     } else {
       await loadLocalEnvironments()
     }
   } catch (error) {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('apiTesting.messages.error.copyFailed'))
   }
 }
 
@@ -452,21 +449,21 @@ const submitForm = async () => {
     
     if (editingEnvironment.value) {
       await api.put(`/api-testing/environments/${editingEnvironment.value.id}/`, data)
-      ElMessage.success('环境更新成功')
+      ElMessage.success(t('apiTesting.messages.success.environmentUpdated'))
     } else {
       await api.post('/api-testing/environments/', data)
-      ElMessage.success('环境创建成功')
+      ElMessage.success(t('apiTesting.messages.success.environmentCreated'))
     }
-    
+
     showCreateDialog.value = false
-    
+
     if (activeTab.value === 'GLOBAL') {
       await loadGlobalEnvironments()
     } else {
       await loadLocalEnvironments()
     }
   } catch (error) {
-    ElMessage.error(editingEnvironment.value ? '更新环境失败' : '创建环境失败')
+    ElMessage.error(editingEnvironment.value ? t('apiTesting.messages.error.updateFailed') : t('apiTesting.messages.error.createFailed'))
   } finally {
     submitting.value = false
   }

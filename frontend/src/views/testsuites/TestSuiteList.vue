@@ -1,16 +1,16 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">测试套件</h1>
+      <h1 class="page-title">{{ $t('testSuite.title') }}</h1>
       <el-button type="primary">
         <el-icon><Plus /></el-icon>
-        新建套件
+        {{ $t('testSuite.newSuite') }}
       </el-button>
     </div>
-    
+
     <div class="card-container">
       <div class="empty-state">
-        <el-empty description="测试套件功能开发中..." />
+        <el-empty :description="$t('testSuite.inDevelopment')" />
       </div>
     </div>
   </div>

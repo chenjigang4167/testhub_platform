@@ -6,7 +6,7 @@
         <el-col :span="6">
           <el-input
               v-model="searchForm.taskName"
-              placeholder="搜索任务名称"
+              :placeholder="$t('uiAutomation.notification.logs.searchTaskName')"
               clearable
               @clear="handleSearch"
               @keyup.enter="handleSearch"
@@ -22,9 +22,9 @@
           <el-date-picker
               v-model="searchForm.dateRange"
               type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
+              :range-separator="$t('uiAutomation.notification.logs.dateRangeTo')"
+              :start-placeholder="$t('uiAutomation.notification.logs.startDate')"
+              :end-placeholder="$t('uiAutomation.notification.logs.endDate')"
               value-format="YYYY-MM-DD"
               @change="handleSearch"
           />
@@ -32,14 +32,14 @@
         <el-col :span="6">
           <el-select
               v-model="searchForm.status"
-              placeholder="通知状态"
+              :placeholder="$t('uiAutomation.notification.logs.notificationStatus')"
               clearable
               @change="handleSearch"
           >
-            <el-option label="全部状态" value=""/>
-            <el-option label="成功" value="SUCCESS"/>
-            <el-option label="失败" value="FAILED"/>
-            <el-option label="重试中" value="RETRYING"/>
+            <el-option :label="$t('uiAutomation.notification.logs.allStatus')" value=""/>
+            <el-option :label="$t('uiAutomation.notification.logs.statusSuccess')" value="SUCCESS"/>
+            <el-option :label="$t('uiAutomation.notification.logs.statusFailed')" value="FAILED"/>
+            <el-option :label="$t('uiAutomation.notification.logs.statusRetrying')" value="RETRYING"/>
           </el-select>
         </el-col>
         <el-col :span="6">
@@ -47,10 +47,10 @@
             <el-icon>
               <Search/>
             </el-icon>
-            搜索
+            {{ $t('uiAutomation.common.search') }}
           </el-button>
           <el-button @click="handleReset">
-            重置
+            {{ $t('uiAutomation.common.reset') }}
           </el-button>
         </el-col>
       </el-row>
@@ -61,20 +61,20 @@
       <el-table
           :data="logsData"
           v-loading="loading"
-          element-loading-text="加载中..."
+          :element-loading-text="$t('uiAutomation.notification.logs.messages.loading')"
           stripe
           style="width: 100%"
           @sort-change="handleSortChange"
       >
         <el-table-column
             prop="task_name"
-            label="任务名称"
+            :label="$t('uiAutomation.notification.logs.taskName')"
             min-width="150"
             sortable="custom"
         />
         <el-table-column
             prop="task_type_display"
-            label="任务类型"
+            :label="$t('uiAutomation.notification.logs.taskType')"
             min-width="100"
         >
           <template #default="{ row }">
@@ -88,7 +88,7 @@
         </el-table-column>
         <el-table-column
             prop="actual_notification_type_display"
-            label="通知类型"
+            :label="$t('uiAutomation.notification.logs.notificationType')"
             min-width="120"
         >
           <template #default="{ row }">
@@ -102,7 +102,7 @@
         </el-table-column>
         <el-table-column
             prop="created_at"
-            label="通知时间"
+            :label="$t('uiAutomation.notification.logs.notificationTime')"
             min-width="180"
             sortable="custom"
         >
@@ -112,7 +112,7 @@
         </el-table-column>
         <el-table-column
             prop="status_display"
-            label="状态"
+            :label="$t('uiAutomation.common.status')"
             min-width="100"
             sortable="custom"
         >
@@ -126,7 +126,7 @@
           </template>
         </el-table-column>
         <el-table-column
-            label="操作"
+            :label="$t('uiAutomation.common.operation')"
             fixed="right"
             width="120"
         >
@@ -137,7 +137,7 @@
                 size="small"
                 @click="viewDetail(row)"
             >
-              查看详情
+              {{ $t('uiAutomation.notification.logs.viewDetail') }}
             </el-button>
           </template>
         </el-table-column>
@@ -160,11 +160,7 @@
     <!-- 详情弹窗 -->
     <el-dialog
         v-model="detailDialogVisible"
-        title="通知详情"
-        :close-on-click-modal="false"
-        :close-on-press-escape="false"
-        :modal="true"
-        :destroy-on-close="false"
+        :title="$t('uiAutomation.notification.logs.detailTitle')"
         width="600px"
         :before-close="handleDetailDialogClose"
     >
@@ -175,54 +171,54 @@
       >
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="任务名称">
+            <el-form-item :label="$t('uiAutomation.notification.logs.taskName')">
               <span>{{ selectedLog.task_name }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="任务类型">
+            <el-form-item :label="$t('uiAutomation.notification.logs.taskType')">
               <span>{{ selectedLog.task_type_display }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="通知类型">
+            <el-form-item :label="$t('uiAutomation.notification.logs.notificationType')">
               <el-tag :type="getNotificationTypeTagType(selectedLog.actual_notification_type_display)">
                 {{ selectedLog.actual_notification_type_display }}
               </el-tag>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="状态">
+            <el-form-item :label="$t('uiAutomation.common.status')">
               <el-tag :type="getStatusTagType(selectedLog.status_display)">
                 {{ selectedLog.status_display }}
               </el-tag>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="通知时间">
+            <el-form-item :label="$t('uiAutomation.notification.logs.notificationTime')">
               <span>{{ formatDate(selectedLog.created_at) }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="发送时间">
+            <el-form-item :label="$t('uiAutomation.notification.logs.sentTime')">
               <span>{{ selectedLog.sent_at ? formatDate(selectedLog.sent_at) : '-' }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="24" v-if="selectedLog.webhook_bot_info && (selectedLog.webhook_bot_info.bot_type || selectedLog.webhook_bot_info.type)">
-            <el-form-item label="Webhook机器人">
+            <el-form-item :label="$t('uiAutomation.notification.logs.webhookBot')">
               <div class="webhook-info">
                 <el-tag
                     class="webhook-tag"
                     size="small"
                     type="info"
                 >
-                  {{ selectedLog.webhook_bot_info.name || selectedLog.webhook_bot_info.bot_name || 'Webhook机器人' }}
+                  {{ selectedLog.webhook_bot_info.name || selectedLog.webhook_bot_info.bot_name || $t('uiAutomation.notification.logs.defaultBotName') }}
                 </el-tag>
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="通知内容">
+            <el-form-item :label="$t('uiAutomation.notification.logs.content')">
               <div class="notification-content">
                 <div v-if="parsedNotificationContent" class="notification-content-parsed">
                   <div class="content-item" v-for="(item, index) in parsedNotificationContent" :key="index">
@@ -237,7 +233,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="24" v-if="selectedLog.error_message">
-            <el-form-item label="错误信息">
+            <el-form-item :label="$t('uiAutomation.notification.logs.errorMessage')">
               <div class="error-message">
                 <el-alert
                     :title="selectedLog.error_message"
@@ -252,7 +248,7 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button @click="detailDialogVisible = false">{{ $t('uiAutomation.common.close') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -264,6 +260,7 @@ import {Search} from '@element-plus/icons-vue'
 import {ref, reactive, onMounted, computed} from 'vue'
 import {ElMessage} from 'element-plus'
 import { getNotificationLogs } from '@/api/ui_automation.js'
+import { useI18n } from 'vue-i18n'
 
 export default {
   name: 'NotificationLogs',
@@ -271,6 +268,8 @@ export default {
     Search
   },
   setup() {
+    const { t } = useI18n()
+
     // 数据状态
     const loading = ref(false)
     const logsData = ref([])
@@ -324,7 +323,7 @@ export default {
         pagination.total = response.data.count || 0
       } catch (error) {
         console.error('获取通知日志失败:', error)
-        ElMessage.error('获取通知日志失败')
+        ElMessage.error(t('uiAutomation.notification.logs.messages.loadFailed'))
       } finally {
         loading.value = false
       }

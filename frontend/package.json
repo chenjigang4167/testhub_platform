@@ -1,6 +1,6 @@
 {
   "name": "testhub-frontend",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "TestHub前端应用",
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "pinia": "^2.1.6",
     "vue": "^3.3.4",
     "vue-echarts": "^6.6.1",
+    "vue-i18n": "^9.14.5",
     "vue-router": "^4.2.4",
     "vuedraggable": "^4.1.0",
     "xlsx": "^0.18.5"
@@ -30,6 +31,6 @@
     "eslint-plugin-vue": "^9.15.1",
     "prettier": "^3.0.0",
     "sass": "^1.64.1",
-    "vite": "^5.4.21"
+    "vite": "^4.4.5"
   }
 }

@@ -1,21 +1,21 @@
 <template>
   <div class="prompt-config">
     <div class="page-header">
-      <h1>📝 提示词配置</h1>
-      <p>配置用于测试用例编写和评审的AI提示词</p>
+      <h1>{{ $t('promptConfig.title') }}</h1>
+      <p>{{ $t('promptConfig.subtitle') }}</p>
     </div>
 
     <div class="main-content">
       <!-- 配置列表 -->
       <div class="configs-section">
         <div class="section-header">
-          <h2>提示词配置列表</h2>
+          <h2>{{ $t('promptConfig.configListTitle') }}</h2>
           <div class="header-actions">
             <button class="load-defaults-btn" @click="loadDefaultPrompts">
-              📂 加载默认提示词
+              {{ $t('promptConfig.loadDefaults') }}
             </button>
             <button class="add-config-btn" @click="openAddModal">
-              ➕ 添加配置
+              {{ $t('promptConfig.addConfig') }}
             </button>
           </div>
         </div>
@@ -30,36 +30,36 @@
                     {{ config.prompt_type_display }}
                   </span>
                   <span class="status-badge" :class="{ active: config.is_active }">
-                    {{ config.is_active ? '启用' : '禁用' }}
+                    {{ config.is_active ? $t('promptConfig.enabled') : $t('promptConfig.disabled') }}
                   </span>
                 </div>
               </div>
               <div class="config-actions">
-                <button class="preview-btn" @click="previewPrompt(config)">👁️ 预览</button>
-                <button class="edit-btn" @click="editConfig(config)">✏️ 编辑</button>
-                <button class="delete-btn" @click="deleteConfig(config.id)">🗑️ 删除</button>
+                <button class="preview-btn" @click="previewPrompt(config)">{{ $t('promptConfig.preview') }}</button>
+                <button class="edit-btn" @click="editConfig(config)">{{ $t('promptConfig.edit') }}</button>
+                <button class="delete-btn" @click="deleteConfig(config.id)">{{ $t('promptConfig.delete') }}</button>
               </div>
             </div>
-            
+
             <div class="config-details">
               <div class="prompt-preview">
-                <label>提示词内容预览:</label>
+                <label>{{ $t('promptConfig.contentPreview') }}</label>
                 <div class="content-preview">
                   {{ truncateContent(config.content, 200) }}
                 </div>
               </div>
               <div class="config-meta">
                 <div class="meta-item">
-                  <label>创建时间:</label>
+                  <label>{{ $t('promptConfig.createdAt') }}</label>
                   <span>{{ formatDateTime(config.created_at) }}</span>
                 </div>
                 <div class="meta-item">
-                  <label>更新时间:</label>
+                  <label>{{ $t('promptConfig.updatedAt') }}</label>
                   <span>{{ formatDateTime(config.updated_at) }}</span>
                 </div>
                 <div class="meta-item">
-                  <label>创建者:</label>
-                  <span>{{ config.created_by_name || '未知' }}</span>
+                  <label>{{ $t('promptConfig.createdBy') }}</label>
+                  <span>{{ config.created_by_name || $t('promptConfig.unknown') }}</span>
                 </div>
               </div>
             </div>
@@ -68,14 +68,14 @@
 
         <div v-if="configs.length === 0" class="empty-state">
           <div class="empty-icon">📝</div>
-          <h3>暂无提示词配置</h3>
-          <p>请添加提示词配置以自定义AI的行为和输出格式</p>
+          <h3>{{ $t('promptConfig.noConfigs') }}</h3>
+          <p>{{ $t('promptConfig.emptyHint') }}</p>
           <div class="empty-actions">
             <button class="add-first-config-btn" @click="openAddModal">
-              ➕ 添加第一个配置
+              {{ $t('promptConfig.addFirstConfig') }}
             </button>
             <button class="load-defaults-first-btn" @click="loadDefaultPrompts">
-              📂 加载默认提示词
+              {{ $t('promptConfig.loadDefaults') }}
             </button>
           </div>
         </div>
@@ -86,73 +86,73 @@
     <div v-if="showAddModal || showEditModal" class="config-modal" @click="closeModals">
       <div class="modal-content large" @click.stop>
         <div class="modal-header">
-          <h3>{{ isEditing ? '编辑' : '添加' }}提示词配置</h3>
+          <h3>{{ isEditing ? $t('promptConfig.editConfig') : $t('promptConfig.addConfig') }}</h3>
           <button class="close-btn" @click="closeModals">×</button>
         </div>
         <div class="modal-body">
           <form @submit.prevent="saveConfig">
             <div class="form-group">
-              <label>配置名称 <span class="required">*</span></label>
-              <input 
-                v-model="configForm.name" 
-                type="text" 
+              <label>{{ $t('promptConfig.configName') }} <span class="required">*</span></label>
+              <input
+                v-model="configForm.name"
+                type="text"
                 class="form-input"
-                placeholder="例如：测试用例编写提示词 v1.0"
+                :placeholder="$t('promptConfig.configNamePlaceholder')"
                 required>
             </div>
 
             <div class="form-group">
-              <label>提示词类型 <span class="required">*</span></label>
+              <label>{{ $t('promptConfig.promptType') }} <span class="required">*</span></label>
               <select v-model="configForm.prompt_type" class="form-select" required>
-                <option value="">请选择提示词类型</option>
-                <option value="writer">用例编写提示词</option>
-                <option value="reviewer">用例评审提示词</option>
+                <option value="">{{ $t('promptConfig.selectPromptType') }}</option>
+                <option value="writer">{{ $t('promptConfig.writerPrompt') }}</option>
+                <option value="reviewer">{{ $t('promptConfig.reviewerPrompt') }}</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label>提示词内容 <span class="required">*</span></label>
+              <label>{{ $t('promptConfig.promptContent') }} <span class="required">*</span></label>
               <div class="textarea-container">
-                <textarea 
-                  v-model="configForm.content" 
+                <textarea
+                  v-model="configForm.content"
                   class="form-textarea large"
                   rows="20"
-                  placeholder="输入提示词内容，支持Markdown格式"
+                  :placeholder="$t('promptConfig.contentPlaceholder')"
                   required></textarea>
-                <div class="char-count">{{ configForm.content.length }} 字符</div>
+                <div class="char-count">{{ $t('promptConfig.charCount', { count: configForm.content.length }) }}</div>
               </div>
               <div class="textarea-tips">
-                <p><strong>提示词编写建议：</strong></p>
+                <p><strong>{{ $t('promptConfig.writingTipsTitle') }}</strong></p>
                 <ul>
-                  <li>明确定义AI的角色和专业领域</li>
-                  <li>详细说明输出格式要求</li>
-                  <li>提供具体的示例和模板</li>
-                  <li>说明需要考虑的测试场景和边界条件</li>
+                  <li>{{ $t('promptConfig.tip1') }}</li>
+                  <li>{{ $t('promptConfig.tip2') }}</li>
+                  <li>{{ $t('promptConfig.tip3') }}</li>
+                  <li>{{ $t('promptConfig.tip4') }}</li>
                 </ul>
               </div>
             </div>
 
             <div class="form-group">
               <label class="checkbox-label">
-                <input 
-                  v-model="configForm.is_active" 
+                <input
+                  v-model="configForm.is_active"
                   type="checkbox">
                 <span class="checkmark"></span>
-                启用此配置
+                {{ $t('promptConfig.enableConfig') }}
               </label>
               <div class="checkbox-hint">
-                注意：每种类型只能有一个启用的配置
+                {{ $t('promptConfig.enableHint') }}
               </div>
             </div>
 
             <div class="modal-actions">
-              <button type="button" class="cancel-btn" @click="closeModals">取消</button>
-              <button 
-                type="submit" 
+              <button type="button" class="cancel-btn" @click="closeModals">{{ $t('promptConfig.cancel') }}</button>
+              <button
+                type="submit"
                 class="confirm-btn"
                 :disabled="isSaving">
-                <span v-if="isSaving">🔄 保存中...</span>
-                <span v-else>💾 保存配置</span>
+                <span v-if="isSaving">{{ $t('promptConfig.saving') }}</span>
+                <span v-else>{{ $t('promptConfig.saveConfig') }}</span>
               </button>
             </div>
           </form>
@@ -164,27 +164,27 @@
     <div v-if="showPreviewModal" class="preview-modal" @click="closePreview">
       <div class="modal-content large" @click.stop>
         <div class="modal-header">
-          <h3>提示词预览 - {{ previewConfig.name }}</h3>
+          <h3>{{ $t('promptConfig.previewTitle', { name: previewConfig.name }) }}</h3>
           <button class="close-btn" @click="closePreview">×</button>
         </div>
         <div class="modal-body">
           <div class="preview-content">
             <div class="preview-meta">
               <div class="meta-item">
-                <label>类型:</label>
+                <label>{{ $t('promptConfig.type') }}</label>
                 <span class="type-badge" :class="previewConfig.prompt_type">
                   {{ previewConfig.prompt_type_display }}
                 </span>
               </div>
               <div class="meta-item">
-                <label>状态:</label>
+                <label>{{ $t('promptConfig.status') }}</label>
                 <span class="status-badge" :class="{ active: previewConfig.is_active }">
-                  {{ previewConfig.is_active ? '启用' : '禁用' }}
+                  {{ previewConfig.is_active ? $t('promptConfig.enabled') : $t('promptConfig.disabled') }}
                 </span>
               </div>
             </div>
             <div class="content-display">
-              <label>提示词内容:</label>
+              <label>{{ $t('promptConfig.promptContent') }}</label>
               <div class="content-text">{{ previewConfig.content }}</div>
             </div>
           </div>
@@ -196,41 +196,41 @@
     <div v-if="showDefaultsModal" class="defaults-modal" @click="closeDefaultsModal">
       <div class="modal-content large" @click.stop>
         <div class="modal-header">
-          <h3>默认提示词预览</h3>
+          <h3>{{ $t('promptConfig.defaultPromptsPreview') }}</h3>
           <button class="close-btn" @click="closeDefaultsModal">×</button>
         </div>
         <div class="modal-body">
           <div class="defaults-content">
             <div class="tabs">
-              <button 
-                class="tab-btn" 
+              <button
+                class="tab-btn"
                 :class="{ active: activeTab === 'writer' }"
                 @click="activeTab = 'writer'">
-                📝 编写提示词
+                {{ $t('promptConfig.writerTab') }}
               </button>
-              <button 
-                class="tab-btn" 
+              <button
+                class="tab-btn"
                 :class="{ active: activeTab === 'reviewer' }"
                 @click="activeTab = 'reviewer'">
-                🔍 评审提示词
+                {{ $t('promptConfig.reviewerTab') }}
               </button>
             </div>
-            
+
             <div class="tab-content">
               <div class="content-display">
-                <div class="content-text">{{ defaultPrompts[activeTab] || '暂无内容' }}</div>
+                <div class="content-text">{{ defaultPrompts[activeTab] || $t('promptConfig.noContent') }}</div>
               </div>
             </div>
           </div>
-          
+
           <div class="modal-actions">
-            <button class="cancel-btn" @click="closeDefaultsModal">取消</button>
-            <button 
-              class="confirm-btn" 
+            <button class="cancel-btn" @click="closeDefaultsModal">{{ $t('promptConfig.cancel') }}</button>
+            <button
+              class="confirm-btn"
               @click="confirmLoadDefaults"
               :disabled="isLoadingDefaults">
-              <span v-if="isLoadingDefaults">🔄 加载中...</span>
-              <span v-else>📂 确认加载</span>
+              <span v-if="isLoadingDefaults">{{ $t('promptConfig.loading') }}</span>
+              <span v-else>{{ $t('promptConfig.confirmLoad') }}</span>
             </button>
           </div>
         </div>
@@ -287,7 +287,7 @@ export default {
     async loadConfigs() {
       try {
         console.log('Loading prompt configs...')
-        const response = await api.get('/requirement-analysis/prompts/')
+        const response = await api.get('/requirement-analysis/api/prompts/')
         console.log('Prompts API response:', response.data)
         
         // 处理分页API响应格式
@@ -305,13 +305,13 @@ export default {
         
         console.log('Final configs count:', this.configs.length)
       } catch (error) {
-        console.error('加载配置失败:', error)
+        console.error(this.$t('promptConfig.loadConfigsFailed'), error)
         this.configs = [] // 确保configs始终是数组
-        
+
         if (error.response?.status === 401) {
-          ElMessage.error('请先登录')
+          ElMessage.error(this.$t('promptConfig.pleaseLogin'))
         } else {
-          ElMessage.error('加载配置失败: ' + (error.response?.data?.error || error.message))
+          ElMessage.error(this.$t('promptConfig.loadConfigsFailed') + ': ' + (error.response?.data?.error || error.message))
         }
       }
     },
@@ -319,14 +319,14 @@ export default {
     async loadDefaultPrompts() {
       console.log('loadDefaultPrompts clicked')
       try {
-        const response = await api.get('/requirement-analysis/prompts/load_defaults/')
+        const response = await api.get('/requirement-analysis/api/prompts/load_defaults/')
         console.log('Default prompts response:', response.data)
         this.defaultPrompts = response.data.defaults
         this.showDefaultsModal = true
         console.log('showDefaultsModal set to:', this.showDefaultsModal)
       } catch (error) {
-        console.error('加载默认提示词失败:', error)
-        ElMessage.error('加载默认提示词失败: ' + (error.response?.data?.error || error.message))
+        console.error(this.$t('promptConfig.loadDefaultsFailed'), error)
+        ElMessage.error(this.$t('promptConfig.loadDefaultsFailed') + ': ' + (error.response?.data?.error || error.message))
       }
     },
 
@@ -336,8 +336,8 @@ export default {
       try {
         // 创建编写提示词配置
         if (this.defaultPrompts.writer) {
-          await api.post('/requirement-analysis/prompts/', {
-            name: '默认用例编写提示词',
+          await api.post('/requirement-analysis/api/prompts/', {
+            name: this.$t('promptConfig.defaultWriterName'),
             prompt_type: 'writer',
             content: this.defaultPrompts.writer,
             is_active: true
@@ -346,21 +346,21 @@ export default {
 
         // 创建评审提示词配置
         if (this.defaultPrompts.reviewer) {
-          await api.post('/requirement-analysis/prompts/', {
-            name: '默认用例评审提示词',
+          await api.post('/requirement-analysis/api/prompts/', {
+            name: this.$t('promptConfig.defaultReviewerName'),
             prompt_type: 'reviewer',
             content: this.defaultPrompts.reviewer,
             is_active: true
           })
         }
 
-        ElMessage.success('默认提示词加载成功')
+        ElMessage.success(this.$t('promptConfig.defaultsLoadSuccess'))
         this.closeDefaultsModal()
         this.loadConfigs()
       } catch (error) {
-        console.error('加载默认提示词失败:', error)
-        ElMessage.error('加载失败: ' + (error.response?.data?.error || error.message))
-      } finally {
+        console.error(this.$t('promptConfig.loadDefaultsFailed'), error)
+        ElMessage.error(this.$t('promptConfig.loadFailed') + ': ' + (error.response?.data?.error || error.message))
+      } finally{
         this.isLoadingDefaults = false
       }
     },
@@ -396,35 +396,35 @@ export default {
       
       try {
         if (this.isEditing) {
-          await api.patch(`/requirement-analysis/prompts/${this.editingConfigId}/`, this.configForm)
-          ElMessage.success('配置更新成功')
+          await api.patch(`/requirement-analysis/api/prompts/${this.editingConfigId}/`, this.configForm)
+          ElMessage.success(this.$t('promptConfig.updateSuccess'))
         } else {
-          await api.post('/requirement-analysis/prompts/', this.configForm)
-          ElMessage.success('配置添加成功')
+          await api.post('/requirement-analysis/api/prompts/', this.configForm)
+          ElMessage.success(this.$t('promptConfig.addSuccess'))
         }
-        
+
         this.closeModals()
         this.loadConfigs()
       } catch (error) {
-        console.error('保存配置失败:', error)
-        ElMessage.error('保存失败: ' + (error.response?.data?.error || error.message))
+        console.error(this.$t('promptConfig.saveConfigFailed'), error)
+        ElMessage.error(this.$t('promptConfig.saveFailed') + ': ' + (error.response?.data?.error || error.message))
       } finally {
         this.isSaving = false
       }
     },
 
     async deleteConfig(configId) {
-      if (!confirm('确定要删除此配置吗？')) {
+      if (!confirm(this.$t('promptConfig.deleteConfirm'))) {
         return
       }
 
       try {
-        await api.delete(`/requirement-analysis/prompts/${configId}/`)
-        ElMessage.success('配置删除成功')
+        await api.delete(`/requirement-analysis/api/prompts/${configId}/`)
+        ElMessage.success(this.$t('promptConfig.deleteSuccess'))
         this.loadConfigs()
       } catch (error) {
-        console.error('删除配置失败:', error)
-        ElMessage.error('删除失败: ' + (error.response?.data?.error || error.message))
+        console.error(this.$t('promptConfig.deleteConfigFailed'), error)
+        ElMessage.error(this.$t('promptConfig.deleteFailed') + ': ' + (error.response?.data?.error || error.message))
       }
     },
 

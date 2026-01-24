@@ -18,39 +18,40 @@
             <el-sub-menu index="requirement">
               <template #title>
                 <el-icon><MagicStick /></el-icon>
-                <span>智能用例生成</span>
+                <span>{{ $t('menu.intelligentCaseGeneration') }}</span>
               </template>
-              <el-menu-item index="/ai-generation/requirement-analysis">AI用例生成</el-menu-item>
-              <el-menu-item index="/ai-generation/generated-testcases">AI生成用例记录</el-menu-item>
+              <el-menu-item index="/ai-generation/requirement-analysis">{{ $t('menu.aiCaseGeneration') }}</el-menu-item>
+              <el-menu-item index="/ai-generation/generated-testcases">{{ $t('menu.aiGeneratedTestcases') }}</el-menu-item>
+              <el-menu-item index="/ai-generation/prompt-config">{{ $t('menu.promptConfig') }}</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/ai-generation/projects">
               <el-icon><Folder /></el-icon>
-              <span>项目管理</span>
+              <span>{{ $t('menu.projectManagement') }}</span>
             </el-menu-item>
             <el-menu-item index="/ai-generation/testcases">
               <el-icon><Document /></el-icon>
-              <span>测试用例</span>
+              <span>{{ $t('menu.testCases') }}</span>
             </el-menu-item>
             <el-menu-item index="/ai-generation/versions">
               <el-icon><Flag /></el-icon>
-              <span>版本管理</span>
+              <span>{{ $t('menu.versionManagement') }}</span>
             </el-menu-item>
             <el-sub-menu index="reviews">
               <template #title>
                 <el-icon><Check /></el-icon>
-                <span>评审管理</span>
+                <span>{{ $t('menu.reviewManagement') }}</span>
               </template>
-              <el-menu-item index="/ai-generation/reviews">评审列表</el-menu-item>
-              <el-menu-item index="/ai-generation/review-templates">评审模板</el-menu-item>
+              <el-menu-item index="/ai-generation/reviews">{{ $t('menu.reviewList') }}</el-menu-item>
+              <el-menu-item index="/ai-generation/review-templates">{{ $t('menu.reviewTemplates') }}</el-menu-item>
             </el-sub-menu>
 
             <el-menu-item index="/ai-generation/executions">
               <el-icon><VideoPlay /></el-icon>
-              <span>测试计划</span>
+              <span>{{ $t('menu.testPlan') }}</span>
             </el-menu-item>
             <el-menu-item index="/ai-generation/reports">
               <el-icon><DataAnalysis /></el-icon>
-              <span>测试报告</span>
+              <span>{{ $t('menu.testReport') }}</span>
             </el-menu-item>
           </template>
 
@@ -58,39 +59,39 @@
           <template v-else-if="currentModule === 'api-testing'">
             <el-menu-item index="/api-testing/dashboard">
               <el-icon><Odometer /></el-icon>
-              <span>数据看板</span>
+              <span>{{ $t('menu.dashboard') }}</span>
             </el-menu-item>
             <el-menu-item index="/api-testing/projects">
               <el-icon><Folder /></el-icon>
-              <span>项目管理</span>
+              <span>{{ $t('menu.projectManagement') }}</span>
             </el-menu-item>
             <el-menu-item index="/api-testing/interfaces">
               <el-icon><Link /></el-icon>
-              <span>接口管理</span>
+              <span>{{ $t('menu.interfaceManagement') }}</span>
             </el-menu-item>
             <el-menu-item index="/api-testing/automation">
               <el-icon><VideoPlay /></el-icon>
-              <span>自动化测试</span>
+              <span>{{ $t('menu.automationTesting') }}</span>
             </el-menu-item>
             <el-menu-item index="/api-testing/history">
               <el-icon><Timer /></el-icon>
-              <span>请求历史</span>
+              <span>{{ $t('menu.requestHistory') }}</span>
             </el-menu-item>
             <el-menu-item index="/api-testing/environments">
               <el-icon><Setting /></el-icon>
-              <span>环境管理</span>
+              <span>{{ $t('menu.environmentManagement') }}</span>
             </el-menu-item>
             <el-menu-item index="/api-testing/reports">
               <el-icon><DataAnalysis /></el-icon>
-              <span>测试报告</span>
+              <span>{{ $t('menu.testReport') }}</span>
             </el-menu-item>
             <el-menu-item index="/api-testing/scheduled-tasks">
               <el-icon><AlarmClock /></el-icon>
-              <span>定时任务</span>
+              <span>{{ $t('menu.scheduledTasks') }}</span>
             </el-menu-item>
             <el-menu-item index="/api-testing/notification-logs">
               <el-icon><Bell /></el-icon>
-              <span>通知列表</span>
+              <span>{{ $t('menu.notificationList') }}</span>
             </el-menu-item>
           </template>
 
@@ -98,47 +99,47 @@
           <template v-else-if="currentModule === 'ui-automation'">
             <el-menu-item index="/ui-automation/dashboard">
               <el-icon><Odometer /></el-icon>
-              <span>数据看板</span>
+              <span>{{ $t('menu.dashboard') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/projects">
               <el-icon><Folder /></el-icon>
-              <span>项目管理</span>
+              <span>{{ $t('menu.projectManagement') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/elements-enhanced">
               <el-icon><Aim /></el-icon>
-              <span>元素管理</span>
+              <span>{{ $t('menu.elementManagement') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/test-cases">
               <el-icon><Document /></el-icon>
-              <span>用例管理</span>
+              <span>{{ $t('menu.caseManagement') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/scripts-enhanced">
               <el-icon><Edit /></el-icon>
-              <span>脚本生成</span>
+              <span>{{ $t('menu.scriptGeneration') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/scripts">
               <el-icon><DocumentCopy /></el-icon>
-              <span>脚本列表</span>
+              <span>{{ $t('menu.scriptList') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/suites">
               <el-icon><Collection /></el-icon>
-              <span>套件管理</span>
+              <span>{{ $t('menu.suiteManagement') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/executions">
               <el-icon><VideoPlay /></el-icon>
-              <span>执行记录</span>
+              <span>{{ $t('menu.executionRecords') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/reports">
               <el-icon><DataAnalysis /></el-icon>
-              <span>测试报告</span>
+              <span>{{ $t('menu.testReport') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/scheduled-tasks">
               <el-icon><AlarmClock /></el-icon>
-              <span>定时任务</span>
+              <span>{{ $t('menu.scheduledTasks') }}</span>
             </el-menu-item>
             <el-menu-item index="/ui-automation/notification-logs">
               <el-icon><Bell /></el-icon>
-              <span>通知列表</span>
+              <span>{{ $t('menu.notificationList') }}</span>
             </el-menu-item>
           </template>
 
@@ -146,54 +147,40 @@
           <template v-else-if="currentModule === 'ai-intelligent-mode'">
             <el-menu-item index="/ai-intelligent-mode/testing">
               <el-icon><VideoPlay /></el-icon>
-              <span>AI 智能测试</span>
+              <span>{{ $t('menu.aiIntelligentTesting') }}</span>
             </el-menu-item>
             <el-menu-item index="/ai-intelligent-mode/cases">
               <el-icon><Document /></el-icon>
-              <span>AI 用例管理</span>
+              <span>{{ $t('menu.aiCaseManagement') }}</span>
             </el-menu-item>
             <el-menu-item index="/ai-intelligent-mode/execution-records">
               <el-icon><Timer /></el-icon>
-              <span>AI 测试报告</span>
+              <span>{{ $t('menu.aiExecutionRecords') }}</span>
             </el-menu-item>
 
           </template>
 
           <!-- 配置中心模块菜单 -->
           <template v-else-if="currentModule === 'configuration'">
-            <el-sub-menu index="ai-case-generation">
-              <template #title>
-                <el-icon><MagicStick /></el-icon>
-                <span>AI用例生成配置</span>
-              </template>
-              <el-menu-item index="/configuration/ai-model">
-                <el-icon><Cpu /></el-icon>
-                <span>用例模型配置</span>
-              </el-menu-item>
-              <el-menu-item index="/configuration/prompt-config">
-                <el-icon><Edit /></el-icon>
-                <span>提示词配置</span>
-              </el-menu-item>
-              <el-menu-item index="/configuration/generation-config">
-                <el-icon><Setting /></el-icon>
-                <span>生成行为配置</span>
-              </el-menu-item>
-            </el-sub-menu>
+            <el-menu-item index="/configuration/ai-model">
+              <el-icon><Cpu /></el-icon>
+              <span>{{ $t('menu.aiModelConfig') }}</span>
+            </el-menu-item>
             <el-menu-item index="/configuration/ui-env">
               <el-icon><Monitor /></el-icon>
-              <span>UI环境配置</span>
+              <span>{{ $t('menu.uiEnvConfig') }}</span>
             </el-menu-item>
             <el-menu-item index="/configuration/ai-mode">
               <el-icon><MagicStick /></el-icon>
-              <span>AI智能模式配置</span>
+              <span>{{ $t('menu.aiModeConfig') }}</span>
             </el-menu-item>
             <el-menu-item index="/configuration/scheduled-task">
               <el-icon><Timer /></el-icon>
-              <span>定时任务配置</span>
+              <span>{{ $t('menu.scheduledTaskConfig') }}</span>
             </el-menu-item>
             <el-menu-item index="/configuration/dify">
               <el-icon><ChatDotRound /></el-icon>
-              <span>AI评测师配置</span>
+              <span>{{ $t('menu.difyConfig') }}</span>
             </el-menu-item>
           </template>
         </el-menu>
@@ -206,13 +193,33 @@
           <div class="header-content">
             <div class="header-left">
               <el-breadcrumb separator="/">
-                <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+                <el-breadcrumb-item :to="{ path: '/home' }">{{ $t('nav.home') }}</el-breadcrumb-item>
                 <el-breadcrumb-item v-if="moduleName">{{ moduleName }}</el-breadcrumb-item>
                 <el-breadcrumb-item>{{ breadcrumbTitle }}</el-breadcrumb-item>
               </el-breadcrumb>
             </div>
             <div class="header-right">
-              <el-dropdown @command="handleCommand">
+              <!-- 语言切换 -->
+              <el-dropdown @command="handleLanguageChange" class="language-dropdown">
+                <span class="language-selector">
+                  <span class="language-flag">{{ appStore.language === 'zh-cn' ? '🇨🇳' : '🇺🇸' }}</span>
+                  <span>{{ currentLanguage }}</span>
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="zh-cn" :disabled="appStore.language === 'zh-cn'">
+                      <span class="dropdown-flag">🇨🇳</span> 简体中文
+                    </el-dropdown-item>
+                    <el-dropdown-item command="en" :disabled="appStore.language === 'en'">
+                      <span class="dropdown-flag">🇺🇸</span> English
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+
+              <!-- 用户信息 -->
+              <el-dropdown @command="handleCommand" class="user-dropdown">
                 <span class="user-info">
                   <el-avatar :size="32" :src="userStore.user?.avatar" />
                   <span class="username">{{ userStore.user?.username }}</span>
@@ -220,8 +227,8 @@
                 </span>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item command="profile">个人设置</el-dropdown-item>
-                    <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                    <el-dropdown-item command="profile">{{ $t('nav.profile') }}</el-dropdown-item>
+                    <el-dropdown-item divided command="logout">{{ $t('nav.logout') }}</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -242,16 +249,31 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useAppStore } from '@/stores/app'
 import { ElMessage } from 'element-plus'
-import { 
-  Monitor, Folder, Document, Flag, Check, Collection, VideoPlay, 
+import { useI18n } from 'vue-i18n'
+import {
+  Monitor, Folder, Document, Flag, Check, Collection, VideoPlay,
   DataAnalysis, ChatDotRound, DocumentCopy, Link, MagicStick,
-  Odometer, Timer, Setting, AlarmClock, Bell, Aim, Edit, Cpu
+  Odometer, Timer, Setting, AlarmClock, Bell, Aim, Edit, Cpu, ArrowDown
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const appStore = useAppStore()
+const { t } = useI18n()
+
+// 当前语言显示
+const currentLanguage = computed(() => {
+  return appStore.language === 'zh-cn' ? '简体中文' : 'English'
+})
+
+// 切换语言（无需刷新页面）
+const handleLanguageChange = (lang) => {
+  appStore.setLanguage(lang)
+  ElMessage.success(lang === 'zh-cn' ? '语言已切换为中文' : 'Language switched to English')
+}
 
 const currentModule = computed(() => {
   if (route.path.startsWith('/ai-generation')) return 'ai-generation'
@@ -264,11 +286,11 @@ const currentModule = computed(() => {
 
 const moduleName = computed(() => {
   const map = {
-    'ai-generation': 'AI用例生成',
-    'api-testing': '接口测试',
-    'ui-automation': 'UI自动化测试',
-    'ai-intelligent-mode': 'AI 智能模式',
-    'configuration': '配置中心'
+    'ai-generation': t('modules.aiGeneration'),
+    'api-testing': t('modules.apiTesting'),
+    'ui-automation': t('modules.uiAutomation'),
+    'ai-intelligent-mode': t('modules.aiIntelligentMode'),
+    'configuration': t('modules.configuration')
   }
   return map[currentModule.value] || ''
 })
@@ -276,58 +298,56 @@ const moduleName = computed(() => {
 const breadcrumbTitle = computed(() => {
   const routeMap = {
     // AI用例生成
-    '/ai-generation/requirement-analysis': 'AI用例生成',
-    '/ai-generation/generated-testcases': 'AI生成用例记录',
-    '/ai-generation/prompt-config': '提示词配置',
-    '/ai-generation/projects': '项目管理',
-    '/ai-generation/testcases': '测试用例',
-    '/ai-generation/versions': '版本管理',
-    '/ai-generation/reviews': '评审列表',
-    '/ai-generation/review-templates': '评审模板',
-    '/ai-generation/testsuites': '测试套件',
-    '/ai-generation/executions': '执行记录',
-    '/ai-generation/reports': '测试报告',
-    
-    // 接口测试
-    '/api-testing/dashboard': '数据看板',
-    '/api-testing/projects': '项目管理',
-    '/api-testing/interfaces': '接口管理',
-    '/api-testing/automation': '自动化测试',
-    '/api-testing/history': '请求历史',
-    '/api-testing/environments': '环境管理',
-    '/api-testing/reports': '测试报告',
-    '/api-testing/scheduled-tasks': '定时任务',
-    '/api-testing/notification-logs': '通知列表',
-    
-    // UI自动化测试
-    '/ui-automation/dashboard': '数据看板',
-    '/ui-automation/projects': '项目管理',
-    '/ui-automation/elements-enhanced': '元素管理',
-    '/ui-automation/test-cases': '用例管理',
-    '/ui-automation/scripts-enhanced': '脚本生成',
-    '/ui-automation/scripts': '脚本列表',
-    '/ui-automation/suites': '套件管理',
-    '/ui-automation/executions': '执行记录',
-    '/ui-automation/reports': '测试报告',
-    '/ui-automation/scheduled-tasks': '定时任务',
-    '/ui-automation/notification-logs': '通知列表',
-    
-    // AI 智能模式
-    '/ai-intelligent-mode/testing': 'AI 智能测试',
-    '/ai-intelligent-mode/cases': 'AI 用例管理',
-    '/ai-intelligent-mode/execution-records': 'AI 测试报告',
+    '/ai-generation/requirement-analysis': t('menu.aiCaseGeneration'),
+    '/ai-generation/generated-testcases': t('menu.aiGeneratedTestcases'),
+    '/ai-generation/prompt-config': t('menu.promptConfig'),
+    '/ai-generation/projects': t('menu.projectManagement'),
+    '/ai-generation/testcases': t('menu.testCases'),
+    '/ai-generation/versions': t('menu.versionManagement'),
+    '/ai-generation/reviews': t('menu.reviewList'),
+    '/ai-generation/review-templates': t('menu.reviewTemplates'),
+    '/ai-generation/testsuites': t('menu.suiteManagement'),
+    '/ai-generation/executions': t('menu.executionRecords'),
+    '/ai-generation/reports': t('menu.testReport'),
 
-    
+    // 接口测试
+    '/api-testing/dashboard': t('menu.dashboard'),
+    '/api-testing/projects': t('menu.projectManagement'),
+    '/api-testing/interfaces': t('menu.interfaceManagement'),
+    '/api-testing/automation': t('menu.automationTesting'),
+    '/api-testing/history': t('menu.requestHistory'),
+    '/api-testing/environments': t('menu.environmentManagement'),
+    '/api-testing/reports': t('menu.testReport'),
+    '/api-testing/scheduled-tasks': t('menu.scheduledTasks'),
+    '/api-testing/notification-logs': t('menu.notificationList'),
+
+    // UI自动化测试
+    '/ui-automation/dashboard': t('menu.dashboard'),
+    '/ui-automation/projects': t('menu.projectManagement'),
+    '/ui-automation/elements-enhanced': t('menu.elementManagement'),
+    '/ui-automation/test-cases': t('menu.caseManagement'),
+    '/ui-automation/scripts-enhanced': t('menu.scriptGeneration'),
+    '/ui-automation/scripts': t('menu.scriptList'),
+    '/ui-automation/suites': t('menu.suiteManagement'),
+    '/ui-automation/executions': t('menu.executionRecords'),
+    '/ui-automation/reports': t('menu.testReport'),
+    '/ui-automation/scheduled-tasks': t('menu.scheduledTasks'),
+    '/ui-automation/notification-logs': t('menu.notificationList'),
+
+    // AI 智能模式
+    '/ai-intelligent-mode/testing': t('menu.aiIntelligentTesting'),
+    '/ai-intelligent-mode/cases': t('menu.aiCaseManagement'),
+    '/ai-intelligent-mode/execution-records': t('menu.aiExecutionRecords'),
+
+
     // 配置中心
-    '/configuration/ai-model': '用例模型配置',
-    '/configuration/prompt-config': '提示词配置',
-    '/configuration/generation-config': '生成行为配置',
-    '/configuration/ui-env': 'UI环境配置',
-    '/configuration/ai-mode': 'AI智能模式配置',
-    '/configuration/scheduled-task': '定时任务配置',
-    '/configuration/dify': 'AI评测师配置',
-    
-    '/profile': '个人设置'
+    '/configuration/ai-model': t('menu.aiModelConfig'),
+    '/configuration/ui-env': t('menu.uiEnvConfig'),
+    '/configuration/ai-mode': t('menu.aiModeConfig'),
+    '/configuration/scheduled-task': t('menu.scheduledTaskConfig'),
+    '/configuration/dify': t('menu.difyConfig'),
+
+    '/profile': t('nav.profile')
   }
   return routeMap[route.path] || route.meta.title || ''
 })
@@ -439,22 +459,63 @@ const handleCommand = (command) => {
   .header-left {
     flex: 1;
     overflow: hidden;
-    
+
     :deep(.el-breadcrumb) {
       font-size: 14px;
     }
   }
 
-  .user-info {
+  .header-right {
     display: flex;
     align-items: center;
-    cursor: pointer;
-    white-space: nowrap;
+    gap: 20px;
+  }
 
-    .username {
-      margin: 0 8px;
+  .language-dropdown {
+    .language-selector {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
       color: #303133;
       font-size: 14px;
+      outline: none;
+
+      &:focus {
+        outline: none;
+      }
+
+      .language-flag {
+        font-size: 18px;
+        margin-right: 5px;
+        line-height: 1;
+      }
+
+      span {
+        margin: 0 4px;
+      }
+
+      &:hover {
+        color: #1890ff;
+      }
+    }
+  }
+
+  .dropdown-flag {
+    font-size: 16px;
+    margin-right: 5px;
+  }
+
+  .user-dropdown {
+    .user-info {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      white-space: nowrap;
+
+      .username {
+        margin: 0 8px;
+        color: #303133;
+      }
     }
   }
 }

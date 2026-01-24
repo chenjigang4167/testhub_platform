@@ -4,7 +4,7 @@
       <!-- 左侧集合树 -->
       <div class="sidebar">
         <div class="sidebar-header">
-          <el-select v-model="selectedProject" placeholder="选择项目" @change="onProjectChange">
+          <el-select v-model="selectedProject" :placeholder="$t('apiTesting.common.selectProject')" @change="onProjectChange">
             <el-option
               v-for="project in projects"
               :key="project.id"
@@ -13,10 +13,10 @@
             />
           </el-select>
           <div class="header-actions">
-            <el-button type="primary" size="small" @click="showCreateCollectionDialog = true" title="创建集合">
+            <el-button type="primary" size="small" @click="showCreateCollectionDialog = true" :title="$t('apiTesting.interface.createCollection')">
               <el-icon><Folder /></el-icon>
             </el-button>
-            <el-button type="success" size="small" @click="createEmptyRequest" title="添加接口">
+            <el-button type="success" size="small" @click="createEmptyRequest" :title="$t('apiTesting.interface.addInterface')">
               <el-icon><Plus /></el-icon>
             </el-button>
           </div>
@@ -71,8 +71,8 @@
       <!-- 右侧请求详情 -->
       <div class="main-content">
         <div v-if="!selectedRequest" class="empty-state">
-          <el-empty description="请选择一个接口查看详情，或点击上方绿色按钮创建新接口">
-            <el-button type="primary" @click="createEmptyRequest">创建新接口</el-button>
+          <el-empty :description="$t('apiTesting.interface.selectInterface')">
+            <el-button type="primary" @click="createEmptyRequest">{{ $t('apiTesting.interface.createNewInterface') }}</el-button>
           </el-empty>
         </div>
         
@@ -91,13 +91,13 @@
               
               <el-input
                 v-model="selectedRequest.url"
-                placeholder="输入请求URL"
+                :placeholder="$t('apiTesting.interface.inputRequestUrl')"
                 class="url-input"
                 :class="{ 'websocket-url': selectedRequest && selectedRequest.request_type === 'WEBSOCKET' }"
               >
                 <template #prepend>
-                  <el-select v-model="selectedEnvironment" placeholder="环境" style="width: 120px;">
-                    <el-option label="无环境" :value="null" />
+                  <el-select v-model="selectedEnvironment" :placeholder="$t('apiTesting.interface.environment')" style="width: 120px;">
+                    <el-option :label="$t('apiTesting.common.noEnvironment')" :value="null" />
                     <el-option
                       v-for="env in environments"
                       :key="env.id"
@@ -107,39 +107,39 @@
                   </el-select>
                 </template>
               </el-input>
-              
+
               <!-- WebSocket连接按钮 -->
-              <el-button 
+              <el-button
                 v-if="selectedRequest && selectedRequest.request_type === 'WEBSOCKET'"
                 :type="websocketConnectionStatus === 'disconnected' ? 'primary' : 'info'"
                 :loading="websocketConnectionStatus === 'connecting'"
                 @click="toggleWebSocketConnection"
               >
-                <span v-if="websocketConnectionStatus === 'disconnected'">连接</span>
-                <span v-else-if="websocketConnectionStatus === 'connecting'">连接中</span>
-                <span v-else>关闭连接</span>
+                <span v-if="websocketConnectionStatus === 'disconnected'">{{ $t('apiTesting.interface.connect') }}</span>
+                <span v-else-if="websocketConnectionStatus === 'connecting'">{{ $t('apiTesting.interface.connecting') }}</span>
+                <span v-else>{{ $t('apiTesting.interface.disconnect') }}</span>
               </el-button>
-              
+
               <!-- HTTP发送按钮 -->
-              <el-button 
+              <el-button
                 v-else
-                type="primary" 
-                @click="sendRequest" 
+                type="primary"
+                @click="sendRequest"
                 :loading="sending"
               >
-                发送
+                {{ $t('apiTesting.interface.send') }}
               </el-button>
             </div>
-            
+
             <div class="request-name">
               <el-input
                 v-model="selectedRequest.name"
-                placeholder="请求名称"
+                :placeholder="$t('apiTesting.interface.requestName')"
                 size="small"
                 style="width: 300px;"
               />
               <el-button size="small" @click="saveRequest" :loading="saving" ref="saveButtonRef">
-                保存
+                {{ $t('apiTesting.common.save') }}
               </el-button>
             </div>
           </div>
@@ -149,17 +149,17 @@
             <el-tab-pane label="Params" name="params">
               <KeyValueEditor
                 v-model="selectedRequest.params"
-                placeholder-key="参数名"
-                placeholder-value="参数值"
+                :placeholder-key="$t('apiTesting.interface.paramName')"
+                :placeholder-value="$t('apiTesting.interface.paramValue')"
               />
             </el-tab-pane>
-            
+
             <el-tab-pane label="Headers" name="headers">
               <KeyValueEditor
                 ref="headersEditorRef"
                 v-model="selectedRequest.headers"
-                placeholder-key="Header名"
-                placeholder-value="Header值"
+                :placeholder-key="$t('apiTesting.interface.headerName')"
+                :placeholder-value="$t('apiTesting.interface.headerValue')"
                 @update:modelValue="onHeadersUpdate"
               />
             </el-tab-pane>
@@ -177,20 +177,20 @@
                 <div v-if="bodyType === 'form-data'" class="body-content">
                   <KeyValueEditor
                     v-model="formData"
-                    placeholder-key="键"
-                    placeholder-value="值"
+                    :placeholder-key="$t('apiTesting.interface.key')"
+                    :placeholder-value="$t('apiTesting.interface.value')"
                     :show-file="true"
                   />
                 </div>
-                
+
                 <div v-else-if="bodyType === 'x-www-form-urlencoded'" class="body-content">
                   <KeyValueEditor
                     v-model="formUrlEncoded"
-                    placeholder-key="键"
-                    placeholder-value="值"
+                    :placeholder-key="$t('apiTesting.interface.key')"
+                    :placeholder-value="$t('apiTesting.interface.value')"
                   />
                 </div>
-                
+
                 <div v-else-if="bodyType === 'raw'" class="body-content">
                   <div class="raw-options">
                     <el-select v-model="rawType" style="width: 150px;">
@@ -204,7 +204,7 @@
                     v-model="rawBody"
                     type="textarea"
                     :rows="10"
-                    placeholder="请输入请求体内容"
+                    :placeholder="$t('apiTesting.interface.inputRequestBody')"
                     class="raw-body"
                   />
                 </div>
@@ -218,25 +218,25 @@
                   v-model="selectedRequest.pre_request_script"
                   type="textarea"
                   :rows="10"
-                  placeholder="// 请求前脚本，使用JavaScript语法"
+                  :placeholder="$t('apiTesting.interface.preRequestScript')"
                 />
               </el-tab-pane>
-              
+
               <el-tab-pane label="Tests" name="tests">
                 <el-input
                   v-model="selectedRequest.post_request_script"
                   type="textarea"
                   :rows="10"
-                  placeholder="// 请求后脚本和测试，使用JavaScript语法"
+                  :placeholder="$t('apiTesting.interface.postRequestScript')"
                 />
               </el-tab-pane>
-              
-              <el-tab-pane label="断言" name="assertions">
+
+              <el-tab-pane :label="$t('apiTesting.interface.assertions')" name="assertions">
                 <div class="assertions-editor">
                   <div class="assertions-header">
                     <el-button size="small" type="primary" @click="addAssertion">
                       <el-icon><Plus /></el-icon>
-                      添加断言
+                      {{ $t('apiTesting.interface.addAssertion') }}
                     </el-button>
                   </div>
                   
@@ -247,117 +247,117 @@
                       class="assertion-item"
                     >
                       <div class="assertion-header">
-                        <el-input 
-                          v-model="assertion.name" 
-                          placeholder="断言名称" 
-                          size="small" 
+                        <el-input
+                          v-model="assertion.name"
+                          :placeholder="$t('apiTesting.interface.assertionName')"
+                          size="small"
                           class="assertion-name"
                         />
-                        <el-button 
-                          size="small" 
-                          type="danger" 
+                        <el-button
+                          size="small"
+                          type="danger"
                           @click="removeAssertion(index)"
                           circle
                         >
                           <el-icon><Delete /></el-icon>
                         </el-button>
                       </div>
-                      
+
                       <div class="assertion-config">
-                        <el-select 
-                          v-model="assertion.type" 
-                          placeholder="选择断言类型" 
+                        <el-select
+                          v-model="assertion.type"
+                          :placeholder="$t('apiTesting.interface.selectAssertionType')"
                           size="small"
                           @change="onAssertionTypeChange(assertion)"
                         >
-                          <el-option label="状态码" value="status_code" />
-                          <el-option label="响应时间" value="response_time" />
-                          <el-option label="包含文本" value="contains" />
-                          <el-option label="JSON路径" value="json_path" />
-                          <el-option label="响应头" value="header" />
-                          <el-option label="完全匹配" value="equals" />
+                          <el-option :label="$t('apiTesting.interface.assertionTypes.statusCode')" value="status_code" />
+                          <el-option :label="$t('apiTesting.interface.assertionTypes.responseTime')" value="response_time" />
+                          <el-option :label="$t('apiTesting.interface.assertionTypes.contains')" value="contains" />
+                          <el-option :label="$t('apiTesting.interface.assertionTypes.jsonPath')" value="json_path" />
+                          <el-option :label="$t('apiTesting.interface.assertionTypes.header')" value="header" />
+                          <el-option :label="$t('apiTesting.interface.assertionTypes.equals')" value="equals" />
                         </el-select>
-                        
+
                         <div class="assertion-params" v-if="assertion.type">
                           <!-- 状态码断言 -->
                           <div v-if="assertion.type === 'status_code'">
-                            <el-input-number 
-                              v-model="assertion.expected" 
-                              :min="100" 
-                              :max="599" 
+                            <el-input-number
+                              v-model="assertion.expected"
+                              :min="100"
+                              :max="599"
                               size="small"
-                              placeholder="期望状态码"
+                              :placeholder="$t('apiTesting.interface.expectedStatusCode')"
                             />
                           </div>
-                          
+
                           <!-- 响应时间断言 -->
                           <div v-else-if="assertion.type === 'response_time'">
-                            <el-input-number 
-                              v-model="assertion.expected" 
-                              :min="1" 
+                            <el-input-number
+                              v-model="assertion.expected"
+                              :min="1"
                               size="small"
-                              placeholder="最大响应时间(ms)"
+                              :placeholder="$t('apiTesting.interface.maxResponseTime')"
                             />
                           </div>
                           
                           <!-- 包含文本断言 -->
                           <div v-else-if="assertion.type === 'contains'">
-                            <el-input 
-                              v-model="assertion.expected" 
-                              placeholder="期望包含的文本" 
+                            <el-input
+                              v-model="assertion.expected"
+                              :placeholder="$t('apiTesting.interface.expectedContains')"
                               size="small"
                             />
                           </div>
-                          
+
                           <!-- JSON路径断言 -->
                           <div v-else-if="assertion.type === 'json_path'">
-                            <el-input 
-                              v-model="assertion.json_path" 
-                              placeholder="JSON路径表达式" 
+                            <el-input
+                              v-model="assertion.json_path"
+                              :placeholder="$t('apiTesting.interface.jsonPathExpression')"
                               size="small"
                               class="assertion-input"
                             />
-                            <el-input 
-                              v-model="assertion.expected" 
-                              placeholder="期望值" 
+                            <el-input
+                              v-model="assertion.expected"
+                              :placeholder="$t('apiTesting.interface.expectedValue')"
                               size="small"
                               class="assertion-input"
                             />
                           </div>
-                          
+
                           <!-- 响应头断言 -->
                           <div v-else-if="assertion.type === 'header'">
-                            <el-input 
-                              v-model="assertion.header_name" 
-                              placeholder="响应头名称" 
+                            <el-input
+                              v-model="assertion.header_name"
+                              :placeholder="$t('apiTesting.interface.headerNameLabel')"
                               size="small"
                               class="assertion-input"
                             />
-                            <el-input 
-                              v-model="assertion.expected_value" 
-                              placeholder="期望值" 
+                            <el-input
+                              v-model="assertion.expected_value"
+                              :placeholder="$t('apiTesting.interface.expectedValue')"
                               size="small"
                               class="assertion-input"
                             />
                           </div>
-                          
+
                           <!-- 完全匹配断言 -->
                           <div v-else-if="assertion.type === 'equals'">
-                            <el-input 
-                              v-model="assertion.expected" 
-                              placeholder="期望完全匹配的文本" 
+                            <el-input
+                              v-model="assertion.expected"
+                              :placeholder="$t('apiTesting.interface.expectedMatch')"
                               size="small"
                             />
                           </div>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div v-if="!selectedRequest.assertions || selectedRequest.assertions.length === 0" class="no-assertions">
-                      <p>暂无断言配置</p>
+                      <p>{{ $t('apiTesting.interface.noAssertions') }}</p>
                       <el-button size="small" type="primary" @click="addAssertion">
                         <el-icon><Plus /></el-icon>
-                        添加第一个断言
+                        {{ $t('apiTesting.interface.addFirstAssertion') }}
                       </el-button>
                     </div>
                   </div>
@@ -370,25 +370,25 @@
               <el-tab-pane label="Message" name="message">
                 <div class="message-container">
                   <div class="message-input-section">
-                    <el-select 
-                      v-model="websocketMessageType" 
-                      placeholder="选择消息类型" 
+                    <el-select
+                      v-model="websocketMessageType"
+                      :placeholder="$t('apiTesting.interface.messageType')"
                       style="width: 150px; margin-bottom: 15px;"
                     >
                       <el-option label="Text" value="text" />
                       <el-option label="JSON" value="json" />
                       <el-option label="Binary" value="binary" />
                     </el-select>
-                    
+
                     <div v-if="websocketMessageType === 'text' || websocketMessageType === 'json'">
                       <el-input
                         v-model="websocketMessageContent"
                         type="textarea"
                         :rows="6"
-                        placeholder="请输入要发送的WebSocket消息内容"
+                        :placeholder="$t('apiTesting.interface.inputWebSocketMessage')"
                       />
                     </div>
-                    
+
                     <div v-else-if="websocketMessageType === 'binary'">
                       <el-upload
                         drag
@@ -399,41 +399,41 @@
                       >
                         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
                         <div class="el-upload__text">
-                          将二进制文件拖到此处，或<em>点击上传</em>
+                          {{ $t('apiTesting.interface.dragBinaryFile') }}<em>{{ $t('apiTesting.interface.clickUpload') }}</em>
                         </div>
                       </el-upload>
                       <div v-if="websocketBinaryFile" class="uploaded-file">
                         <span>{{ websocketBinaryFile.name }}</span>
-                        <el-button size="small" type="danger" @click="clearWebSocketBinaryFile">清除</el-button>
+                        <el-button size="small" type="danger" @click="clearWebSocketBinaryFile">{{ $t('apiTesting.interface.clear') }}</el-button>
                       </div>
                     </div>
-                    
+
                     <div class="message-actions" style="margin-top: 15px;">
                       <el-button type="primary" @click="sendWebSocketMessage">
-                        发送消息
+                        {{ $t('apiTesting.interface.sendMessage') }}
                       </el-button>
                       <el-button @click="clearWebSocketMessage">
-                        清空消息
+                        {{ $t('apiTesting.interface.clearMessage') }}
                       </el-button>
                     </div>
                   </div>
-                  
+
                   <!-- WebSocket消息历史记录 -->
                   <div class="websocket-response-section" v-if="websocketMessages.length > 0">
-                    <h3>消息历史</h3>
+                    <h3>{{ $t('apiTesting.interface.messageHistory') }}</h3>
                     <div class="websocket-messages">
-                      <div 
-                        v-for="(msg, index) in websocketMessages.slice().reverse()" 
-                        :key="index" 
+                      <div
+                        v-for="(msg, index) in websocketMessages.slice().reverse()"
+                        :key="index"
                         class="websocket-message-item"
                         :class="msg.type"
                       >
                         <div class="message-header">
                           <span class="message-type" :class="msg.type">
-                            {{ msg.type === 'sent' ? '↑ 发送' : 
-                               msg.type === 'connected' ? '✅连接成功' : 
-                               msg.type === 'info' ? 'ℹ️信息' : 
-                               msg.type === 'error' ? '❌错误' : '↓ 接收' }}
+                            {{ msg.type === 'sent' ? $t('apiTesting.interface.messageSent') :
+                               msg.type === 'connected' ? $t('apiTesting.interface.messageConnected') :
+                               msg.type === 'info' ? $t('apiTesting.interface.messageInfo') :
+                               msg.type === 'error' ? $t('apiTesting.interface.messageError') : $t('apiTesting.interface.messageReceived') }}
                           </span>
                           <span class="message-time">{{ msg.timestamp }}</span>
                         </div>
@@ -444,7 +444,7 @@
                       </div>
                     </div>
                     <div class="message-actions">
-                      <el-button size="small" @click="clearWebSocketMessages">清空历史</el-button>
+                      <el-button size="small" @click="clearWebSocketMessages">{{ $t('apiTesting.interface.clearHistory') }}</el-button>
                     </div>
                   </div>
                 </div>
@@ -455,7 +455,7 @@
           <!-- 响应区域 -->
           <div v-if="response" class="response-section">
             <div class="response-header">
-              <h3>响应</h3>
+              <h3>{{ $t('apiTesting.interface.response') }}</h3>
               <div class="response-info">
                 <el-tag :type="getStatusType(response.status_code)">
                   {{ response.status_code }}
@@ -463,53 +463,53 @@
                 <span class="response-time">{{ response.response_time?.toFixed(0) }}ms</span>
               </div>
             </div>
-            
+
             <el-tabs v-model="responseActiveTab">
-              <el-tab-pane label="Body" name="body">
+              <el-tab-pane :label="$t('apiTesting.interface.responseBody')" name="body">
                 <div class="response-body">
                   <div class="response-actions">
                     <el-button-group>
-                      <el-button size="small" @click="formatResponse">格式化</el-button>
-                      <el-button size="small" @click="copyResponse">复制</el-button>
+                      <el-button size="small" @click="formatResponse">{{ $t('apiTesting.interface.format') }}</el-button>
+                      <el-button size="small" @click="copyResponse">{{ $t('apiTesting.common.copy') }}</el-button>
                     </el-button-group>
                   </div>
                   <pre class="response-content">{{ responseBody }}</pre>
                 </div>
               </el-tab-pane>
-              
-              <el-tab-pane label="Headers" name="headers">
+
+              <el-tab-pane :label="$t('apiTesting.interface.responseHeaders')" name="headers">
                 <div class="response-headers">
                   <div v-for="(value, key) in response.response_data?.headers" :key="key" class="header-row">
                     <strong>{{ key }}:</strong> {{ value }}
                   </div>
                 </div>
               </el-tab-pane>
-              
-              <el-tab-pane label="断言结果" name="assertions" v-if="response.assertions_results && response.assertions_results.length > 0">
+
+              <el-tab-pane :label="$t('apiTesting.interface.assertionResults')" name="assertions" v-if="response.assertions_results && response.assertions_results.length > 0">
                 <div class="assertions-results">
-                  <div 
-                    v-for="(result, index) in response.assertions_results" 
-                    :key="index" 
+                  <div
+                    v-for="(result, index) in response.assertions_results"
+                    :key="index"
                     class="assertion-result-item"
                     :class="{ 'passed': result.passed, 'failed': !result.passed }"
                   >
                     <div class="assertion-result-header">
                       <el-tag :type="result.passed ? 'success' : 'danger'" size="small">
-                        {{ result.passed ? '通过' : '失败' }}
+                        {{ result.passed ? $t('apiTesting.interface.passed') : $t('apiTesting.interface.failed') }}
                       </el-tag>
                       <span class="assertion-name">{{ result.name }}</span>
                     </div>
                     <div class="assertion-result-details">
                       <div class="result-row">
-                        <span class="label">期望:</span>
-                        <span class="value">{{ result.expected !== null && result.expected !== undefined ? result.expected : '未设置' }}</span>
+                        <span class="label">{{ $t('apiTesting.interface.expected') }}</span>
+                        <span class="value">{{ result.expected !== null && result.expected !== undefined ? result.expected : $t('apiTesting.interface.notSet') }}</span>
                       </div>
                       <div class="result-row">
-                        <span class="label">实际:</span>
-                        <span class="value">{{ result.actual !== null && result.actual !== undefined ? result.actual : '未获取到' }}</span>
+                        <span class="label">{{ $t('apiTesting.interface.actual') }}</span>
+                        <span class="value">{{ result.actual !== null && result.actual !== undefined ? result.actual : $t('apiTesting.interface.notObtained') }}</span>
                       </div>
                       <div class="result-row" v-if="result.error">
-                        <span class="label">错误:</span>
+                        <span class="label">{{ $t('apiTesting.interface.error') }}</span>
                         <span class="value error">{{ result.error }}</span>
                       </div>
                     </div>
@@ -523,16 +523,16 @@
     </div>
 
     <!-- 创建集合对话框 -->
-    <el-dialog v-model="showCreateCollectionDialog" title="创建集合" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="500px">
+    <el-dialog v-model="showCreateCollectionDialog" :title="$t('apiTesting.interface.createCollection')" width="500px">
       <el-form ref="collectionFormRef" :model="collectionForm" :rules="collectionRules" label-width="80px">
-        <el-form-item label="集合名称" prop="name">
-          <el-input v-model="collectionForm.name" placeholder="请输入集合名称" />
+        <el-form-item :label="$t('apiTesting.interface.collectionName')" prop="name">
+          <el-input v-model="collectionForm.name" :placeholder="$t('apiTesting.interface.inputCollectionName')" />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="collectionForm.description" type="textarea" :rows="3" placeholder="请输入描述" />
+        <el-form-item :label="$t('apiTesting.common.description')" prop="description">
+          <el-input v-model="collectionForm.description" type="textarea" :rows="3" :placeholder="$t('apiTesting.common.pleaseInput')" />
         </el-form-item>
-        <el-form-item label="父级集合" prop="parent">
-          <el-select v-model="collectionForm.parent" placeholder="选择父级集合（可选）" clearable>
+        <el-form-item :label="$t('apiTesting.interface.parentCollection')" prop="parent">
+          <el-select v-model="collectionForm.parent" :placeholder="$t('apiTesting.interface.selectParentCollection')" clearable>
             <el-option
               v-for="collection in flatCollections"
               :key="collection.id"
@@ -542,24 +542,24 @@
           </el-select>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
-        <el-button @click="showCreateCollectionDialog = false">取消</el-button>
-        <el-button type="primary" @click="createCollection">创建</el-button>
+        <el-button @click="showCreateCollectionDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
+        <el-button type="primary" @click="createCollection">{{ $t('apiTesting.common.create') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 编辑集合对话框 -->
-    <el-dialog v-model="showEditCollectionDialog" title="编辑集合" :close-on-click-modal="false" width="500px">
+    <el-dialog v-model="showEditCollectionDialog" :title="$t('apiTesting.common.edit')" width="500px">
       <el-form ref="editCollectionFormRef" :model="editCollectionForm" :rules="collectionRules" label-width="80px">
-        <el-form-item label="集合名称" prop="name">
-          <el-input v-model="editCollectionForm.name" placeholder="请输入集合名称" />
+        <el-form-item :label="$t('apiTesting.interface.collectionName')" prop="name">
+          <el-input v-model="editCollectionForm.name" :placeholder="$t('apiTesting.interface.inputCollectionName')" />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="editCollectionForm.description" type="textarea" :rows="3" placeholder="请输入描述" />
+        <el-form-item :label="$t('apiTesting.common.description')" prop="description">
+          <el-input v-model="editCollectionForm.description" type="textarea" :rows="3" :placeholder="$t('apiTesting.common.pleaseInput')" />
         </el-form-item>
-        <el-form-item label="父级集合" prop="parent">
-          <el-select v-model="editCollectionForm.parent" placeholder="选择父级集合（可选）" clearable>
+        <el-form-item :label="$t('apiTesting.interface.parentCollection')" prop="parent">
+          <el-select v-model="editCollectionForm.parent" :placeholder="$t('apiTesting.interface.selectParentCollection')" clearable>
             <el-option
               v-for="collection in flatCollections.filter(c => c.id !== editCollectionForm.id)"
               :key="collection.id"
@@ -569,19 +569,19 @@
           </el-select>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
-        <el-button @click="showEditCollectionDialog = false">取消</el-button>
-        <el-button type="primary" @click="updateCollection">保存</el-button>
+        <el-button @click="showEditCollectionDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
+        <el-button type="primary" @click="updateCollection">{{ $t('apiTesting.common.save') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 右键菜单 -->
     <ul v-show="showContextMenu" class="context-menu" :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }">
-      <li @click="addRequest">添加请求</li>
-      <li @click="addCollection">添加子集合</li>
-      <li @click="editNode">编辑</li>
-      <li @click="deleteNode">删除</li>
+      <li @click="addRequest">{{ $t('apiTesting.interface.contextMenu.addRequest') }}</li>
+      <li @click="addCollection">{{ $t('apiTesting.interface.contextMenu.addSubCollection') }}</li>
+      <li @click="editNode">{{ $t('apiTesting.interface.contextMenu.edit') }}</li>
+      <li @click="deleteNode">{{ $t('apiTesting.interface.contextMenu.delete') }}</li>
     </ul>
   </div>
 </template>
@@ -589,9 +589,12 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { Plus, Folder, Document } from '@element-plus/icons-vue'
 import api from '@/utils/api'
 import KeyValueEditor from './components/KeyValueEditor.vue'
+
+const { t } = useI18n()
 
 const treeRef = ref(null)
 const expandedKeys = ref([])
@@ -712,9 +715,9 @@ const editCollectionForm = reactive({
   parent: null
 })
 
-const collectionRules = {
-  name: [{ required: true, message: '请输入集合名称', trigger: 'blur' }]
-}
+const collectionRules = computed(() => ({
+  name: [{ required: true, message: t('apiTesting.interface.inputCollectionName'), trigger: 'blur' }]
+}))
 
 const hasBody = computed(() => {
   return selectedRequest.value && ['POST', 'PUT', 'PATCH'].includes(selectedRequest.value.method)
@@ -750,48 +753,48 @@ const loadProjects = async () => {
       await onProjectChange()
     }
   } catch (error) {
-    ElMessage.error('加载项目失败')
+    ElMessage.error(t('apiTesting.messages.error.loadProjects'))
   }
 }
 
 const loadCollections = async (preserveExpandState = true) => {
   if (!selectedProject.value) return
-  
+
   try {
     const res = await api.get('/api-testing/collections/', {
       params: { project: selectedProject.value }
     })
     const collectionsData = res.data.results || res.data
-    
+
     // 构建树形结构
     collections.value = buildTree(collectionsData)
     flatCollections.value = collectionsData
-    
+
     // 加载每个集合的请求
     await loadRequests()
-    
+
     // 如果不保留展开状态，清空展开键
     if (!preserveExpandState) {
       expandedKeys.value = []
     }
-    
+
   } catch (error) {
-    ElMessage.error('加载集合失败')
+    ElMessage.error(t('apiTesting.messages.error.loadCollections'))
   }
 }
 
 const loadRequests = async () => {
   if (!selectedProject.value) return
-  
+
   try {
     const res = await api.get('/api-testing/requests/')
     const requests = res.data.results || res.data
-    
+
     // 清空所有集合的子节点（请求）
     collections.value.forEach(collection => {
       clearCollectionChildren(collection)
     })
-    
+
     // 将请求添加到对应集合中
     requests.forEach(request => {
       const collection = findCollectionById(collections.value, request.collection)
@@ -805,7 +808,7 @@ const loadRequests = async () => {
       }
     })
   } catch (error) {
-    ElMessage.error('加载请求失败')
+    ElMessage.error(t('apiTesting.messages.error.loadRequests'))
   }
 }
 
@@ -821,14 +824,14 @@ const loadEnvironments = async () => {
     // 获取全局环境 + 当前项目环境，不传递project参数
     const res = await api.get('/api-testing/environments/')
     const allEnvironments = res.data.results || res.data
-    
+
     // 过滤全局环境和当前项目环境
-    environments.value = allEnvironments.filter(env => 
-      env.scope === 'GLOBAL' || 
+    environments.value = allEnvironments.filter(env =>
+      env.scope === 'GLOBAL' ||
       (env.scope === 'LOCAL' && (!selectedProject.value || env.project === selectedProject.value))
     )
   } catch (error) {
-    ElMessage.error('加载环境失败')
+    ElMessage.error(t('apiTesting.messages.error.loadEnvironments'))
   }
 }
 
@@ -955,7 +958,7 @@ const saveCollectionName = async () => {
   try {
     const collection = flatCollections.value.find(c => c.id === editingNodeId.value)
     if (!collection) {
-      ElMessage.error('集合不存在')
+      ElMessage.error(t('apiTesting.messages.error.operationFailed'))
       cancelEdit()
       return
     }
@@ -993,10 +996,10 @@ const saveCollectionName = async () => {
       flatCollection.name = editingNodeName.value.trim()
     }
     
-    ElMessage.success('集合名称更新成功')
+    ElMessage.success(t('apiTesting.messages.success.collectionNameUpdated'))
     cancelEdit()
   } catch (error) {
-    ElMessage.error('更新失败')
+    ElMessage.error(t('apiTesting.messages.error.updateFailed'))
     cancelEdit()
   }
 }
@@ -1022,7 +1025,7 @@ const onNodeCollapse = (data) => {
 const addRequest = () => {
   // 创建新请求
   const newRequest = {
-    name: '新建请求',
+    name: t('apiTesting.interface.newRequest'),
     method: 'GET',
     url: '',
     headers: {},
@@ -1106,15 +1109,17 @@ const deleteNode = async () => {
 
   const nodeType = rightClickedNode.value.type
   const nodeName = rightClickedNode.value.name
-  
+
   // 显示确认对话框
   try {
+    const typeText = nodeType === 'collection' ? t('apiTesting.interface.collection') : t('apiTesting.interface.request')
+    const extra = nodeType === 'collection' ? t('apiTesting.interface.deleteCollectionExtra') : ''
     await ElMessageBox.confirm(
-      `确定要删除${nodeType === 'collection' ? '集合' : '接口'} "${nodeName}" 吗？${nodeType === 'collection' ? '删除集合会同时删除其中的所有接口。' : ''}`,
-      '确认删除',
+      t('apiTesting.interface.confirmDeleteNode', { type: typeText, name: nodeName, extra: extra }),
+      t('apiTesting.messages.confirm.deleteTitle'),
       {
-        confirmButtonText: '确定删除',
-        cancelButtonText: '取消',
+        confirmButtonText: t('apiTesting.interface.confirmDeleteBtn'),
+        cancelButtonText: t('apiTesting.common.cancel'),
         type: 'warning',
         confirmButtonClass: 'el-button--danger'
       }
@@ -1137,7 +1142,7 @@ const deleteNode = async () => {
 const deleteCollection = async (collectionId) => {
   try {
     await api.delete(`/api-testing/collections/${collectionId}/`)
-    ElMessage.success('集合删除成功')
+    ElMessage.success(t('apiTesting.messages.success.collectionDeleted'))
     
     // 如果当前选中的请求属于被删除的集合，清空选中状态
     if (selectedRequest.value && selectedRequest.value.collection === collectionId) {
@@ -1174,7 +1179,7 @@ const deleteCollection = async (collectionId) => {
     }
     
   } catch (error) {
-    ElMessage.error('删除集合失败')
+    ElMessage.error(t('apiTesting.messages.error.deleteFailed'))
     console.error('Delete collection error:', error)
   }
 }
@@ -1182,7 +1187,7 @@ const deleteCollection = async (collectionId) => {
 const deleteRequest = async (requestId) => {
   try {
     await api.delete(`/api-testing/requests/${requestId}/`)
-    ElMessage.success('接口删除成功')
+    ElMessage.success(t('apiTesting.messages.success.interfaceDeleted'))
     
     // 如果当前选中的是被删除的请求，清空选中状态
     if (selectedRequest.value && selectedRequest.value.id === requestId) {
@@ -1210,7 +1215,7 @@ const deleteRequest = async (requestId) => {
     removeRequestFromTree(collections.value, requestId)
     
   } catch (error) {
-    ElMessage.error('删除接口失败')
+    ElMessage.error(t('apiTesting.messages.error.deleteFailed'))
     console.error('Delete request error:', error)
   }
 }
@@ -1223,8 +1228,8 @@ const createCollection = async () => {
     }
     const res = await api.post('/api-testing/collections/', data)
     const newCollection = res.data
-    
-    ElMessage.success('创建成功')
+
+    ElMessage.success(t('apiTesting.messages.success.collectionCreated'))
     showCreateCollectionDialog.value = false
     Object.assign(collectionForm, { name: '', description: '', parent: null })
     
@@ -1272,7 +1277,7 @@ const createCollection = async () => {
     }
     
   } catch (error) {
-    ElMessage.error('创建失败')
+    ElMessage.error(t('apiTesting.messages.error.createFailed'))
   }
 }
 
@@ -1281,9 +1286,9 @@ const addAssertion = () => {
   if (!selectedRequest.value.assertions) {
     selectedRequest.value.assertions = []
   }
-  
+
   selectedRequest.value.assertions.push({
-    name: `断言${selectedRequest.value.assertions.length + 1}`,
+    name: `${t('apiTesting.interface.assertion')}${selectedRequest.value.assertions.length + 1}`,
     type: '',
     expected: null,
     json_path: '',
@@ -1316,18 +1321,18 @@ const clearWebSocketBinaryFile = () => {
 
 const sendWebSocketMessage = () => {
   if (websocketConnectionStatus.value !== 'connected') {
-    ElMessage.warning('请先建立WebSocket连接')
+    ElMessage.warning(t('apiTesting.messages.warning.pleaseConnect'))
     return
   }
-  
+
   if (!websocketConnection.value) {
-    ElMessage.error('WebSocket连接不存在')
+    ElMessage.error(t('apiTesting.messages.error.connectFailed'))
     return
   }
-  
+
   try {
     let messageToSend = ''
-    
+
     if (websocketMessageType.value === 'text' || websocketMessageType.value === 'json') {
       messageToSend = websocketMessageContent.value
     } else if (websocketMessageType.value === 'binary' && websocketBinaryFile.value) {
@@ -1335,25 +1340,25 @@ const sendWebSocketMessage = () => {
       const reader = new FileReader()
       reader.onload = (e) => {
         websocketConnection.value.send(e.target.result)
-        addWebSocketMessage('sent', '[二进制数据]')
-        ElMessage.success('二进制消息已发送')
+        addWebSocketMessage('sent', '[Binary Data]')
+        ElMessage.success(t('apiTesting.messages.success.binaryMessageSent'))
       }
       reader.onerror = () => {
-        ElMessage.error('读取文件失败')
+        ElMessage.error(t('apiTesting.messages.error.readFileFailed'))
       }
       reader.readAsArrayBuffer(websocketBinaryFile.value)
       return
     } else {
-      ElMessage.warning('请输入消息内容或选择文件')
+      ElMessage.warning(t('apiTesting.messages.warning.pleaseInputContent'))
       return
     }
-    
+
     websocketConnection.value.send(messageToSend)
     addWebSocketMessage('sent', messageToSend)
-    ElMessage.success('消息已发送')
-    
+    ElMessage.success(t('apiTesting.messages.success.messageSent'))
+
   } catch (error) {
-    const errorMsg = '发送消息失败: ' + error.message
+    const errorMsg = t('apiTesting.messages.error.sendFailed') + ': ' + error.message
     addWebSocketMessage('error', errorMsg)
     ElMessage.error(errorMsg)
   }
@@ -1407,12 +1412,12 @@ const toggleWebSocketConnection = () => {
 
 const connectWebSocket = () => {
   if (!selectedRequest.value || !selectedRequest.value.url) {
-    ElMessage.warning('请输入WebSocket连接地址')
+    ElMessage.warning(t('apiTesting.messages.warning.pleaseInputUrl'))
     return
   }
-  
+
   websocketConnectionStatus.value = 'connecting'
-  
+
   try {
     // 替换环境变量
     let url = selectedRequest.value.url
@@ -1424,40 +1429,40 @@ const connectWebSocket = () => {
         })
       }
     }
-    
+
     // 创建WebSocket连接
     websocketConnection.value = new WebSocket(url)
-    
+
     websocketConnection.value.onopen = () => {
       websocketConnectionStatus.value = 'connected'
       // 添加连接成功的特殊消息
-      addWebSocketMessage('connected', `Websocket已连接至${url}`)
-      ElMessage.success('WebSocket连接成功')
+      addWebSocketMessage('connected', t('apiTesting.messages.info.websocketConnectedTo', { url }))
+      ElMessage.success(t('apiTesting.messages.success.connect'))
     }
-    
+
     websocketConnection.value.onmessage = (event) => {
       // 处理接收到的消息
       console.log('WebSocket message received:', event.data)
       addWebSocketMessage('received', event.data)
-      ElMessage.info('收到WebSocket消息')
+      ElMessage.info(t('apiTesting.messages.info.websocketMessageReceived'))
     }
-    
+
     websocketConnection.value.onclose = () => {
       websocketConnectionStatus.value = 'disconnected'
-      addWebSocketMessage('info', 'WebSocket连接已关闭')
-      ElMessage.info('WebSocket连接已关闭')
+      addWebSocketMessage('info', t('apiTesting.messages.info.websocketClosed'))
+      ElMessage.info(t('apiTesting.messages.info.websocketClosed'))
     }
-    
+
     websocketConnection.value.onerror = (error) => {
       websocketConnectionStatus.value = 'disconnected'
-      const errorMsg = 'WebSocket连接错误: ' + (error.message || '连接失败')
+      const errorMsg = t('apiTesting.messages.error.websocketError') + ': ' + (error.message || '')
       addWebSocketMessage('error', errorMsg)
       ElMessage.error(errorMsg)
     }
-    
+
   } catch (error) {
     websocketConnectionStatus.value = 'disconnected'
-    const errorMsg = 'WebSocket连接失败: ' + error.message
+    const errorMsg = t('apiTesting.messages.error.connectFailed') + ': ' + error.message
     addWebSocketMessage('error', errorMsg)
     ElMessage.error(errorMsg)
   }
@@ -1476,13 +1481,13 @@ const disconnectWebSocket = () => {
 const createEmptyRequest = async () => {
   // 检查是否有选中的项目
   if (!selectedProject.value) {
-    ElMessage.warning('请先选择一个项目')
+    ElMessage.warning(t('apiTesting.messages.warning.pleaseSelectProject'))
     return
   }
-  
+
   // 检查是否有可用的集合
   if (!flatCollections.value || flatCollections.value.length === 0) {
-    ElMessage.warning('请先创建一个集合')
+    ElMessage.warning(t('apiTesting.messages.warning.pleaseCreateCollection'))
     return
   }
   
@@ -1515,8 +1520,8 @@ const createEmptyRequest = async () => {
     }
     
     const res = await api.post('/api-testing/requests/', data)
-    ElMessage.success('创建成功')
-    
+    ElMessage.success(t('apiTesting.messages.success.create'))
+
     // 重新加载集合和请求
     await Promise.all([loadCollections(), loadRequests()])
     
@@ -1549,7 +1554,7 @@ const createEmptyRequest = async () => {
     rawBody.value = ''
     
   } catch (error) {
-    ElMessage.error('创建失败')
+    ElMessage.error(t('apiTesting.messages.error.createFailed'))
     console.error('Create request error:', error)
   } finally {
     saving.value = false
@@ -1558,16 +1563,16 @@ const createEmptyRequest = async () => {
 
 const sendRequest = async () => {
   if (!selectedRequest.value) return
-  
+
   // 检查是否为WebSocket接口
   if (selectedRequest.value.request_type === 'WEBSOCKET') {
-    ElMessage.warning('WebSocket接口暂不支持在此界面直接执行，请使用专门的WebSocket测试工具')
+    ElMessage.warning(t('apiTesting.messages.warning.websocketNotSupported'))
     return
   }
-  
+
   // 检查是否选择了环境
   if (!selectedEnvironment.value) {
-    ElMessage.warning('请选择环境')
+    ElMessage.warning(t('apiTesting.messages.warning.pleaseSelectEnvironment'))
     return
   }
   
@@ -1628,9 +1633,9 @@ const sendRequest = async () => {
     
     const res = await api.post(`/api-testing/requests/${selectedRequest.value.id}/execute/`, requestData)
     response.value = res.data
-    ElMessage.success('请求发送成功')
+    ElMessage.success(t('apiTesting.messages.success.requestSent'))
   } catch (error) {
-    ElMessage.error('请求发送失败')
+    ElMessage.error(t('apiTesting.messages.error.requestFailed'))
     if (error.response?.data) {
       response.value = error.response.data
     }
@@ -1772,10 +1777,10 @@ const saveRequest = async () => {
       // 新建的请求需要重新加载树以显示新请求
       await loadCollections()
     }
-    
-    ElMessage.success('保存成功')
+
+    ElMessage.success(t('apiTesting.messages.success.save'))
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error(t('apiTesting.messages.error.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -1795,14 +1800,14 @@ const formatResponse = () => {
       response.value.response_data.body = JSON.stringify(response.value.response_data.json, null, 2)
     }
   } catch (e) {
-    ElMessage.error('格式化失败')
+    ElMessage.error(t('apiTesting.messages.error.formatFailed'))
   }
 }
 
 const copyResponse = () => {
   if (responseBody.value) {
     navigator.clipboard.writeText(responseBody.value)
-    ElMessage.success('已复制到剪贴板')
+    ElMessage.success(t('apiTesting.messages.success.copiedToClipboard'))
   }
 }
 

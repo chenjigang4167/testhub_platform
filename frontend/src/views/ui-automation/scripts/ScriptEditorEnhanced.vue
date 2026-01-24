@@ -1,9 +1,9 @@
 <template>
   <div class="script-editor-enhanced">
     <div class="page-header">
-      <h1 class="page-title">智能脚本生成</h1>
+      <h1 class="page-title">{{ $t('uiAutomation.scriptEditor.title') }}</h1>
       <div class="header-actions">
-        <el-select v-model="projectId" placeholder="选择项目" style="width: 200px; margin-right: 15px" @change="onProjectChange">
+        <el-select v-model="projectId" :placeholder="$t('uiAutomation.common.selectProject')" style="width: 200px; margin-right: 15px" @change="onProjectChange">
           <el-option v-for="project in projects" :key="project.id" :label="project.name" :value="project.id" />
         </el-select>
       </div>
@@ -13,10 +13,10 @@
       <!-- 左侧:���素库(页面树形式) -->
       <div class="left-panel">
         <div class="panel-header">
-          <h3>元素库</h3>
+          <h3>{{ $t('uiAutomation.scriptEditor.elementLibrary') }}</h3>
           <el-input
             v-model="elementFilter"
-            placeholder="搜索元素..."
+            :placeholder="$t('uiAutomation.scriptEditor.searchElement')"
             clearable
             size="small"
             style="margin-top: 10px"
@@ -43,7 +43,7 @@
                 </el-icon>
                 <span class="node-label">{{ data.name }}</span>
                 <div class="node-actions" v-if="data.type === 'element'">
-                  <el-button size="small" text @click.stop="insertElementCode(data)" title="点击插入代码">
+                  <el-button size="small" text @click.stop="insertElementCode(data)" :title="$t('uiAutomation.scriptEditor.clickToInsert')">
                     <el-icon><Plus /></el-icon>
                   </el-button>
                   <el-button size="small" text @click.stop="showElementDetail(data)">
@@ -72,15 +72,15 @@
           <div class="toolbar-right">
             <el-button size="small" @click="formatCode">
               <el-icon><Operation /></el-icon>
-              格式化
+              {{ $t('uiAutomation.scriptEditor.format') }}
             </el-button>
             <el-button size="small" @click="clearCode">
               <el-icon><Delete /></el-icon>
-              清空
+              {{ $t('uiAutomation.scriptEditor.clear') }}
             </el-button>
             <el-button size="small" type="primary" @click="saveScript" :loading="saving">
               <el-icon><Check /></el-icon>
-              保存脚本
+              {{ $t('uiAutomation.scriptEditor.saveScript') }}
             </el-button>
           </div>
         </div>
@@ -90,7 +90,7 @@
             ref="codeEditor"
             v-model="scriptContent"
             class="code-editor"
-            placeholder="请输入脚本代码或点击左侧元素库中的+号自动插入代码..."
+            :placeholder="$t('uiAutomation.scriptEditor.editorPlaceholder')"
             @focus="handleEditorFocus"
             @blur="handleEditorBlur"
             @input="handleContentChange"
@@ -98,9 +98,9 @@
         </div>
 
         <div class="editor-status">
-          <span>行: {{ cursorPosition.line }}, 列: {{ cursorPosition.column }}</span>
-          <span>字符数: {{ scriptContent.length }}</span>
-          <span>语言: {{ scriptLanguage }}</span>
+          <span>{{ $t('uiAutomation.scriptEditor.line') }}: {{ cursorPosition.line }}, {{ $t('uiAutomation.scriptEditor.column') }}: {{ cursorPosition.column }}</span>
+          <span>{{ $t('uiAutomation.scriptEditor.characters') }}: {{ scriptContent.length }}</span>
+          <span>{{ $t('uiAutomation.scriptEditor.language') }}: {{ scriptLanguage }}</span>
         </div>
       </div>
 
@@ -108,12 +108,12 @@
       <div class="right-panel">
         <el-tabs v-model="rightActiveTab" type="border-card">
           <!-- 执行日志 -->
-          <el-tab-pane label="执行日志" name="logs">
+          <el-tab-pane :label="$t('uiAutomation.scriptEditor.executionLogs')" name="logs">
             <div class="panel-content">
               <div class="log-controls">
                 <el-button size="small" @click="clearLogs">
                   <el-icon><Delete /></el-icon>
-                  清空日志
+                  {{ $t('uiAutomation.scriptEditor.clearLogs') }}
                 </el-button>
               </div>
               <div class="log-output">
@@ -132,34 +132,34 @@
           </el-tab-pane>
 
           <!-- 元素详情 -->
-          <el-tab-pane label="元素详情" name="elementDetail" v-if="selectedElementDetail">
+          <el-tab-pane :label="$t('uiAutomation.scriptEditor.elementDetail')" name="elementDetail" v-if="selectedElementDetail">
             <div class="panel-content">
               <div class="element-detail">
                 <h4>{{ selectedElementDetail.name }}</h4>
                 <el-descriptions :column="1" border size="small">
-                  <el-descriptions-item label="类型">
+                  <el-descriptions-item :label="$t('uiAutomation.scriptEditor.type')">
                     {{ getElementTypeText(selectedElementDetail.element_type) }}
                   </el-descriptions-item>
-                  <el-descriptions-item label="页面">
-                    {{ selectedElementDetail.page || '未指定' }}
+                  <el-descriptions-item :label="$t('uiAutomation.scriptEditor.page')">
+                    {{ selectedElementDetail.page || $t('uiAutomation.element.notSpecified') }}
                   </el-descriptions-item>
-                  <el-descriptions-item label="定位策略">
+                  <el-descriptions-item :label="$t('uiAutomation.scriptEditor.locatorStrategy')">
                     {{ selectedElementDetail.locator_strategy?.name || selectedElementDetail.locator_strategy }}
                   </el-descriptions-item>
-                  <el-descriptions-item label="定位表达式">
+                  <el-descriptions-item :label="$t('uiAutomation.scriptEditor.locatorExpression')">
                     <code>{{ selectedElementDetail.locator_value }}</code>
                   </el-descriptions-item>
-                  <el-descriptions-item label="使用次数">
+                  <el-descriptions-item :label="$t('uiAutomation.scriptEditor.usageCount')">
                     {{ selectedElementDetail.usage_count || 0 }}
                   </el-descriptions-item>
                 </el-descriptions>
 
                 <div class="element-actions" style="margin-top: 15px">
                   <el-button size="small" type="primary" @click="insertElementCode(selectedElementDetail)">
-                    插入代码
+                    {{ $t('uiAutomation.scriptEditor.insertCode') }}
                   </el-button>
                   <el-button size="small" @click="validateElement(selectedElementDetail)">
-                    验证元素
+                    {{ $t('uiAutomation.scriptEditor.validateElement') }}
                   </el-button>
                 </div>
               </div>
@@ -173,6 +173,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Search, Plus, View, Document, Check, Delete, Operation, Folder
@@ -185,6 +186,9 @@ import {
   getElementGroupTree,
   validateElementLocator
 } from '@/api/ui_automation'
+
+// i18n
+const { t } = useI18n()
 
 // 响应式数据
 const projects = ref([])
@@ -213,7 +217,7 @@ const loadProjects = async () => {
     const response = await getUiProjects({ page_size: 100 })
     projects.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('获取项目列表失败')
+    ElMessage.error(t('uiAutomation.scriptEditor.messages.loadProjectsFailed'))
     console.error('获取项目列表失败:', error)
   }
 }
@@ -274,10 +278,10 @@ const loadElementTree = async () => {
     attachElementsToPages(pageNodes)
     elementTree.value = pageNodes
 
-    addLog('info', `已加载 ${countElements(elementTree.value)} 个元素`)
+    addLog('info', t('uiAutomation.scriptEditor.messages.elementsLoaded', { count: countElements(elementTree.value) }))
   } catch (error) {
     console.error('获取元素树失败:', error)
-    addLog('error', '获取元素树失败')
+    addLog('error', t('uiAutomation.scriptEditor.messages.loadElementTreeFailed'))
   }
 }
 
@@ -353,7 +357,7 @@ const insertElementCode = (element) => {
   const code = generateElementCode(element)
   insertCodeAtCursor(code + '\n')  // 自动换行
 
-  addLog('info', `插入元素代码: ${element.name}`)
+  addLog('info', `${t('uiAutomation.scriptEditor.messages.insertCode')}: ${element.name}`)
 }
 
 const insertCodeAtCursor = (code) => {
@@ -420,12 +424,12 @@ const generateScriptName = () => {
 
 const saveScript = async () => {
   if (!projectId.value) {
-    ElMessage.warning('请先选择项目')
+    ElMessage.warning(t('uiAutomation.scriptEditor.messages.selectProject'))
     return
   }
 
   if (!scriptContent.value.trim()) {
-    ElMessage.warning('脚本内容不能为空')
+    ElMessage.warning(t('uiAutomation.scriptEditor.messages.emptyScript'))
     return
   }
 
@@ -443,12 +447,12 @@ const saveScript = async () => {
       framework: scriptFramework.value
     })
 
-    ElMessage.success(`脚本保存成功: ${scriptName}`)
-    addLog('success', `脚本已保存: ${scriptName}`)
+    ElMessage.success(`${t('uiAutomation.scriptEditor.messages.saveSuccess')}: ${scriptName}`)
+    addLog('success', `${t('uiAutomation.scriptEditor.messages.saveSuccess')}: ${scriptName}`)
   } catch (error) {
     console.error('保存脚本失败:', error)
-    ElMessage.error('脚本保存失败')
-    addLog('error', '脚本保存失败')
+    ElMessage.error(t('uiAutomation.scriptEditor.messages.saveFailed'))
+    addLog('error', t('uiAutomation.scriptEditor.messages.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -460,16 +464,16 @@ const validateElement = async (element) => {
     const result = response.data
 
     if (result.is_valid) {
-      ElMessage.success('元素验证通过')
-      addLog('info', `元素验证通过: ${element.name}`)
+      ElMessage.success(t('uiAutomation.scriptEditor.messages.validatePassed'))
+      addLog('info', `${t('uiAutomation.scriptEditor.messages.validatePassed')}: ${element.name}`)
     } else {
-      ElMessage.error(`元素验证失败: ${result.validation_message}`)
-      addLog('error', `元素验证失败: ${element.name} - ${result.validation_message}`)
+      ElMessage.error(`${t('uiAutomation.scriptEditor.messages.validateFailed')}: ${result.validation_message}`)
+      addLog('error', `${t('uiAutomation.scriptEditor.messages.validateFailed')}: ${element.name} - ${result.validation_message}`)
     }
   } catch (error) {
     console.error('验证元素失败:', error)
-    ElMessage.error('验证元素失败')
-    addLog('error', `验证元素失败: ${element.name}`)
+    ElMessage.error(t('uiAutomation.scriptEditor.messages.validateFailed'))
+    addLog('error', `${t('uiAutomation.scriptEditor.messages.validateFailed')}: ${element.name}`)
   }
 }
 
@@ -484,18 +488,18 @@ const formatCode = () => {
         .replace(/\n\s*\n/g, '\n')
 
       scriptContent.value = formatted
-      addLog('info', '代码格式化完成')
+      addLog('info', t('uiAutomation.scriptEditor.messages.codeFormatted'))
     } else {
-      addLog('info', '当前语言的格式化功能开发中...')
+      addLog('info', t('uiAutomation.scriptEditor.messages.formatInProgress'))
     }
   } catch (error) {
-    addLog('error', '代码格式化失败')
+    addLog('error', t('uiAutomation.scriptEditor.messages.formatFailed'))
   }
 }
 
 const clearCode = () => {
   scriptContent.value = ''
-  addLog('info', '代码已清空')
+  addLog('info', t('uiAutomation.scriptEditor.messages.codeCleared'))
 }
 
 const clearLogs = () => {
@@ -522,18 +526,18 @@ const getTreeNodeIcon = (type) => {
 
 const getElementTypeText = (type) => {
   const typeMap = {
-    'BUTTON': '按钮',
-    'INPUT': '输入框',
-    'LINK': '链接',
-    'DROPDOWN': '下拉框',
-    'CHECKBOX': '复选框',
-    'RADIO': '单选框',
-    'TEXT': '文本',
-    'IMAGE': '图片',
-    'CONTAINER': '容器',
-    'TABLE': '表格',
-    'FORM': '表单',
-    'MODAL': '弹窗'
+    'BUTTON': t('uiAutomation.element.elementTypes.button'),
+    'INPUT': t('uiAutomation.element.elementTypes.input'),
+    'LINK': t('uiAutomation.element.elementTypes.link'),
+    'DROPDOWN': t('uiAutomation.element.elementTypes.dropdown'),
+    'CHECKBOX': t('uiAutomation.element.elementTypes.checkbox'),
+    'RADIO': t('uiAutomation.element.elementTypes.radio'),
+    'TEXT': t('uiAutomation.element.elementTypes.text'),
+    'IMAGE': t('uiAutomation.element.elementTypes.image'),
+    'CONTAINER': t('uiAutomation.element.elementTypes.container'),
+    'TABLE': t('uiAutomation.element.elementTypes.table'),
+    'FORM': t('uiAutomation.element.elementTypes.form'),
+    'MODAL': t('uiAutomation.element.elementTypes.modal')
   }
   return typeMap[type] || type
 }
@@ -548,7 +552,7 @@ watch(elementFilter, (val) => {
 })
 
 watch(scriptLanguage, (newLang) => {
-  addLog('info', `切换到${newLang}语言`)
+  addLog('info', t('uiAutomation.scriptEditor.messages.switchLanguage', { lang: newLang }))
 })
 
 // 组件挂载

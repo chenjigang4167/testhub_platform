@@ -131,7 +131,7 @@
     </div>
 
     <!-- 用例选择对话框 -->
-    <el-dialog v-model="testcaseSelectorVisible" title="选择测试用例" :close-on-click-modal="false" width="800px">
+    <el-dialog v-model="testcaseSelectorVisible" title="选择测试用例" width="800px">
       <div class="testcase-selector-content">
         <el-input
           v-model="testcaseSearchInDialog"

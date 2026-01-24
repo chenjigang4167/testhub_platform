@@ -1,35 +1,35 @@
 <template>
   <div class="generated-testcase-list">
     <div class="page-header">
-      <h2>AI生成用例记录</h2>
+      <h2>{{ $t('generatedTestCases.title') }}</h2>
     </div>
 
     <div class="filters-section">
       <div class="filter-card">
         <div class="filter-group">
-          <label>状态筛选:</label>
+          <label>{{ $t('generatedTestCases.statusFilter') }}</label>
           <select v-model="selectedStatus" @change="loadTasks" class="filter-select">
-            <option value="">全部状态</option>
-            <option value="pending">需求分析中</option>
-            <option value="generating">用例编写中</option>
-            <option value="reviewing">用例评审中</option>
-            <option value="completed">已完成</option>
-            <option value="failed">失败</option>
+            <option value="">{{ $t('generatedTestCases.allStatus') }}</option>
+            <option value="pending">{{ $t('generatedTestCases.statusPending') }}</option>
+            <option value="generating">{{ $t('generatedTestCases.statusGenerating') }}</option>
+            <option value="reviewing">{{ $t('generatedTestCases.statusReviewing') }}</option>
+            <option value="completed">{{ $t('generatedTestCases.statusCompleted') }}</option>
+            <option value="failed">{{ $t('generatedTestCases.statusFailed') }}</option>
           </select>
         </div>
 
         <div class="filter-actions">
-          <button 
-            v-if="selectedTasks.length > 0" 
-            class="batch-delete-btn" 
+          <button
+            v-if="selectedTasks.length > 0"
+            class="batch-delete-btn"
             @click="batchDeleteTasks"
             :disabled="isDeleting">
-            <span v-if="isDeleting">🗑️ 删除中...</span>
-            <span v-else>🗑️ 批量删除 ({{ selectedTasks.length }})</span>
+            <span v-if="isDeleting">{{ $t('generatedTestCases.deleting') }}</span>
+            <span v-else>{{ $t('generatedTestCases.batchDelete', { count: selectedTasks.length }) }}</span>
           </button>
           <button class="refresh-btn" @click="loadTasks" :disabled="isLoading">
-            <span v-if="isLoading">🔄 加载中...</span>
-            <span v-else>🔄 刷新</span>
+            <span v-if="isLoading">{{ $t('generatedTestCases.loading') }}</span>
+            <span v-else>{{ $t('generatedTestCases.refresh') }}</span>
           </button>
         </div>
       </div>
@@ -40,19 +40,19 @@
       <div class="stats-card">
         <div class="stat-item">
           <span class="stat-number">{{ allStats.total }}</span>
-          <span class="stat-label">任务总数</span>
+          <span class="stat-label">{{ $t('generatedTestCases.totalTasks') }}</span>
         </div>
         <div class="stat-item">
           <span class="stat-number">{{ allStats.completed }}</span>
-          <span class="stat-label">已完成</span>
+          <span class="stat-label">{{ $t('generatedTestCases.completedCount') }}</span>
         </div>
         <div class="stat-item">
           <span class="stat-number">{{ allStats.running }}</span>
-          <span class="stat-label">进行中</span>
+          <span class="stat-label">{{ $t('generatedTestCases.runningCount') }}</span>
         </div>
         <div class="stat-item">
           <span class="stat-number">{{ allStats.failed }}</span>
-          <span class="stat-label">失败</span>
+          <span class="stat-label">{{ $t('generatedTestCases.failedCount') }}</span>
         </div>
       </div>
     </div>
@@ -60,13 +60,13 @@
     <!-- AI任务列表 -->
     <div class="testcases-section">
       <div v-if="isLoading" class="loading-state">
-        <p>🔄 正在加载任务列表...</p>
+        <p>{{ $t('generatedTestCases.loadingTasks') }}</p>
       </div>
 
       <div v-else-if="tasks.length === 0" class="empty-state">
         <div class="empty-icon">📝</div>
-        <h3>暂无生成任务</h3>
-        <p>还没有AI生成用例任务，去<router-link to="/requirement-analysis">AI用例生成</router-link>页面创建一个任务吧！</p>
+        <h3>{{ $t('generatedTestCases.noTasks') }}</h3>
+        <p>{{ $t('generatedTestCases.emptyHint') }}<router-link to="/requirement-analysis">{{ $t('generatedTestCases.aiGeneration') }}</router-link>{{ $t('generatedTestCases.createTask') }}</p>
       </div>
 
       <div v-else class="testcases-table">
@@ -78,13 +78,13 @@
               :checked="isAllSelected"
               class="task-checkbox">
           </div>
-          <div class="header-cell serial-cell">序号</div>
-          <div class="header-cell task-id-cell">任务ID</div>
-          <div class="header-cell requirement-name-cell">关联需求</div>
-          <div class="header-cell status-cell">状态</div>
-          <div class="header-cell count-cell">用例条数</div>
-          <div class="header-cell time-cell">生成时间</div>
-          <div class="header-cell action-cell">操作</div>
+          <div class="header-cell serial-cell">{{ $t('generatedTestCases.serialNumber') }}</div>
+          <div class="header-cell task-id-cell">{{ $t('generatedTestCases.taskId') }}</div>
+          <div class="header-cell requirement-name-cell">{{ $t('generatedTestCases.requirement') }}</div>
+          <div class="header-cell status-cell">{{ $t('generatedTestCases.status') }}</div>
+          <div class="header-cell count-cell">{{ $t('generatedTestCases.caseCount') }}</div>
+          <div class="header-cell time-cell">{{ $t('generatedTestCases.generationTime') }}</div>
+          <div class="header-cell action-cell">{{ $t('generatedTestCases.actions') }}</div>
         </div>
         
         <div class="table-body">
@@ -116,22 +116,22 @@
             <div class="body-cell time-cell">{{ formatDateTime(task.created_at) }}</div>
             <div class="body-cell action-cell">
               <div class="action-buttons">
-                <button 
-                  class="view-detail-btn" 
+                <button
+                  class="view-detail-btn"
                   @click="viewTaskDetail(task)">
-                  📖 查看详情
+                  {{ $t('generatedTestCases.viewDetail') }}
                 </button>
-                <button 
+                <button
                   v-if="task.status === 'completed'"
-                  class="adopt-btn" 
+                  class="adopt-btn"
                   @click="batchAdoptTask(task)">
-                  ✅ 一键采纳
+                  {{ $t('generatedTestCases.batchAdopt') }}
                 </button>
-                <button 
+                <button
                   v-if="task.status === 'completed'"
-                  class="discard-btn" 
+                  class="discard-btn"
                   @click="batchDiscardTask(task)">
-                  ❌ 一键弃用
+                  {{ $t('generatedTestCases.batchDiscard') }}
                 </button>
               </div>
             </div>
@@ -149,21 +149,21 @@
       <div class="pagination-controls">
         <!-- 每页条数选择 -->
         <div class="page-size-selector">
-          <label>每页显示：</label>
+          <label>{{ $t('generatedTestCases.pageSize') }}</label>
           <select v-model="pagination.pageSize" @change="onPageSizeChange">
             <option v-for="size in pagination.pageSizeOptions" :key="size" :value="size">
-              {{ size }} 条
+              {{ $t('generatedTestCases.pageSizeUnit', { size: size }) }}
             </option>
           </select>
         </div>
-        
+
         <!-- 分页按钮 -->
         <div class="pagination-buttons">
-          <button 
-            class="page-btn" 
+          <button
+            class="page-btn"
             :disabled="pagination.currentPage <= 1"
             @click="goToPage(pagination.currentPage - 1)">
-            上一页
+            {{ $t('generatedTestCases.previousPage') }}
           </button>
           
           <!-- 页码显示 -->
@@ -180,25 +180,25 @@
             </span>
           </div>
           
-          <button 
-            class="page-btn" 
+          <button
+            class="page-btn"
             :disabled="pagination.currentPage >= totalPages"
             @click="goToPage(pagination.currentPage + 1)">
-            下一页
+            {{ $t('generatedTestCases.nextPage') }}
           </button>
         </div>
-        
+
         <!-- 页码跳转 -->
         <div class="page-jumper">
-          <label>跳转到：</label>
-          <input 
-            v-model="jumpPage" 
-            type="number" 
-            :min="1" 
+          <label>{{ $t('generatedTestCases.jumpTo') }}</label>
+          <input
+            v-model="jumpPage"
+            type="number"
+            :min="1"
             :max="totalPages"
             @keyup.enter="jumpToPage"
-            placeholder="页码">
-          <button class="jump-btn" @click="jumpToPage">跳转</button>
+            :placeholder="$t('generatedTestCases.pageNumber')">
+          <button class="jump-btn" @click="jumpToPage">{{ $t('generatedTestCases.jump') }}</button>
         </div>
       </div>
     </div>
@@ -212,51 +212,51 @@
         </div>
         <div class="modal-body">
           <div class="detail-item">
-            <label>用例编号:</label>
+            <label>{{ $t('generatedTestCases.caseNumber') }}</label>
             <span>{{ selectedTestCaseDetail.case_id }}</span>
           </div>
           <div class="detail-item">
-            <label>关联需求:</label>
+            <label>{{ $t('generatedTestCases.relatedRequirement') }}</label>
             <span>{{ selectedTestCaseDetail.requirement_name }} ({{ selectedTestCaseDetail.requirement_id_display }})</span>
           </div>
           <div class="detail-item">
-            <label>优先级:</label>
+            <label>{{ $t('generatedTestCases.priority') }}</label>
             <span class="priority-tag" :class="selectedTestCaseDetail.priority.toLowerCase()">
               {{ selectedTestCaseDetail.priority_display }}
             </span>
           </div>
           <div class="detail-item">
-            <label>状态:</label>
+            <label>{{ $t('generatedTestCases.status') }}</label>
             <span class="status-tag" :class="selectedTestCaseDetail.status">
               {{ selectedTestCaseDetail.status_display }}
             </span>
           </div>
           <div class="detail-item">
-            <label>前置条件:</label>
+            <label>{{ $t('generatedTestCases.preconditions') }}</label>
             <p>{{ selectedTestCaseDetail.precondition }}</p>
           </div>
           <div class="detail-item">
-            <label>测试步骤:</label>
+            <label>{{ $t('generatedTestCases.testSteps') }}</label>
             <p class="test-steps" v-html="selectedTestCaseDetail.test_steps"></p>
           </div>
           <div class="detail-item">
-            <label>预期结果:</label>
+            <label>{{ $t('generatedTestCases.expectedResult') }}</label>
             <p v-html="selectedTestCaseDetail.expected_result"></p>
           </div>
           <div class="detail-item" v-if="selectedTestCaseDetail.review_comments">
-            <label>评审意见:</label>
+            <label>{{ $t('generatedTestCases.reviewComments') }}</label>
             <p>{{ selectedTestCaseDetail.review_comments }}</p>
           </div>
           <div class="detail-item">
-            <label>生成AI:</label>
+            <label>{{ $t('generatedTestCases.generatedAI') }}</label>
             <span>{{ selectedTestCaseDetail.generated_by_ai }}</span>
           </div>
           <div class="detail-item" v-if="selectedTestCaseDetail.reviewed_by_ai">
-            <label>评审AI:</label>
+            <label>{{ $t('generatedTestCases.reviewedAI') }}</label>
             <span>{{ selectedTestCaseDetail.reviewed_by_ai }}</span>
           </div>
           <div class="detail-item">
-            <label>生成时间:</label>
+            <label>{{ $t('generatedTestCases.generatedTime') }}</label>
             <span>{{ formatDateTime(selectedTestCaseDetail.created_at) }}</span>
           </div>
         </div>
@@ -267,110 +267,110 @@
     <div v-if="showAdoptModal" class="testcase-detail-modal" @click="closeAdoptModal">
       <div class="modal-content large-modal" @click.stop>
         <div class="modal-header">
-          <h3>采纳测试用例</h3>
+          <h3>{{ $t('generatedTestCases.adoptModalTitle') }}</h3>
           <button class="close-btn" @click="closeAdoptModal">×</button>
         </div>
         <div class="modal-body">
           <form class="adopt-form">
             <div class="form-row">
               <div class="form-group">
-                <label>用例标题:</label>
-                <input v-model="adoptForm.title" type="text" placeholder="请输入用例标题" />
+                <label>{{ $t('generatedTestCases.caseTitle') }}</label>
+                <input v-model="adoptForm.title" type="text" :placeholder="$t('generatedTestCases.caseTitlePlaceholder')" />
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
-                <label>用例描述:</label>
-                <textarea v-model="adoptForm.description" rows="3" placeholder="请输入用例描述"></textarea>
+                <label>{{ $t('generatedTestCases.caseDescription') }}</label>
+                <textarea v-model="adoptForm.description" rows="3" :placeholder="$t('generatedTestCases.caseDescriptionPlaceholder')"></textarea>
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
-                <label>归属项目: <span class="required">*</span></label>
+                <label>{{ $t('generatedTestCases.belongsToProject') }} <span class="required">*</span></label>
                 <select v-model="adoptForm.project_id" @change="onAdoptProjectChange">
-                  <option value="">请选择项目</option>
+                  <option value="">{{ $t('generatedTestCases.selectProject') }}</option>
                   <option v-for="project in projects" :key="project.id" :value="project.id">
                     {{ project.name }}
                   </option>
                 </select>
               </div>
               <div class="form-group">
-                <label>关联版本: <span class="required">*</span></label>
+                <label>{{ $t('generatedTestCases.relatedVersion') }} <span class="required">*</span></label>
                 <select v-model="adoptForm.version_id">
-                  <option value="">请选择版本</option>
+                  <option value="">{{ $t('generatedTestCases.selectVersion') }}</option>
                   <option v-for="version in availableVersions" :key="version.id" :value="version.id">
-                    {{ version.name }}{{ version.is_baseline ? ' (基线)' : '' }}
+                    {{ version.name }}{{ version.is_baseline ? $t('generatedTestCases.baseline') : '' }}
                   </option>
                 </select>
                 <small class="form-hint">
-                  {{ adoptForm.project_id ? 
-                      `显示项目"${getProjectName(adoptForm.project_id)}"的版本` : 
-                      '显示所有版本，选择项目后将过滤为项目版本' }}
+                  {{ adoptForm.project_id ?
+                      $t('generatedTestCases.showingProjectVersions', { project: getProjectName(adoptForm.project_id) }) :
+                      $t('generatedTestCases.showingAllVersions') }}
                 </small>
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
-                <label>优先级:</label>
+                <label>{{ $t('generatedTestCases.priority') }}</label>
                 <select v-model="adoptForm.priority">
-                  <option value="low">低</option>
-                  <option value="medium">中</option>
-                  <option value="high">高</option>
-                  <option value="critical">紧急</option>
+                  <option value="low">{{ $t('generatedTestCases.priorityLow') }}</option>
+                  <option value="medium">{{ $t('generatedTestCases.priorityMedium') }}</option>
+                  <option value="high">{{ $t('generatedTestCases.priorityHigh') }}</option>
+                  <option value="critical">{{ $t('generatedTestCases.priorityCritical') }}</option>
                 </select>
               </div>
               <div class="form-group">
-                <label>测试类型:</label>
+                <label>{{ $t('generatedTestCases.testType') }}</label>
                 <select v-model="adoptForm.test_type">
-                  <option value="functional">功能测试</option>
-                  <option value="integration">集成测试</option>
-                  <option value="api">API测试</option>
-                  <option value="ui">UI测试</option>
-                  <option value="performance">性能测试</option>
-                  <option value="security">安全测试</option>
+                  <option value="functional">{{ $t('generatedTestCases.testTypeFunctional') }}</option>
+                  <option value="integration">{{ $t('generatedTestCases.testTypeIntegration') }}</option>
+                  <option value="api">{{ $t('generatedTestCases.testTypeAPI') }}</option>
+                  <option value="ui">{{ $t('generatedTestCases.testTypeUI') }}</option>
+                  <option value="performance">{{ $t('generatedTestCases.testTypePerformance') }}</option>
+                  <option value="security">{{ $t('generatedTestCases.testTypeSecurity') }}</option>
                 </select>
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
-                <label>状态:</label>
+                <label>{{ $t('generatedTestCases.status') }}</label>
                 <select v-model="adoptForm.status">
-                  <option value="draft">草稿</option>
-                  <option value="active">激活</option>
+                  <option value="draft">{{ $t('generatedTestCases.statusDraft') }}</option>
+                  <option value="active">{{ $t('generatedTestCases.statusActive') }}</option>
                 </select>
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
-                <label>前置条件:</label>
-                <textarea v-model="adoptForm.preconditions" rows="3" placeholder="请输入前置条件"></textarea>
+                <label>{{ $t('generatedTestCases.preconditions') }}</label>
+                <textarea v-model="adoptForm.preconditions" rows="3" :placeholder="$t('generatedTestCases.preconditionsPlaceholder')"></textarea>
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
-                <label>操作步骤:</label>
-                <textarea v-model="adoptForm.steps" rows="6" placeholder="请输入详细的操作步骤"></textarea>
+                <label>{{ $t('generatedTestCases.operationSteps') }}</label>
+                <textarea v-model="adoptForm.steps" rows="6" :placeholder="$t('generatedTestCases.operationStepsPlaceholder')"></textarea>
               </div>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
-                <label>预期结果:</label>
-                <textarea v-model="adoptForm.expected_result" rows="3" placeholder="请输入预期结果"></textarea>
+                <label>{{ $t('generatedTestCases.expectedResult') }}</label>
+                <textarea v-model="adoptForm.expected_result" rows="3" :placeholder="$t('generatedTestCases.expectedResultPlaceholder')"></textarea>
               </div>
             </div>
-            
+
             <div class="form-actions">
               <button type="button" class="confirm-btn" @click="confirmAdopt" :disabled="isAdopting">
-                {{ isAdopting ? '正在采纳...' : '确认采纳' }}
+                {{ isAdopting ? $t('generatedTestCases.adopting') : $t('generatedTestCases.confirmAdopt') }}
               </button>
-              <button type="button" class="cancel-btn" @click="closeAdoptModal">取消</button>
+              <button type="button" class="cancel-btn" @click="closeAdoptModal">{{ $t('generatedTestCases.cancel') }}</button>
             </div>
           </form>
         </div>
@@ -381,7 +381,7 @@
 
 <script>
 import api from '@/utils/api'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 
 export default {
   name: 'GeneratedTestCaseList',
@@ -451,7 +451,7 @@ export default {
     paginationInfo() {
       const start = (this.pagination.currentPage - 1) * this.pagination.pageSize + 1
       const end = Math.min(this.pagination.currentPage * this.pagination.pageSize, this.pagination.total)
-      return `显示 ${start}-${end} 条，共 ${this.pagination.total} 条`
+      return this.$t('generatedTestCases.paginationInfo', { start, end, total: this.pagination.total })
     },
     
     // 是否全选
@@ -470,7 +470,7 @@ export default {
     async loadTasks() {
       this.isLoading = true
       try {
-        let url = '/requirement-analysis/testcase-generation/'
+        let url = '/requirement-analysis/api/testcase-generation/'
         const params = new URLSearchParams()
         
         // 添加分页参数
@@ -499,7 +499,7 @@ export default {
         this.updateStats()
         
       } catch (error) {
-        console.error('加载任务列表失败:', error)
+        console.error(this.$t('generatedTestCases.loadTasksFailed'), error)
         this.tasks = []
         this.pagination.total = 0
       } finally {
@@ -541,22 +541,11 @@ export default {
     // 批量删除任务
     async batchDeleteTasks() {
       if (this.selectedTasks.length === 0) {
-        ElMessage.warning('请先选择要删除的任务')
+        ElMessage.warning(this.$t('generatedTestCases.selectTasksFirst'))
         return
       }
 
-      try {
-        await ElMessageBox.confirm(
-          `确定要删除选中的 ${this.selectedTasks.length} 个任务吗？此操作不可恢复。`,
-          '确认删除',
-          {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning',
-            confirmButtonClass: 'el-button--danger'
-          }
-        )
-      } catch {
+      if (!confirm(this.$t('generatedTestCases.batchDeleteConfirm', { count: this.selectedTasks.length }))) {
         return
       }
 
@@ -568,7 +557,7 @@ export default {
         // 逐个删除选中的任务
         for (const taskId of this.selectedTasks) {
           try {
-            await api.delete(`/requirement-analysis/testcase-generation/${taskId}/`)
+            await api.delete(`/requirement-analysis/api/testcase-generation/${taskId}/`)
             successCount++
           } catch (error) {
             console.error(`删除任务 ${taskId} 失败:`, error)
@@ -578,9 +567,9 @@ export default {
 
         // 显示删除结果
         if (successCount > 0) {
-          ElMessage.success(`成功删除 ${successCount} 个任务${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+          ElMessage.success(this.$t('generatedTestCases.deleteSuccess', { success: successCount, failed: failCount }))
         } else {
-          ElMessage.error('删除失败')
+          ElMessage.error(this.$t('generatedTestCases.deleteFailed'))
         }
 
         // 清空选择并重新加载列表
@@ -588,8 +577,8 @@ export default {
         this.loadTasks()
 
       } catch (error) {
-        console.error('批量删除失败:', error)
-        ElMessage.error('批量删除失败: ' + (error.message || '未知错误'))
+        console.error(this.$t('generatedTestCases.batchDeleteFailed'), error)
+        ElMessage.error(this.$t('generatedTestCases.batchDeleteFailed') + ': ' + (error.message || this.$t('generatedTestCases.unknownError')))
       } finally {
         this.isDeleting = false
       }
@@ -604,7 +593,7 @@ export default {
     async loadAllStats() {
       try {
         // 构建统计请求URL
-        let url = '/requirement-analysis/testcase-generation/'
+        let url = '/requirement-analysis/api/testcase-generation/'
         const params = new URLSearchParams()
         
         // 获取所有数据来进行统计
@@ -628,7 +617,7 @@ export default {
         this.allStats.failed = allTasks.filter(t => t.status === 'failed').length
         
       } catch (error) {
-        console.error('获取统计数据失败:', error)
+        console.error(this.$t('generatedTestCases.loadStatsFailed'), error)
         // 如果获取统计失败，使用分页信息的总数作为备选
         this.allStats.total = this.pagination.total || 0
         this.allStats.completed = 0
@@ -639,11 +628,11 @@ export default {
 
     getStatusText(status) {
       const statusMap = {
-        'pending': '需求分析中',
-        'generating': '用例编写中', 
-        'reviewing': '用例评审中',
-        'completed': '已完成',
-        'failed': '失败'
+        'pending': this.$t('generatedTestCases.statusPending'),
+        'generating': this.$t('generatedTestCases.statusGenerating'),
+        'reviewing': this.$t('generatedTestCases.statusReviewing'),
+        'completed': this.$t('generatedTestCases.statusCompleted'),
+        'failed': this.$t('generatedTestCases.statusFailed')
       }
       return statusMap[status] || status
     },
@@ -703,7 +692,7 @@ export default {
 
     viewTaskDetail(task) {
       if (['pending', 'generating', 'reviewing'].includes(task.status)) {
-        ElMessage.info('用例正在生成中，请稍后查看！')
+        ElMessage.info(this.$t('generatedTestCases.generatingWait'))
         return
       }
       
@@ -718,55 +707,36 @@ export default {
     },
 
     async batchAdoptTask(task) {
-      try {
-        await ElMessageBox.confirm(
-          `确定要一键采纳任务"${task.title}"的所有测试用例吗？`,
-          '确认采纳',
-          {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'success'
-          }
-        )
-      } catch {
+      if (!confirm(this.$t('generatedTestCases.adoptConfirm', { title: task.title }))) {
         return
       }
 
       try {
         // 调用后端API批量采纳该任务的所有测试用例
-        await api.post(`/requirement-analysis/testcase-generation/${task.task_id}/batch-adopt/`)
-        ElMessage.success('一键采纳成功！所有测试用例已导入到测试用例列表')
+        // await api.post(`/requirement-analysis/api/testcase-generation/${task.task_id}/batch-adopt/`)
+        await api.post(`/requirement-analysis/api/testcase-generation/${task.task_id}/batch_adopt/`)
+        ElMessage.success(this.$t('generatedTestCases.adoptSuccess'))
         this.loadTasks()
       } catch (error) {
-        console.error('一键采纳失败:', error)
-        ElMessage.error('一键采纳失败: ' + (error.response?.data?.message || error.message))
+        console.error(this.$t('generatedTestCases.adoptFailed'), error)
+        ElMessage.error(this.$t('generatedTestCases.adoptFailed') + ': ' + (error.response?.data?.message || error.message))
       }
     },
 
     async batchDiscardTask(task) {
-      try {
-        await ElMessageBox.confirm(
-          `确定要一键弃用任务"${task.title}"的所有测试用例吗？此操作不可恢复。`,
-          '确认弃用',
-          {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning',
-            confirmButtonClass: 'el-button--danger'
-          }
-        )
-      } catch {
+      if (!confirm(this.$t('generatedTestCases.discardConfirm', { title: task.title }))) {
         return
       }
 
       try {
         // 调用后端API批量删除该任务的所有测试用例
-        await api.post(`/requirement-analysis/testcase-generation/${task.task_id}/batch-discard/`)
-        ElMessage.success('一键弃用成功！该任务的所有测试用例已删除')
+        // await api.post(`/requirement-analysis/api/testcase-generation/${task.task_id}/batch-discard/`)
+        await api.post(`/requirement-analysis/api/testcase-generation/${task.task_id}/batch_discard/`)
+        ElMessage.success(this.$t('generatedTestCases.discardSuccess'))
         this.loadTasks()
       } catch (error) {
-        console.error('一键弃用失败:', error)
-        ElMessage.error('一键弃用失败: ' + (error.response?.data?.message || error.message))
+        console.error(this.$t('generatedTestCases.discardFailed'), error)
+        ElMessage.error(this.$t('generatedTestCases.discardFailed') + ': ' + (error.response?.data?.message || error.message))
       }
     },
 
@@ -788,7 +758,7 @@ export default {
         const response = await api.get('/projects/list/')
         this.projects = response.data.results || []
       } catch (error) {
-        console.error('获取项目列表失败:', error)
+        console.error(this.$t('generatedTestCases.fetchProjectsFailed'), error)
       }
     },
 
@@ -798,7 +768,7 @@ export default {
         const response = await api.get('/versions/')
         this.allVersions = response.data.results || response.data || []
       } catch (error) {
-        console.error('获取所有版本列表失败:', error)
+        console.error(this.$t('generatedTestCases.fetchVersionsFailed'), error)
         this.allVersions = []
       }
     },
@@ -809,12 +779,12 @@ export default {
         this.projectVersions = []
         return
       }
-      
+
       try {
         const response = await api.get(`/versions/projects/${projectId}/versions/`)
         this.projectVersions = response.data || []
       } catch (error) {
-        console.error('获取项目版本失败:', error)
+        console.error(this.$t('generatedTestCases.fetchProjectVersionsFailed'), error)
         this.projectVersions = []
       }
     },
@@ -865,93 +835,82 @@ export default {
     async confirmAdopt() {
       // 必填项验证
       if (!this.adoptForm.project_id) {
-        ElMessage.warning('请选择归属项目')
+        alert(this.$t('generatedTestCases.selectProjectRequired'))
         return
       }
 
       if (!this.adoptForm.version_id) {
-        ElMessage.warning('请选择关联版本')
+        alert(this.$t('generatedTestCases.selectVersionRequired'))
         return
       }
 
       if (!this.adoptForm.title.trim()) {
-        ElMessage.warning('请输入用例标题')
+        alert(this.$t('generatedTestCases.enterCaseTitle'))
         return
       }
 
       if (!this.adoptForm.expected_result.trim()) {
-        ElMessage.warning('请输入预期结果')
+        alert(this.$t('generatedTestCases.enterExpectedResult'))
         return
       }
-
+      
       this.isAdopting = true
-
+      
       try {
         // 准备提交的数据，将单选版本转换为数组格式（如果API需要）
         const submitData = { ...this.adoptForm }
-
+        
         // 确保优先级有默认值
         if (!submitData.priority) {
           submitData.priority = 'low'
         }
-
+        
         if (submitData.version_id) {
           submitData.version_ids = [submitData.version_id]
         }
         delete submitData.version_id
-
+        
         // 调用API创建测试用例
         await api.post('/testcases/', submitData)
-
+        
         // 将AI生成的用例状态更新为"已采纳"
         try {
-          await api.patch(`/requirement-analysis/test-cases/${this.currentAdoptingTestCase.id}/`, {
+          await api.patch(`/requirement-analysis/api/test-cases/${this.currentAdoptingTestCase.id}/`, {
             status: 'adopted'
           })
         } catch (updateError) {
-          console.warn('更新AI用例状态失败:', updateError)
+          console.warn(this.$t('generatedTestCases.updateStatusFailed'), updateError)
           // 即使状态更新失败，用例已成功导入，仍然提示成功
         }
 
-        ElMessage.success('用例采纳成功！已导入到测试用例列表')
+        alert(this.$t('generatedTestCases.adoptModalSuccess'))
         this.closeAdoptModal()
         this.loadTestCases() // 重新加载列表
 
       } catch (error) {
-        console.error('采纳用例失败:', error)
-        ElMessage.error('采纳用例失败，请重试')
-      } finally {
+        console.error(this.$t('generatedTestCases.adoptCaseFailed'), error)
+        alert(this.$t('generatedTestCases.adoptCaseFailedRetry'))
+      } finally{
         this.isAdopting = false
       }
     },
 
     // 弃用测试用例
     async discardTestCase(testCase) {
-      try {
-        await ElMessageBox.confirm(
-          `确定要弃用测试用例"${testCase.title}"吗？此操作不可恢复。`,
-          '确认弃用',
-          {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning',
-            confirmButtonClass: 'el-button--danger'
-          }
-        )
-      } catch {
+      if (!confirm(this.$t('generatedTestCases.discardCaseConfirm', { title: testCase.title }))) {
         return
       }
 
       try {
         // 将状态更新为"已弃用"
-        await api.patch(`/requirement-analysis/test-cases/${testCase.id}/`, {
+        await api.patch(`/requirement-analysis/api/test-cases/${testCase.id}/`, {
           status: 'discarded'
         })
-        ElMessage.success('用例已弃用')
+        alert(this.$t('generatedTestCases.caseDiscarded'))
         this.loadTestCases() // 重新加载列表，已弃用的用例会被过滤掉
       } catch (error) {
-        console.error('弃用用例失败:', error)
-        ElMessage.error('弃用用例失败，请重试')
+        console.error(this.$t('generatedTestCases.discardCaseFailed'), error)
+        alert(this.$t('generatedTestCases.discardCaseFailedRetry'))
       }
     },
 
@@ -988,7 +947,7 @@ export default {
         this.jumpPage = ''
         this.loadTasks()
       } else {
-        ElMessage.warning(`请输入 1-${this.totalPages} 之间的页码`)
+        alert(`请输入 1-${this.totalPages} 之间的页码`)
       }
     },
 

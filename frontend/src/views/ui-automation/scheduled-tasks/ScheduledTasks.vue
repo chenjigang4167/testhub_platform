@@ -1,10 +1,10 @@
 <template>
   <div class="scheduled-tasks">
     <div class="header">
-      <h3>UI自动化定时任务</h3>
+      <h3>{{ $t('uiAutomation.scheduledTask.title') }}</h3>
       <el-button type="primary" @click="handleCreateClick">
         <el-icon><Plus /></el-icon>
-        新建定时任务
+        {{ $t('uiAutomation.scheduledTask.newTask') }}
       </el-button>
     </div>
 
@@ -12,29 +12,29 @@
     <div class="filters">
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-select v-model="filters.task_type" placeholder="任务类型" clearable>
-            <el-option label="测试套件执行" value="TEST_SUITE" />
-            <el-option label="测试用例执行" value="TEST_CASE" />
+          <el-select v-model="filters.task_type" :placeholder="$t('uiAutomation.scheduledTask.taskType')" clearable>
+            <el-option :label="$t('uiAutomation.scheduledTask.taskTypes.testSuite')" value="TEST_SUITE" />
+            <el-option :label="$t('uiAutomation.scheduledTask.taskTypes.testCase')" value="TEST_CASE" />
           </el-select>
         </el-col>
         <el-col :span="6">
-          <el-select v-model="filters.trigger_type" placeholder="触发器类型" clearable>
-            <el-option label="Cron表达式" value="CRON" />
-            <el-option label="固定间隔" value="INTERVAL" />
-            <el-option label="单次执行" value="ONCE" />
+          <el-select v-model="filters.trigger_type" :placeholder="$t('uiAutomation.scheduledTask.triggerType')" clearable>
+            <el-option :label="$t('uiAutomation.scheduledTask.triggerTypes.cron')" value="CRON" />
+            <el-option :label="$t('uiAutomation.scheduledTask.triggerTypes.interval')" value="INTERVAL" />
+            <el-option :label="$t('uiAutomation.scheduledTask.triggerTypes.once')" value="ONCE" />
           </el-select>
         </el-col>
         <el-col :span="6">
-          <el-select v-model="filters.status" placeholder="任务状态" clearable>
-            <el-option label="激活" value="ACTIVE" />
-            <el-option label="暂停" value="PAUSED" />
-            <el-option label="已完成" value="COMPLETED" />
-            <el-option label="失败" value="FAILED" />
+          <el-select v-model="filters.status" :placeholder="$t('uiAutomation.scheduledTask.status')" clearable>
+            <el-option :label="$t('uiAutomation.scheduledTask.statusTypes.active')" value="ACTIVE" />
+            <el-option :label="$t('uiAutomation.scheduledTask.statusTypes.paused')" value="PAUSED" />
+            <el-option :label="$t('uiAutomation.scheduledTask.statusTypes.completed')" value="COMPLETED" />
+            <el-option :label="$t('uiAutomation.scheduledTask.statusTypes.failed')" value="FAILED" />
           </el-select>
         </el-col>
         <el-col :span="6">
-          <el-button @click="resetFilters">重置</el-button>
-          <el-button type="primary" @click="loadTasks">搜索</el-button>
+          <el-button @click="resetFilters">{{ $t('uiAutomation.common.reset') }}</el-button>
+          <el-button type="primary" @click="loadTasks">{{ $t('uiAutomation.common.search') }}</el-button>
         </el-col>
       </el-row>
     </div>
@@ -42,75 +42,75 @@
     <!-- 任务列表 -->
     <div class="task-list">
       <el-table :data="tasks" v-loading="loading">
-        <el-table-column prop="name" label="任务名称" min-width="200" />
-        <el-table-column prop="task_type" label="任务类型" width="120">
+        <el-table-column prop="name" :label="$t('uiAutomation.scheduledTask.taskName')" min-width="200" />
+        <el-table-column prop="task_type" :label="$t('uiAutomation.scheduledTask.taskType')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.task_type === 'TEST_SUITE' ? 'success' : 'primary'">
-              {{ scope.row.task_type === 'TEST_SUITE' ? '测试套件' : '测试用例' }}
+              {{ scope.row.task_type === 'TEST_SUITE' ? $t('uiAutomation.scheduledTask.taskTypes.testSuiteShort') : $t('uiAutomation.scheduledTask.taskTypes.testCaseShort') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="notification_type_display" label="通知类型" width="130">
+        <el-table-column prop="notification_type_display" :label="$t('uiAutomation.scheduledTask.notificationType')" width="130">
           <template #default="scope">
             <el-tag v-if="scope.row.notification_type_display && scope.row.notification_type_display !== '-'"
                     :type="getNotificationTypeTagType(scope.row.notification_type_display)"
                     size="small">
-              {{ scope.row.notification_type_display }}
+              {{ getNotificationTypeText(scope.row.notification_type) }}
             </el-tag>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="trigger_type" label="触发器类型" width="120">
+        <el-table-column prop="trigger_type" :label="$t('uiAutomation.scheduledTask.triggerType')" width="120">
           <template #default="scope">
             <el-tag>
-              {{ scope.row.trigger_type === 'CRON' ? 'Cron' : scope.row.trigger_type === 'INTERVAL' ? '间隔' : '单次' }}
+              {{ getTriggerTypeText(scope.row.trigger_type) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" :label="$t('uiAutomation.scheduledTask.status')" width="100">
           <template #default="scope">
             <el-tag :type="scope.row.status === 'ACTIVE' ? 'success' : scope.row.status === 'PAUSED' ? 'warning' : 'info'">
-              {{ scope.row.status === 'ACTIVE' ? '激活' : scope.row.status === 'PAUSED' ? '暂停' : '完成' }}
+              {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="engine" label="执行引擎" width="120">
+        <el-table-column prop="engine" :label="$t('uiAutomation.scheduledTask.executionEngine')" width="120">
           <template #default="scope">
             <el-tag size="small" type="info">
               {{ scope.row.engine === 'playwright' ? 'Playwright' : 'Selenium' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="browser" label="浏览器" width="100">
+        <el-table-column prop="browser" :label="$t('uiAutomation.scheduledTask.browser')" width="100">
           <template #default="scope">
             {{ scope.row.browser || 'chrome' }}
           </template>
         </el-table-column>
-        <el-table-column prop="next_run_time" label="下次执行时间" width="180">
+        <el-table-column prop="next_run_time" :label="$t('uiAutomation.scheduledTask.nextRunTime')" width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.next_run_time) }}
           </template>
         </el-table-column>
-        <el-table-column prop="last_run_time" label="上次执行时间" width="180">
+        <el-table-column prop="last_run_time" :label="$t('uiAutomation.scheduledTask.lastRunTime')" width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.last_run_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column :label="$t('uiAutomation.common.operation')" width="200" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="runTaskNow(scope.row)" :loading="scope.row.running">
-              立即执行
+              {{ $t('uiAutomation.scheduledTask.runNow') }}
             </el-button>
             <el-dropdown @command="(command) => handleTaskAction(command, scope.row)">
               <el-button size="small">
-                更多<el-icon><arrow-down /></el-icon>
+                {{ $t('uiAutomation.scheduledTask.more') }}<el-icon><arrow-down /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="edit">编辑</el-dropdown-item>
-                  <el-dropdown-item command="pause" v-if="scope.row.status === 'ACTIVE'">暂停</el-dropdown-item>
-                  <el-dropdown-item command="resume" v-if="scope.row.status === 'PAUSED'">激活</el-dropdown-item>
-                  <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                  <el-dropdown-item command="edit">{{ $t('uiAutomation.scheduledTask.actions.edit') }}</el-dropdown-item>
+                  <el-dropdown-item command="pause" v-if="scope.row.status === 'ACTIVE'">{{ $t('uiAutomation.scheduledTask.actions.pause') }}</el-dropdown-item>
+                  <el-dropdown-item command="resume" v-if="scope.row.status === 'PAUSED'">{{ $t('uiAutomation.scheduledTask.actions.resume') }}</el-dropdown-item>
+                  <el-dropdown-item command="delete" divided>{{ $t('uiAutomation.scheduledTask.actions.delete') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -135,25 +135,21 @@
     <!-- 创建/编辑对话框 -->
     <el-dialog
       v-model="showCreateDialog"
-      :title="editingTask ? '编辑定时任务' : '新建定时任务'"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
+      :title="editingTask ? $t('uiAutomation.scheduledTask.editTask') : $t('uiAutomation.scheduledTask.createTask')"
       width="800px"
       @close="resetTaskForm"
     >
       <el-form :model="taskForm" label-width="120px">
-        <el-form-item label="任务名称" required>
-          <el-input v-model="taskForm.name" placeholder="请输入任务名称" />
+        <el-form-item :label="$t('uiAutomation.scheduledTask.taskName')" required>
+          <el-input v-model="taskForm.name" :placeholder="$t('uiAutomation.scheduledTask.taskNamePlaceholder')" />
         </el-form-item>
 
-        <el-form-item label="任务描述">
-          <el-input v-model="taskForm.description" type="textarea" placeholder="请输入任务描述" />
+        <el-form-item :label="$t('uiAutomation.scheduledTask.taskDesc')">
+          <el-input v-model="taskForm.description" type="textarea" :placeholder="$t('uiAutomation.scheduledTask.taskDescPlaceholder')" />
         </el-form-item>
 
-        <el-form-item label="关联项目" required>
-          <el-select v-model="taskForm.project" placeholder="请选择项目" @change="onProjectChange">
+        <el-form-item :label="$t('uiAutomation.scheduledTask.relatedProject')" required>
+          <el-select v-model="taskForm.project" :placeholder="$t('uiAutomation.scheduledTask.selectProject')" @change="onProjectChange">
             <el-option
               v-for="project in projects"
               :key="project.id"
@@ -163,16 +159,16 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="任务类型" required>
+        <el-form-item :label="$t('uiAutomation.scheduledTask.taskType')" required>
           <el-radio-group v-model="taskForm.task_type" @change="onTaskTypeChange">
-            <el-radio value="TEST_SUITE">测试套件执行</el-radio>
-            <el-radio value="TEST_CASE">测试用例执行</el-radio>
+            <el-radio value="TEST_SUITE">{{ $t('uiAutomation.scheduledTask.taskTypes.testSuite') }}</el-radio>
+            <el-radio value="TEST_CASE">{{ $t('uiAutomation.scheduledTask.taskTypes.testCase') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
         <!-- 根据任务类型显示不同配置 - 移到任务类型下面 -->
-        <el-form-item v-if="taskForm.task_type === 'TEST_SUITE'" label="测试套件" required>
-          <el-select v-model="taskForm.test_suite" placeholder="请选择测试套件">
+        <el-form-item v-if="taskForm.task_type === 'TEST_SUITE'" :label="$t('uiAutomation.scheduledTask.testSuite')" required>
+          <el-select v-model="taskForm.test_suite" :placeholder="$t('uiAutomation.scheduledTask.selectSuite')">
             <el-option
               v-for="suite in testSuites"
               :key="suite.id"
@@ -182,12 +178,12 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item v-if="taskForm.task_type === 'TEST_CASE'" label="测试用例" required>
+        <el-form-item v-if="taskForm.task_type === 'TEST_CASE'" :label="$t('uiAutomation.scheduledTask.testCase')" required>
           <el-select
             v-model="taskForm.test_cases"
             multiple
             filterable
-            placeholder="请选择测试用例"
+            :placeholder="$t('uiAutomation.scheduledTask.selectTestCase')"
           >
             <el-option
               v-for="testCase in testCases"
@@ -198,90 +194,90 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="触发器类型" required>
+        <el-form-item :label="$t('uiAutomation.scheduledTask.triggerType')" required>
           <el-radio-group v-model="taskForm.trigger_type">
-            <el-radio value="CRON">Cron表达式</el-radio>
-            <el-radio value="INTERVAL">固定间隔</el-radio>
-            <el-radio value="ONCE">单次执行</el-radio>
+            <el-radio value="CRON">{{ $t('uiAutomation.scheduledTask.triggerTypes.cron') }}</el-radio>
+            <el-radio value="INTERVAL">{{ $t('uiAutomation.scheduledTask.triggerTypes.interval') }}</el-radio>
+            <el-radio value="ONCE">{{ $t('uiAutomation.scheduledTask.triggerTypes.once') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
         <!-- 根据触发器类型显示不同配置 -->
-        <el-form-item v-if="taskForm.trigger_type === 'CRON'" label="Cron表达式" required>
-          <el-input v-model="taskForm.cron_expression" placeholder="0 0 * * *" />
+        <el-form-item v-if="taskForm.trigger_type === 'CRON'" :label="$t('uiAutomation.scheduledTask.cronExpression')" required>
+          <el-input v-model="taskForm.cron_expression" :placeholder="$t('uiAutomation.scheduledTask.cronPlaceholder')" />
           <div class="cron-help">
             <el-tooltip raw-content placement="top">
               <template #content>
                 <div style="line-height: 1.6; text-align: left;">
-                  <div>Cron表达式格式: 分 时 日 月 周</div>
-                  <div>• 分: 0-59</div>
-                  <div>• 时: 0-23</div>
-                  <div>• 日: 1-31</div>
-                  <div>• 月: 1-12 或 JAN-DEC</div>
-                  <div>• 周: 0-6 或 SUN-SAT (0=周日)</div>
-                  <div style="margin-top: 8px;">常用示例:</div>
-                  <div>• 每天0点: 0 0 * * *</div>
-                  <div>• 每小时: 0 * * * *</div>
-                  <div>• 每周一9点: 0 9 * * 1</div>
-                  <div>• 每月1号0点: 0 0 1 * *</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.format') }}</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.minute') }}</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.hour') }}</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.day') }}</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.month') }}</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.week') }}</div>
+                  <div style="margin-top: 8px;">{{ $t('uiAutomation.scheduledTask.cronHelp.examples') }}</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.everyDay') }}</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.everyHour') }}</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.everyMonday') }}</div>
+                  <div>{{ $t('uiAutomation.scheduledTask.cronHelp.everyMonth') }}</div>
                 </div>
               </template>
-              <span style="cursor: pointer; color: #409EFF;">Cron帮助信息</span>
+              <span style="cursor: pointer; color: #409EFF;">{{ $t('uiAutomation.scheduledTask.cronHelpLink') }}</span>
             </el-tooltip>
           </div>
         </el-form-item>
 
-        <el-form-item v-if="taskForm.trigger_type === 'INTERVAL'" label="间隔时间" required>
+        <el-form-item v-if="taskForm.trigger_type === 'INTERVAL'" :label="$t('uiAutomation.scheduledTask.intervalTime')" required>
           <el-input-number v-model="taskForm.interval_seconds" :min="60" :step="60" />
-          <span class="unit">秒</span>
+          <span class="unit">{{ $t('uiAutomation.scheduledTask.intervalUnit') }}</span>
         </el-form-item>
 
-        <el-form-item v-if="taskForm.trigger_type === 'ONCE'" label="执行时间" required>
+        <el-form-item v-if="taskForm.trigger_type === 'ONCE'" :label="$t('uiAutomation.scheduledTask.executeTime')" required>
           <el-date-picker
             v-model="taskForm.execute_at"
             type="datetime"
-            placeholder="选择执行时间"
+            :placeholder="$t('uiAutomation.scheduledTask.selectExecuteTime')"
           />
         </el-form-item>
 
-        <el-form-item label="执行引擎" required>
+        <el-form-item :label="$t('uiAutomation.scheduledTask.executionEngine')" required>
           <el-radio-group v-model="taskForm.engine">
             <el-radio value="playwright">Playwright</el-radio>
             <el-radio value="selenium">Selenium</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="浏览器类型" required>
-          <el-select v-model="taskForm.browser" placeholder="请选择浏览器">
+        <el-form-item :label="$t('uiAutomation.scheduledTask.browserType')" required>
+          <el-select v-model="taskForm.browser" :placeholder="$t('uiAutomation.scheduledTask.selectBrowser')">
             <el-option label="Chrome" value="chrome" />
             <el-option label="Firefox" value="firefox" />
             <el-option label="Edge" value="edge" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="运行模式">
-          <el-checkbox v-model="taskForm.headless">无头模式（后台运行）</el-checkbox>
+        <el-form-item :label="$t('uiAutomation.scheduledTask.runMode')">
+          <el-checkbox v-model="taskForm.headless">{{ $t('uiAutomation.scheduledTask.headlessMode') }}</el-checkbox>
         </el-form-item>
 
-        <el-form-item label="通知设置">
-          <el-checkbox v-model="taskForm.notify_on_success">执行成功时通知</el-checkbox>
-          <el-checkbox v-model="taskForm.notify_on_failure">执行失败时通知</el-checkbox>
+        <el-form-item :label="$t('uiAutomation.scheduledTask.notificationSettings')">
+          <el-checkbox v-model="taskForm.notify_on_success">{{ $t('uiAutomation.scheduledTask.notifyOnSuccess') }}</el-checkbox>
+          <el-checkbox v-model="taskForm.notify_on_failure">{{ $t('uiAutomation.scheduledTask.notifyOnFailure') }}</el-checkbox>
         </el-form-item>
 
-        <el-form-item v-if="taskForm.notify_on_success || taskForm.notify_on_failure" label="通知类型">
-          <el-select v-model="taskForm.notification_type" placeholder="请选择通知类型">
-            <el-option label="邮箱通知" value="email" />
-            <el-option label="Webhook机器人" value="webhook" />
-            <el-option label="两者都发送" value="both" />
+        <el-form-item v-if="taskForm.notify_on_success || taskForm.notify_on_failure" :label="$t('uiAutomation.scheduledTask.notificationType')">
+          <el-select v-model="taskForm.notification_type" :placeholder="$t('uiAutomation.scheduledTask.selectNotificationType')">
+            <el-option :label="$t('uiAutomation.scheduledTask.notificationTypes.email')" value="email" />
+            <el-option :label="$t('uiAutomation.scheduledTask.notificationTypes.webhook')" value="webhook" />
+            <el-option :label="$t('uiAutomation.scheduledTask.notificationTypes.both')" value="both" />
           </el-select>
         </el-form-item>
 
-        <el-form-item v-if="(taskForm.notify_on_success || taskForm.notify_on_failure) && (taskForm.notification_type === 'email' || taskForm.notification_type === 'both')" label="通知邮箱">
+        <el-form-item v-if="(taskForm.notify_on_success || taskForm.notify_on_failure) && (taskForm.notification_type === 'email' || taskForm.notification_type === 'both')" :label="$t('uiAutomation.scheduledTask.notifyEmails')">
           <el-select
             v-model="taskForm.notify_emails"
             multiple
             filterable
-            placeholder="请选择通知邮箱"
+            :placeholder="$t('uiAutomation.scheduledTask.selectNotifyEmails')"
           >
             <el-option
               v-for="user in users"
@@ -294,9 +290,9 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button @click="showCreateDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
         <el-button type="primary" @click="submitTaskForm" :loading="submitting">
-          {{ editingTask ? '更新' : '创建' }}
+          {{ editingTask ? $t('uiAutomation.messages.success.update') : $t('uiAutomation.messages.success.create') }}
         </el-button>
       </template>
     </el-dialog>
@@ -304,9 +300,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, ArrowDown } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import {
   getScheduledTasks,
   createScheduledTask,
@@ -320,6 +317,8 @@ import {
   getTestCases,
   getUiUsers
 } from '@/api/ui_automation.js'
+
+const { t, locale } = useI18n()
 
 // 数据状态
 const tasks = ref([])
@@ -367,6 +366,37 @@ const taskForm = reactive({
   notify_emails: []
 })
 
+// 获取触发器类型文本
+const getTriggerTypeText = (type) => {
+  const typeMap = {
+    'CRON': t('uiAutomation.scheduledTask.triggerTypes.cronShort'),
+    'INTERVAL': t('uiAutomation.scheduledTask.triggerTypes.intervalShort'),
+    'ONCE': t('uiAutomation.scheduledTask.triggerTypes.onceShort')
+  }
+  return typeMap[type] || type
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+  const statusMap = {
+    'ACTIVE': t('uiAutomation.scheduledTask.statusTypes.active'),
+    'PAUSED': t('uiAutomation.scheduledTask.statusTypes.paused'),
+    'COMPLETED': t('uiAutomation.scheduledTask.statusTypes.completedShort'),
+    'FAILED': t('uiAutomation.scheduledTask.statusTypes.failed')
+  }
+  return statusMap[status] || status
+}
+
+// 获取通知类型文本
+const getNotificationTypeText = (type) => {
+  const typeMap = {
+    'email': t('uiAutomation.scheduledTask.notificationTypes.email'),
+    'webhook': t('uiAutomation.scheduledTask.notificationTypes.webhook'),
+    'both': t('uiAutomation.scheduledTask.notificationTypes.both')
+  }
+  return typeMap[type] || type
+}
+
 // 生命周期
 onMounted(() => {
   loadTasks()
@@ -387,7 +417,7 @@ const loadTasks = async () => {
     tasks.value = response.data.results
     pagination.total = response.data.count
   } catch (error) {
-    ElMessage.error('加载任务列表失败')
+    ElMessage.error(t('uiAutomation.scheduledTask.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -399,7 +429,7 @@ const loadProjects = async () => {
     const response = await getUiProjects()
     projects.value = response.data.results
   } catch (error) {
-    console.error('加载项目列表失败:', error)
+    console.error('Load projects failed:', error)
   }
 }
 
@@ -414,7 +444,7 @@ const loadUsers = async () => {
       display_name: user.first_name ? `${user.first_name}（${user.email}）` : `${user.username}（${user.email}）`
     }))
   } catch (error) {
-    console.error('加载用户列表失败:', error)
+    console.error('Load users failed:', error)
   }
 }
 
@@ -431,7 +461,7 @@ const onProjectChange = async (projectId) => {
     const casesResponse = await getTestCases({ project: projectId })
     testCases.value = casesResponse.data.results
   } catch (error) {
-    console.error('加载项目数据失败:', error)
+    console.error('Load project data failed:', error)
   }
 }
 
@@ -526,18 +556,18 @@ const submitTaskForm = async () => {
 
     if (editingTask.value) {
       await updateScheduledTask(editingTask.value.id, submitData)
-      ElMessage.success('更新任务成功')
+      ElMessage.success(t('uiAutomation.scheduledTask.messages.updateSuccess'))
     } else {
       await createScheduledTask(submitData)
-      ElMessage.success('创建任务成功')
+      ElMessage.success(t('uiAutomation.scheduledTask.messages.createSuccess'))
     }
     showCreateDialog.value = false
     loadTasks()
   } catch (error) {
-    console.error('任务操作失败:', error)
+    console.error('Task operation failed:', error)
     ElMessage.error(error.response?.data?.error ||
                    error.response?.data?.detail ||
-                   (editingTask.value ? '更新任务失败' : '创建任务失败'))
+                   (editingTask.value ? t('uiAutomation.scheduledTask.messages.updateFailed') : t('uiAutomation.scheduledTask.messages.createFailed')))
   } finally {
     submitting.value = false
   }
@@ -548,12 +578,12 @@ const runTaskNow = async (task) => {
   try {
     task.running = true
     await runScheduledTask(task.id)
-    ElMessage.success('任务已开始执行')
+    ElMessage.success(t('uiAutomation.scheduledTask.messages.runSuccess'))
     setTimeout(() => {
       loadTasks()
     }, 2000)
   } catch (error) {
-    ElMessage.error('执行任务失败')
+    ElMessage.error(t('uiAutomation.scheduledTask.messages.runFailed'))
   } finally {
     task.running = false
   }
@@ -563,7 +593,8 @@ const runTaskNow = async (task) => {
 const formatDateTime = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
-  return date.toLocaleString('zh-CN', {
+  const localeStr = locale.value === 'en' ? 'en-US' : 'zh-CN'
+  return date.toLocaleString(localeStr, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -577,8 +608,11 @@ const formatDateTime = (dateString) => {
 const getNotificationTypeTagType = (typeDisplay) => {
   const typeMap = {
     '邮箱通知': '',
+    'Email Notification': '',
     'Webhook机器人': 'primary',
-    '两者都发送': 'warning'
+    'Webhook Robot': 'primary',
+    '两者都发送': 'warning',
+    'Both': 'warning'
   }
   return typeMap[typeDisplay] || 'info'
 }
@@ -636,11 +670,11 @@ const editTask = async (task) => {
 const pauseTask = async (task) => {
   try {
     await pauseScheduledTask(task.id)
-    ElMessage.success('任务已暂停')
+    ElMessage.success(t('uiAutomation.scheduledTask.messages.pauseSuccess'))
     loadTasks()
   } catch (error) {
-    console.error('暂停任务失败:', error)
-    ElMessage.error('暂停任务失败')
+    console.error('Pause task failed:', error)
+    ElMessage.error(t('uiAutomation.scheduledTask.messages.pauseFailed'))
   }
 }
 
@@ -648,27 +682,27 @@ const pauseTask = async (task) => {
 const resumeTask = async (task) => {
   try {
     await resumeScheduledTask(task.id)
-    ElMessage.success('任务已恢复')
+    ElMessage.success(t('uiAutomation.scheduledTask.messages.resumeSuccess'))
     loadTasks()
   } catch (error) {
-    ElMessage.error('恢复任务失败')
+    ElMessage.error(t('uiAutomation.scheduledTask.messages.resumeFailed'))
   }
 }
 
 // 删除任务
 const deleteTask = async (task) => {
   try {
-    await ElMessageBox.confirm('确定要删除这个定时任务吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('uiAutomation.scheduledTask.messages.deleteConfirm'), t('uiAutomation.scheduledTask.messages.deleteConfirmTitle'), {
+      confirmButtonText: t('uiAutomation.common.confirm'),
+      cancelButtonText: t('uiAutomation.common.cancel'),
       type: 'warning'
     })
     await deleteScheduledTask(task.id)
-    ElMessage.success('删除任务成功')
+    ElMessage.success(t('uiAutomation.scheduledTask.messages.deleteSuccess'))
     loadTasks()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除任务失败')
+      ElMessage.error(t('uiAutomation.scheduledTask.messages.deleteFailed'))
     }
   }
 }

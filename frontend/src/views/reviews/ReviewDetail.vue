@@ -181,7 +181,7 @@
     </div>
 
     <!-- 提交评审对话框 -->
-    <el-dialog v-model="reviewDialogVisible" title="提交评审" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="800px">
+    <el-dialog v-model="reviewDialogVisible" title="提交评审" width="800px">
       <el-form :model="reviewForm" label-width="100px">
         <el-form-item label="评审结果" required>
           <el-radio-group v-model="reviewForm.status">
@@ -237,7 +237,7 @@
     </el-dialog>
 
     <!-- 添加意见对话框 -->
-    <el-dialog v-model="commentDialogVisible" title="添加评审意见" :close-on-click-modal="false" width="600px">
+    <el-dialog v-model="commentDialogVisible" title="添加评审意见" width="600px">
       <el-form :model="commentForm" label-width="100px">
         <el-form-item label="意见类型" required>
           <el-radio-group v-model="commentForm.comment_type">

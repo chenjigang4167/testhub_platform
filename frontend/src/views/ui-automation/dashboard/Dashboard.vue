@@ -11,7 +11,7 @@
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ projectCount }}</div>
-                <div class="stat-label">UI测试项目</div>
+                <div class="stat-label">{{ $t('uiAutomation.dashboard.uiTestProjects') }}</div>
               </div>
             </div>
           </el-card>
@@ -24,7 +24,7 @@
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ testCaseCount }}</div>
-                <div class="stat-label">测试用例</div>
+                <div class="stat-label">{{ $t('uiAutomation.dashboard.testCases') }}</div>
               </div>
             </div>
           </el-card>
@@ -37,7 +37,7 @@
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ suiteCount }}</div>
-                <div class="stat-label">测试套件</div>
+                <div class="stat-label">{{ $t('uiAutomation.dashboard.testSuites') }}</div>
               </div>
             </div>
           </el-card>
@@ -50,7 +50,7 @@
               </div>
               <div class="stat-info">
                 <div class="stat-value">{{ executionCount }}</div>
-                <div class="stat-label">测试执行</div>
+                <div class="stat-label">{{ $t('uiAutomation.dashboard.testExecutions') }}</div>
               </div>
             </div>
           </el-card>
@@ -62,12 +62,12 @@
     <el-row :gutter="20" class="content-section">
       <!-- 最近活动 -->
       <el-col :span="12">
-        <el-card class="recent-activities" title="操作记录" shadow="hover">
+        <el-card class="recent-activities" :title="$t('uiAutomation.dashboard.operationRecords')" shadow="hover">
           <div v-if="loading" class="loading-container">
-            <el-empty description="加载中..." />
+            <el-empty :description="$t('uiAutomation.dashboard.loading')" />
           </div>
           <div v-else-if="operationRecords.length === 0" class="empty-container">
-            <el-empty description="暂无操作记录" />
+            <el-empty :description="$t('uiAutomation.dashboard.noRecords')" />
           </div>
           <div v-else class="activities-list">
             <div v-for="record in operationRecords" :key="record.id" class="activity-item">
@@ -90,49 +90,49 @@
       
       <!-- 快速操作 -->
       <el-col :span="12">
-        <el-card class="quick-actions" title="快速操作" shadow="hover">
+        <el-card class="quick-actions" :title="$t('uiAutomation.dashboard.quickActions')" shadow="hover">
           <div class="actions-grid">
             <div class="action-item" @click="goToProjects">
               <div class="action-icon bg-blue">
                 <el-icon><Folder /></el-icon>
               </div>
-              <div class="action-label">项目管理</div>
+              <div class="action-label">{{ $t('uiAutomation.dashboard.projectManagement') }}</div>
             </div>
             <div class="action-item" @click="goToElements">
               <div class="action-icon bg-green">
                 <el-icon><Monitor /></el-icon>
               </div>
-              <div class="action-label">元素管理</div>
+              <div class="action-label">{{ $t('uiAutomation.dashboard.elementManagement') }}</div>
             </div>
             <div class="action-item" @click="goToTestCases">
               <div class="action-icon bg-cyan">
                 <el-icon><Document /></el-icon>
               </div>
-              <div class="action-label">用例管理</div>
+              <div class="action-label">{{ $t('uiAutomation.dashboard.caseManagement') }}</div>
             </div>
             <div class="action-item" @click="goToScripts">
               <div class="action-icon bg-purple">
                 <el-icon><Edit /></el-icon>
               </div>
-              <div class="action-label">脚本生成</div>
+              <div class="action-label">{{ $t('uiAutomation.dashboard.scriptGeneration') }}</div>
             </div>
             <div class="action-item" @click="goToSuites">
               <div class="action-icon bg-orange">
                 <el-icon><Collection /></el-icon>
               </div>
-              <div class="action-label">运行测试</div>
+              <div class="action-label">{{ $t('uiAutomation.dashboard.runTests') }}</div>
             </div>
             <div class="action-item" @click="goToExecutions">
               <div class="action-icon bg-red">
                 <el-icon><VideoPlay /></el-icon>
               </div>
-              <div class="action-label">执行记录</div>
+              <div class="action-label">{{ $t('uiAutomation.dashboard.executionRecords') }}</div>
             </div>
             <div class="action-item" @click="goToReports">
               <div class="action-icon bg-indigo">
                 <el-icon><DataAnalysis /></el-icon>
               </div>
-              <div class="action-label">测试报告</div>
+              <div class="action-label">{{ $t('uiAutomation.dashboard.testReports') }}</div>
             </div>
           </div>
         </el-card>
@@ -141,15 +141,15 @@
     
     <!-- 核心功能介绍 -->
     <div class="features-section">
-      <h2 class="section-title">核心功能</h2>
+      <h2 class="section-title">{{ $t('uiAutomation.dashboard.coreFeatures') }}</h2>
       <el-row :gutter="20">
         <el-col :span="6">
           <el-card shadow="hover" class="feature-card">
             <div class="feature-icon">
               <el-icon><Cpu /></el-icon>
             </div>
-            <h3 class="feature-title">元素定位</h3>
-            <p class="feature-description">支持多种定位策略，包括ID、CSS Selector、XPath等，精确捕捉页面元素。</p>
+            <h3 class="feature-title">{{ $t('uiAutomation.dashboard.elementLocation') }}</h3>
+            <p class="feature-description">{{ $t('uiAutomation.dashboard.elementLocationDesc') }}</p>
           </el-card>
         </el-col>
         <el-col :span="6">
@@ -157,8 +157,8 @@
             <div class="feature-icon">
               <el-icon><Monitor /></el-icon>
             </div>
-            <h3 class="feature-title">双引擎驱动</h3>
-            <p class="feature-description">支持Playwright+Selenium双引擎驱动</p>
+            <h3 class="feature-title">{{ $t('uiAutomation.dashboard.dualEngine') }}</h3>
+            <p class="feature-description">{{ $t('uiAutomation.dashboard.dualEngineDesc') }}</p>
           </el-card>
         </el-col>
         <el-col :span="6">
@@ -166,8 +166,8 @@
             <div class="feature-icon">
               <el-icon><Platform /></el-icon>
             </div>
-            <h3 class="feature-title">多浏览器运行</h3>
-            <p class="feature-description">可自由选择Chrome、Safari、Edge、Firefox在内的多款浏览器，支持有头、无头模式运行。</p>
+            <h3 class="feature-title">{{ $t('uiAutomation.dashboard.multiBrowser') }}</h3>
+            <p class="feature-description">{{ $t('uiAutomation.dashboard.multiBrowserDesc') }}</p>
           </el-card>
         </el-col>
         <el-col :span="6">
@@ -175,8 +175,8 @@
             <div class="feature-icon">
               <el-icon><Bell /></el-icon>
             </div>
-            <h3 class="feature-title">全平台通知</h3>
-            <p class="feature-description">自由配置邮件、飞书、企微、钉钉在内的多种机器人通知，实现「躺在家」就能接收测试结果</p>
+            <h3 class="feature-title">{{ $t('uiAutomation.dashboard.fullNotification') }}</h3>
+            <p class="feature-description">{{ $t('uiAutomation.dashboard.fullNotificationDesc') }}</p>
           </el-card>
         </el-col>
         <el-col :span="6">
@@ -184,8 +184,8 @@
             <div class="feature-icon">
               <el-icon><Edit /></el-icon>
             </div>
-            <h3 class="feature-title">脚本录制</h3>
-            <p class="feature-description">提供可视化脚本录制功能，快速生成测试脚本，降低编码门槛。</p>
+            <h3 class="feature-title">{{ $t('uiAutomation.dashboard.scriptRecording') }}</h3>
+            <p class="feature-description">{{ $t('uiAutomation.dashboard.scriptRecordingDesc') }}</p>
           </el-card>
         </el-col>
         <el-col :span="6">
@@ -193,8 +193,8 @@
             <div class="feature-icon">
               <el-icon><RefreshRight /></el-icon>
             </div>
-            <h3 class="feature-title">自动执行</h3>
-            <p class="feature-description">支持手动触发和定时执行，可集成CI/CD流程，实现持续测试。</p>
+            <h3 class="feature-title">{{ $t('uiAutomation.dashboard.autoExecution') }}</h3>
+            <p class="feature-description">{{ $t('uiAutomation.dashboard.autoExecutionDesc') }}</p>
           </el-card>
         </el-col>
       </el-row>
@@ -204,6 +204,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
   Folder, Document, Collection, RefreshRight,
@@ -215,6 +216,8 @@ import {
   getDashboardStats,
   getOperationRecords
 } from '@/api/ui_automation'
+
+const { t } = useI18n()
 
 // 统计数据
 const projectCount = ref(0)
@@ -246,8 +249,8 @@ const loadDashboardData = async () => {
     // 操作记录
     operationRecords.value = recordsRes.data.results || recordsRes.data || []
   } catch (error) {
-    ElMessage.error('加载仪表板数据失败')
-    console.error('加载仪表板数据失败:', error)
+    ElMessage.error(t('uiAutomation.dashboard.messages.loadFailed'))
+    console.error('Failed to load dashboard data:', error)
   } finally {
     loading.value = false
   }
@@ -291,13 +294,13 @@ const formatRelativeTime = (dateString) => {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
   if (diffMins < 1) {
-    return '刚刚'
+    return t('uiAutomation.dashboard.justNow')
   } else if (diffMins < 60) {
-    return `${diffMins}分钟前`
+    return t('uiAutomation.dashboard.minutesAgo', { n: diffMins })
   } else if (diffHours < 24) {
-    return `${diffHours}小时前`
+    return t('uiAutomation.dashboard.hoursAgo', { n: diffHours })
   } else {
-    return `${diffDays}天前`
+    return t('uiAutomation.dashboard.daysAgo', { n: diffDays })
   }
 }
 

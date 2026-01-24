@@ -1,10 +1,10 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">UI自动化项目</h1>
+      <h1 class="page-title">{{ $t('uiAutomation.project.title') }}</h1>
       <el-button type="primary" @click="showCreateDialog = true">
         <el-icon><Plus /></el-icon>
-        新建项目
+        {{ $t('uiAutomation.project.newProject') }}
       </el-button>
     </div>
     
@@ -14,7 +14,7 @@
           <el-col :span="6">
             <el-input
               v-model="searchText"
-              placeholder="搜索项目名称"
+              :placeholder="$t('uiAutomation.project.searchPlaceholder')"
               clearable
               @input="handleSearch"
             >
@@ -24,46 +24,46 @@
             </el-input>
           </el-col>
           <el-col :span="4">
-            <el-select v-model="statusFilter" placeholder="状态筛选" clearable @change="handleFilter">
-              <el-option label="未开始" value="NOT_STARTED" />
-              <el-option label="进行中" value="IN_PROGRESS" />
-              <el-option label="已结束" value="COMPLETED" />
+            <el-select v-model="statusFilter" :placeholder="$t('uiAutomation.project.statusFilter')" clearable @change="handleFilter">
+              <el-option :label="$t('uiAutomation.status.notStarted')" value="NOT_STARTED" />
+              <el-option :label="$t('uiAutomation.status.inProgress')" value="IN_PROGRESS" />
+              <el-option :label="$t('uiAutomation.status.completed')" value="COMPLETED" />
             </el-select>
           </el-col>
         </el-row>
       </div>
       
       <el-table :data="projects" v-loading="loading" style="width: 100%">
-        <el-table-column prop="name" label="项目名称" min-width="200">
+        <el-table-column prop="name" :label="$t('uiAutomation.project.projectName')" min-width="200">
           <template #default="{ row }">
             <el-link @click="goToProjectDetail(row.id)" type="primary">
               {{ row.name }}
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="300" show-overflow-tooltip />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="description" :label="$t('uiAutomation.common.description')" min-width="300" show-overflow-tooltip />
+        <el-table-column prop="status" :label="$t('uiAutomation.common.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="base_url" label="基础URL" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="owner.username" label="负责人" width="100" />
-        <el-table-column prop="created_at" label="创建时间" width="180" :formatter="formatDate" />
-        <el-table-column prop="updated_at" label="更新时间" width="180" :formatter="formatDate" />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column prop="base_url" :label="$t('uiAutomation.project.baseUrl')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="owner.username" :label="$t('uiAutomation.project.owner')" width="100" />
+        <el-table-column prop="created_at" :label="$t('uiAutomation.common.createTime')" width="180" :formatter="formatDate" />
+        <el-table-column prop="updated_at" :label="$t('uiAutomation.common.updateTime')" width="180" :formatter="formatDate" />
+        <el-table-column :label="$t('uiAutomation.common.operation')" width="180" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="goToProjectDetail(row.id)">
               <el-icon><View /></el-icon>
-              查看
+              {{ $t('uiAutomation.common.view') }}
             </el-button>
             <el-button size="small" @click="editProject(row)">
               <el-icon><Edit /></el-icon>
-              编辑
+              {{ $t('uiAutomation.common.edit') }}
             </el-button>
             <el-button size="small" type="danger" @click="deleteProject(row.id)">
               <el-icon><Delete /></el-icon>
-              删除
+              {{ $t('uiAutomation.common.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -83,98 +83,98 @@
     </div>
     
     <!-- 创建项目对话框 -->
-    <el-dialog v-model="showCreateDialog" title="新建UI自动化项目" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="500px">
+    <el-dialog v-model="showCreateDialog" :title="$t('uiAutomation.project.createProject')" width="500px">
       <el-form ref="createFormRef" :model="createForm" :rules="formRules" label-width="80px">
-        <el-form-item label="项目名称" prop="name">
-          <el-input v-model="createForm.name" placeholder="请输入项目名称" />
+        <el-form-item :label="$t('uiAutomation.project.projectName')" prop="name">
+          <el-input v-model="createForm.name" :placeholder="$t('uiAutomation.project.rules.nameRequired')" />
         </el-form-item>
-        <el-form-item label="项目描述" prop="description">
-          <el-input v-model="createForm.description" type="textarea" placeholder="请输入项目描述" />
+        <el-form-item :label="$t('uiAutomation.project.projectDesc')" prop="description">
+          <el-input v-model="createForm.description" type="textarea" :placeholder="$t('uiAutomation.project.projectDesc')" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="createForm.status" placeholder="请选择项目状态">
-            <el-option label="未开始" value="NOT_STARTED" />
-            <el-option label="进行中" value="IN_PROGRESS" />
-            <el-option label="已结束" value="COMPLETED" />
+        <el-form-item :label="$t('uiAutomation.common.status')" prop="status">
+          <el-select v-model="createForm.status" :placeholder="$t('uiAutomation.project.rules.selectStatus')">
+            <el-option :label="$t('uiAutomation.status.notStarted')" value="NOT_STARTED" />
+            <el-option :label="$t('uiAutomation.status.inProgress')" value="IN_PROGRESS" />
+            <el-option :label="$t('uiAutomation.status.completed')" value="COMPLETED" />
           </el-select>
         </el-form-item>
-        <el-form-item label="基础URL" prop="base_url">
-          <el-input v-model="createForm.base_url" placeholder="请输入基础URL" />
+        <el-form-item :label="$t('uiAutomation.project.baseUrl')" prop="base_url">
+          <el-input v-model="createForm.base_url" :placeholder="$t('uiAutomation.project.rules.baseUrlRequired')" />
         </el-form-item>
-        <el-form-item label="开始日期" prop="start_date">
-          <el-date-picker v-model="createForm.start_date" type="date" placeholder="选择日期" />
+        <el-form-item :label="$t('uiAutomation.project.startDate')" prop="start_date">
+          <el-date-picker v-model="createForm.start_date" type="date" :placeholder="$t('uiAutomation.project.selectDate')" />
         </el-form-item>
-        <el-form-item label="结束日期" prop="end_date">
-          <el-date-picker v-model="createForm.end_date" type="date" placeholder="选择日期" />
+        <el-form-item :label="$t('uiAutomation.project.endDate')" prop="end_date">
+          <el-date-picker v-model="createForm.end_date" type="date" :placeholder="$t('uiAutomation.project.selectDate')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showCreateDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleCreate">确定</el-button>
+          <el-button @click="showCreateDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleCreate">{{ $t('uiAutomation.common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
     
     <!-- 编辑项目对话框 -->
-    <el-dialog v-model="showEditDialog" title="编辑UI自动化项目" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="500px">
+    <el-dialog v-model="showEditDialog" :title="$t('uiAutomation.project.editProject')" width="500px">
       <el-form ref="editFormRef" :model="editForm" :rules="formRules" label-width="80px">
-        <el-form-item label="项目名称" prop="name">
-          <el-input v-model="editForm.name" placeholder="请输入项目名称" />
+        <el-form-item :label="$t('uiAutomation.project.projectName')" prop="name">
+          <el-input v-model="editForm.name" :placeholder="$t('uiAutomation.project.rules.nameRequired')" />
         </el-form-item>
-        <el-form-item label="项目描述" prop="description">
-          <el-input v-model="editForm.description" type="textarea" placeholder="请输入项目描述" />
+        <el-form-item :label="$t('uiAutomation.project.projectDesc')" prop="description">
+          <el-input v-model="editForm.description" type="textarea" :placeholder="$t('uiAutomation.project.projectDesc')" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="editForm.status" placeholder="请选择项目状态">
-            <el-option label="未开始" value="NOT_STARTED" />
-            <el-option label="进行中" value="IN_PROGRESS" />
-            <el-option label="已结束" value="COMPLETED" />
+        <el-form-item :label="$t('uiAutomation.common.status')" prop="status">
+          <el-select v-model="editForm.status" :placeholder="$t('uiAutomation.project.rules.selectStatus')">
+            <el-option :label="$t('uiAutomation.status.notStarted')" value="NOT_STARTED" />
+            <el-option :label="$t('uiAutomation.status.inProgress')" value="IN_PROGRESS" />
+            <el-option :label="$t('uiAutomation.status.completed')" value="COMPLETED" />
           </el-select>
         </el-form-item>
-        <el-form-item label="基础URL" prop="base_url">
-          <el-input v-model="editForm.base_url" placeholder="请输入基础URL" />
+        <el-form-item :label="$t('uiAutomation.project.baseUrl')" prop="base_url">
+          <el-input v-model="editForm.base_url" :placeholder="$t('uiAutomation.project.rules.baseUrlRequired')" />
         </el-form-item>
-        <el-form-item label="开始日期" prop="start_date">
-          <el-date-picker v-model="editForm.start_date" type="date" placeholder="选择日期" />
+        <el-form-item :label="$t('uiAutomation.project.startDate')" prop="start_date">
+          <el-date-picker v-model="editForm.start_date" type="date" :placeholder="$t('uiAutomation.project.selectDate')" />
         </el-form-item>
-        <el-form-item label="结束日期" prop="end_date">
-          <el-date-picker v-model="editForm.end_date" type="date" placeholder="选择日期" />
+        <el-form-item :label="$t('uiAutomation.project.endDate')" prop="end_date">
+          <el-date-picker v-model="editForm.end_date" type="date" :placeholder="$t('uiAutomation.project.selectDate')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showEditDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleEdit">确定</el-button>
+          <el-button @click="showEditDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleEdit">{{ $t('uiAutomation.common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
     
     <!-- 项目详情弹框 -->
-    <el-dialog v-model="showDetailDialog" title="项目详情" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="showDetailDialog" :title="$t('uiAutomation.project.projectDetail')" width="600px">
       <div v-if="currentProjectDetail" class="project-detail">
         <el-descriptions bordered column="1">
-          <el-descriptions-item label="项目名称">{{ currentProjectDetail.name }}</el-descriptions-item>
-          <el-descriptions-item label="项目描述" :span="2">{{ currentProjectDetail.description || '暂无描述' }}</el-descriptions-item>
-          <el-descriptions-item label="项目状态">
+          <el-descriptions-item :label="$t('uiAutomation.project.projectName')">{{ currentProjectDetail.name }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.project.projectDesc')" :span="2">{{ currentProjectDetail.description || $t('uiAutomation.project.noDescription') }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.common.status')">
             <el-tag :type="getStatusType(currentProjectDetail.status)">
               {{ getStatusText(currentProjectDetail.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="基础URL">{{ currentProjectDetail.base_url }}</el-descriptions-item>
-          <el-descriptions-item label="负责人">{{ currentProjectDetail.owner?.username || '暂无' }}</el-descriptions-item>
-          <el-descriptions-item label="开始日期">{{ currentProjectDetail.start_date ? formatDate(null, null, currentProjectDetail.start_date) : '未设置' }}</el-descriptions-item>
-          <el-descriptions-item label="结束日期">{{ currentProjectDetail.end_date ? formatDate(null, null, currentProjectDetail.end_date) : '未设置' }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ formatDate(null, null, currentProjectDetail.created_at) }}</el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ formatDate(null, null, currentProjectDetail.updated_at) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.project.baseUrl')">{{ currentProjectDetail.base_url }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.project.owner')">{{ currentProjectDetail.owner?.username || $t('uiAutomation.project.none') }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.project.startDate')">{{ currentProjectDetail.start_date ? formatDate(null, null, currentProjectDetail.start_date) : $t('uiAutomation.project.notSet') }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.project.endDate')">{{ currentProjectDetail.end_date ? formatDate(null, null, currentProjectDetail.end_date) : $t('uiAutomation.project.notSet') }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.common.createTime')">{{ formatDate(null, null, currentProjectDetail.created_at) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.common.updateTime')">{{ formatDate(null, null, currentProjectDetail.updated_at) }}</el-descriptions-item>
         </el-descriptions>
       </div>
       <div v-else class="text-center text-gray-500">
-        加载中...
+        {{ $t('uiAutomation.common.loading') }}
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showDetailDialog = false">关闭</el-button>
+          <el-button @click="showDetailDialog = false">{{ $t('uiAutomation.common.close') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -182,10 +182,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, View, Edit, Delete } from '@element-plus/icons-vue'
 import { getUiProjects, createUiProject, updateUiProject, deleteUiProject } from '@/api/ui_automation'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 项目数据
 const projects = ref([])
@@ -227,16 +230,16 @@ const editForm = reactive({
 })
 
 // 表单验证规则
-const formRules = {
+const formRules = computed(() => ({
   name: [
-    { required: true, message: '请输入项目名称', trigger: 'blur' },
-    { min: 2, max: 200, message: '项目名称长度在 2 到 200 个字符', trigger: 'blur' }
+    { required: true, message: t('uiAutomation.project.rules.nameRequired'), trigger: 'blur' },
+    { min: 2, max: 200, message: t('uiAutomation.project.rules.nameLength'), trigger: 'blur' }
   ],
   base_url: [
-    { required: true, message: '请输入基础URL', trigger: 'blur' },
-    { type: 'url', message: '请输入有效的URL', trigger: 'blur' }
+    { required: true, message: t('uiAutomation.project.rules.baseUrlRequired'), trigger: 'blur' },
+    { type: 'url', message: t('uiAutomation.project.rules.baseUrlInvalid'), trigger: 'blur' }
   ]
-}
+}))
 
 // 格式化日期
 const formatDate = (row, column, cellValue) => {
@@ -263,12 +266,12 @@ const getStatusType = (status) => {
 
 // 获取状态文本
 const getStatusText = (status) => {
-  const statusMap = {
-    'NOT_STARTED': '未开始',
-    'IN_PROGRESS': '进行中',
-    'COMPLETED': '已结束'
-  }
-  return statusMap[status] || status
+  const statusKey = {
+    'NOT_STARTED': 'notStarted',
+    'IN_PROGRESS': 'inProgress',
+    'COMPLETED': 'completed'
+  }[status]
+  return statusKey ? t(`uiAutomation.status.${statusKey}`) : status
 }
 
 // 加载项目列表
@@ -294,7 +297,7 @@ const loadProjects = async () => {
     projects.value = response.data.results || response.data
     total.value = response.data.count || projects.value.length
   } catch (error) {
-    ElMessage.error('获取项目列表失败')
+    ElMessage.error(t('uiAutomation.project.messages.loadFailed'))
     console.error('获取项目列表失败:', error)
   } finally {
     loading.value = false
@@ -336,7 +339,7 @@ const goToProjectDetail = (id) => {
     currentProjectDetail.value = project
     showDetailDialog.value = true
   } else {
-    ElMessage.error('未找到项目信息')
+    ElMessage.error(t('uiAutomation.project.messages.notFound'))
   }
 }
 
@@ -358,18 +361,18 @@ const editProject = (project) => {
 // 删除项目
 const deleteProject = async (id) => {
   try {
-    await ElMessageBox.confirm('确定要删除这个项目吗？删除后数据将无法恢复。', '确认删除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('uiAutomation.project.messages.deleteConfirm'), t('uiAutomation.messages.confirm.delete'), {
+      confirmButtonText: t('uiAutomation.common.confirm'),
+      cancelButtonText: t('uiAutomation.common.cancel'),
       type: 'warning'
     })
-    
+
     await deleteUiProject(id)
-    ElMessage.success('项目删除成功')
+    ElMessage.success(t('uiAutomation.project.messages.deleteSuccess'))
     loadProjects()
   } catch (error) {
     if (error === 'cancel') return
-    ElMessage.error('项目删除失败')
+    ElMessage.error(t('uiAutomation.project.messages.deleteFailed'))
     console.error('删除项目失败:', error)
   }
 }
@@ -408,7 +411,7 @@ const handleCreate = async () => {
     }
     
     await createUiProject(projectData)
-    ElMessage.success('项目创建成功')
+    ElMessage.success(t('uiAutomation.project.messages.createSuccess'))
     showCreateDialog.value = false
     
     // 重置表单
@@ -419,7 +422,7 @@ const handleCreate = async () => {
     
     loadProjects()
   } catch (error) {
-    ElMessage.error('项目创建失败')
+    ElMessage.error(t('uiAutomation.project.messages.createFailed'))
     console.error('创建项目失败:', error)
   }
 }
@@ -439,11 +442,11 @@ const handleEdit = async () => {
     }
     
     await updateUiProject(currentEditId.value, projectData)
-    ElMessage.success('项目更新成功')
+    ElMessage.success(t('uiAutomation.project.messages.updateSuccess'))
     showEditDialog.value = false
     loadProjects()
   } catch (error) {
-    ElMessage.error('项目更新失败')
+    ElMessage.error(t('uiAutomation.project.messages.updateFailed'))
     console.error('更新项目失败:', error)
   }
 }

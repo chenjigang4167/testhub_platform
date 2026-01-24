@@ -1,30 +1,30 @@
 <template>
   <div class="ui-env-config">
     <div class="page-header">
-      <h1>🖥️ UI自动化环境配置</h1>
-      <p>检测和管理浏览器驱动环境</p>
+      <h1>{{ $t('configuration.uiEnv.title') }}</h1>
+      <p>{{ $t('configuration.uiEnv.description') }}</p>
     </div>
 
     <div class="main-content">
       <div class="check-section">
         <el-button type="primary" size="large" @click="checkEnvironment" :loading="checking">
           <el-icon><Refresh /></el-icon>
-          检测环境
+          {{ $t('configuration.uiEnv.checkEnvironment') }}
         </el-button>
         <div v-if="lastCheckTime" class="last-check">
-          上次检测时间: {{ lastCheckTime }}
+          {{ $t('configuration.uiEnv.lastCheckTime') }}: {{ lastCheckTime }}
         </div>
       </div>
 
       <div v-if="environmentData" class="env-status-grid">
         <div class="os-info-card">
-          <h3>🖥️ 操作系统</h3>
+          <h3>{{ $t('configuration.uiEnv.operatingSystem') }}</h3>
           <div class="os-name">{{ environmentData.os }}</div>
         </div>
 
         <!-- 系统浏览器 (Selenium) -->
         <div class="section-title">
-          <h3>🌐 系统浏览器 (Selenium支持)</h3>
+          <h3>{{ $t('configuration.uiEnv.systemBrowsers') }}</h3>
         </div>
         <div class="browser-cards">
           <div v-for="browser in environmentData.system_browsers" :key="browser.name" class="browser-card">
@@ -36,7 +36,7 @@
                   <h3>{{ formatBrowserName(browser.name) }}</h3>
                   <div class="status-row">
                     <el-tag :type="browser.installed ? 'success' : 'info'" effect="dark">
-                      {{ browser.installed ? (browser.version || '已安装') : '未安装' }}
+                      {{ browser.installed ? (browser.version || $t('configuration.uiEnv.installed')) : $t('configuration.uiEnv.notInstalled') }}
                     </el-tag>
                   </div>
                 </div>
@@ -46,7 +46,7 @@
 
         <!-- Playwright 浏览器 -->
         <div class="section-title">
-          <h3>🎭 Playwright 浏览器</h3>
+          <h3>{{ $t('configuration.uiEnv.playwrightBrowsers') }}</h3>
         </div>
         <div class="browser-cards">
           <div v-for="browser in environmentData.playwright_browsers" :key="browser.name" class="browser-card">
@@ -58,18 +58,18 @@
                   <h3>{{ formatBrowserName(browser.name) }}</h3>
                   <div class="status-row">
                     <el-tag :type="browser.installed ? 'success' : 'warning'" effect="dark">
-                      {{ browser.installed ? (browser.version || '已安装') : '未安装' }}
+                      {{ browser.installed ? (browser.version || $t('configuration.uiEnv.installed')) : $t('configuration.uiEnv.notInstalled') }}
                     </el-tag>
                   </div>
                 </div>
                 <div class="browser-actions" v-if="!browser.installed">
-                  <el-button 
-                    type="primary" 
-                    size="small" 
+                  <el-button
+                    type="primary"
+                    size="small"
                     @click="installDriver(browser.name)"
                     :loading="installing === browser.name"
                   >
-                    一键安装
+                    {{ $t('configuration.uiEnv.oneClickInstall') }}
                   </el-button>
                 </div>
               </div>
@@ -82,9 +82,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import api from '@/utils/api'
+
+const { t } = useI18n()
 
 const checking = ref(false)
 const installing = ref(null)
@@ -113,10 +116,10 @@ const checkEnvironment = async () => {
     const response = await api.get('/ui-automation/config/environment/check_environment/')
     environmentData.value = response.data
     lastCheckTime.value = new Date().toLocaleString()
-    ElMessage.success('环境检测完成')
+    ElMessage.success(t('configuration.uiEnv.messages.checkSuccess'))
   } catch (error) {
-    console.error('环境检测失败:', error)
-    ElMessage.error('环境检测失败')
+    console.error('Environment check failed:', error)
+    ElMessage.error(t('configuration.uiEnv.messages.checkFailed'))
   } finally {
     checking.value = false
   }
@@ -126,12 +129,12 @@ const installDriver = async (browserName) => {
   installing.value = browserName
   try {
     await api.post('/ui-automation/config/environment/install_driver/', { browser: browserName })
-    ElMessage.success(`${formatBrowserName(browserName)} 驱动安装成功`)
+    ElMessage.success(t('configuration.uiEnv.messages.installSuccess', { browser: formatBrowserName(browserName) }))
     // Re-check environment
     await checkEnvironment()
   } catch (error) {
-    console.error('驱动安装失败:', error)
-    ElMessage.error(`驱动安装失败: ${error.response?.data?.error || error.message}`)
+    console.error('Driver installation failed:', error)
+    ElMessage.error(`${t('configuration.uiEnv.messages.installFailed')}: ${error.response?.data?.error || error.message}`)
   } finally {
     installing.value = null
   }

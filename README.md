@@ -215,6 +215,12 @@ DB_PORT=3306
 SECRET_KEY=your-secret-key-here
 DEBUG=True
 
+# 本地化配置
+# 语言: 'en-us' (英语), 'zh-hans' (简体中文), 'ja' (日语), 'ko' (韩语) 等
+# 时区: 参考 https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+LANGUAGE_CODE=zh-hans
+TIME_ZONE=Asia/Shanghai
+
 # 邮件配置（可选）
 EMAIL_HOST=smtp.163.com
 EMAIL_PORT=465
@@ -223,6 +229,8 @@ EMAIL_HOST_USER=your_email@gmail.com
 EMAIL_HOST_PASSWORD=your_email_password
 DEFAULT_FROM_EMAIL=your_email@gmail.com
 ```
+
+详细的语言和时区配置说明请参考 [LOCALIZATION_CONFIG.md](LOCALIZATION_CONFIG.md)
 
 5. **初始化数据库**
 ```bash
@@ -280,7 +288,7 @@ npm run build
 
 ### 访问应用
 
-- **前端**: http://localhost:3000
+- **前端**: http://localhost:5173
 - **后端 API**: http://localhost:8000
 - **API 文档**: http://localhost:8000/api/docs/
 - **Admin 后台**: http://localhost:8000/admin/

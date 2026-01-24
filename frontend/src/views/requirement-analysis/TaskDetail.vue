@@ -174,19 +174,19 @@
           </div>
           <div class="detail-item">
             <label>测试场景:</label>
-            <p v-html="formatMarkdown(selectedCase.scenario)"></p>
+            <p>{{ selectedCase.scenario }}</p>
           </div>
           <div class="detail-item">
             <label>前置条件:</label>
-            <p v-html="formatMarkdown(selectedCase.precondition || '无')"></p>
+            <p v-html="selectedCase.precondition || '无'"></p>
           </div>
           <div class="detail-item">
             <label>操作步骤:</label>
-            <p class="test-steps" v-html="formatMarkdown(selectedCase.steps)"></p>
+            <p class="test-steps" v-html="selectedCase.steps"></p>
           </div>
           <div class="detail-item">
             <label>预期结果:</label>
-            <p v-html="formatMarkdown(selectedCase.expected)"></p>
+            <p v-html="selectedCase.expected"></p>
           </div>
           <div class="detail-item">
             <label>优先级:</label>
@@ -250,7 +250,7 @@
 
 <script>
 import api from '@/utils/api'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { DocumentCopy } from '@element-plus/icons-vue'
 import * as XLSX from 'xlsx'
 
@@ -339,7 +339,7 @@ export default {
     async loadTaskDetail() {
       try {
         // 获取任务基本信息
-        const taskResponse = await api.get(`/requirement-analysis/testcase-generation/${this.taskId}/`)
+        const taskResponse = await api.get(`/requirement-analysis/api/testcase-generation/${this.taskId}/`)
         this.task = taskResponse.data
 
         // 解析最终测试用例
@@ -357,17 +357,14 @@ export default {
     parseTestCases(content) {
       // 复用RequirementAnalysisView中的解析逻辑
       if (!content) return []
-
-      // 去除markdown加粗标记，保留纯净文本
-      let cleanContent = content.replace(/\*\*([^*]+)\*\*/g, '$1')
-
-      const lines = cleanContent.split('\n').filter(line => line.trim())
+      
+      const lines = content.split('\n').filter(line => line.trim())
       const testCases = []
-
+      
       // 尝试解析表格格式
       let isTableFormat = false
       const tableData = []
-
+      
       for (let line of lines) {
         const trimmedLine = line.trim()
         if (trimmedLine.includes('|') && !trimmedLine.includes('--------')) {
@@ -385,46 +382,28 @@ export default {
         for (let i = 1; i < tableData.length; i++) {
           const row = tableData[i]
           const testCase = {}
-
-          // 清理<br>标签的辅助函数
-          const cleanBrTags = (text) => {
-            if (!text) return ''
-            return text.replace(/<br\s*\/?>/gi, '\n')
-          }
-
+          
           headers.forEach((header, index) => {
-            const value = cleanBrTags(row[index] || '')
-
-            // 使用更精确的匹配逻辑，避免误判
-            const cleanHeader = header.trim().toLowerCase()
-
-            // 优先级匹配，避免误判
-            if (cleanHeader === '优先级' || cleanHeader === 'priority' || cleanHeader === 'priority（优先级）' || cleanHeader === '优先级（priority）') {
-              testCase.priority = value
-            } else if (cleanHeader === '用例id' || cleanHeader === '编号' || cleanHeader === 'id' || cleanHeader.includes('用例id')) {
+            const value = row[index] || ''
+            if (header.includes('编号') || header.includes('ID') || header.includes('用例ID')) {
               testCase.caseId = value
-            } else if (cleanHeader === '测试目标' || cleanHeader === '测试场景' || cleanHeader === '场景' || cleanHeader === '标题' || cleanHeader.includes('测试目标')) {
+            } else if (header.includes('场景') || header.includes('标题') || header.includes('测试目标')) {
               testCase.scenario = value
-            } else if (cleanHeader === '前置条件' || cleanHeader === '前置' || cleanHeader === '前提条件') {
+            } else if (header.includes('前置')) {
               testCase.precondition = value
-            } else if (cleanHeader === '测试步骤' || cleanHeader === '操作步骤' || cleanHeader === '步骤') {
-              // 确保不要误匹配"预期结果"中包含的"步骤"字样
-              if (!cleanHeader.includes('预期') && !cleanHeader.includes('结果')) {
-                testCase.steps = value
-              }
-            } else if (cleanHeader === '预期结果' || cleanHeader === '预期' || cleanHeader === '结果' || cleanHeader.includes('预期结果')) {
+            } else if (header.includes('步骤') || header.includes('操作步骤')) {
+              testCase.steps = value
+            } else if (header.includes('预期') || header.includes('结果')) {
               testCase.expected = value
+            } else if (header.includes('优先级')) {
+              testCase.priority = value
             }
           })
-
+          
           if (testCase.scenario || testCase.caseId) {
             // 如果没有steps字段，使用scenario作为steps的默认值
             if (!testCase.steps && testCase.scenario) {
               testCase.steps = '参考测试目标执行相应操作'
-            }
-            // 如果没有priority，设置默认值
-            if (!testCase.priority) {
-              testCase.priority = 'P2'
             }
             testCases.push(testCase)
           }
@@ -488,24 +467,6 @@ export default {
       return text.replace(/<br\s*\/?>/gi, '\n')
     },
 
-    // 格式化文本，去除markdown标记并保留格式
-    formatMarkdown(text) {
-      if (!text) return ''
-
-      // 先转义HTML标签，防止XSS
-      let formatted = text.replace(/&/g, '&amp;')
-                         .replace(/</g, '&lt;')
-                         .replace(/>/g, '&gt;')
-
-      // 去除markdown加粗标记 **text**，保留纯文本
-      formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '$1')
-
-      // 转换换行符为<br>
-      formatted = formatted.replace(/\n/g, '<br>')
-
-      return formatted
-    },
-
     toggleSelectAll() {
       if (this.isAllSelected) {
         this.selectedCases = []
@@ -525,17 +486,7 @@ export default {
         return
       }
 
-      try {
-        await ElMessageBox.confirm(
-          `确定要采纳选中的 ${this.selectedCases.length} 条测试用例吗？`,
-          '确认采纳',
-          {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'success'
-          }
-        )
-      } catch {
+      if (!confirm(`确定要采纳选中的 ${this.selectedCases.length} 条测试用例吗？`)) {
         return
       }
 
@@ -551,16 +502,17 @@ export default {
           status: 'draft'
         }))
 
-        await api.post(`/requirement-analysis/testcase-generation/${this.taskId}/batch-adopt-selected/`, {
+        // await api.post(`/requirement-analysis/api/testcase-generation/${this.taskId}/batch-adopt-selected/`, {
+        await api.post(`/requirement-analysis/api/testcase-generation/${this.taskId}/batch_adopt_selected/`, {
           test_cases: casesData
         })
 
         ElMessage.success(`成功采纳 ${this.selectedCases.length} 条测试用例！`)
         this.selectedCases = []
-
+        
         // 不再移除已采纳的用例，保留在列表中供多次采纳
         // this.testCases = this.testCases.filter(tc => !this.selectedCases.includes(tc))
-
+        
       } catch (error) {
         console.error('批量采纳失败:', error)
         ElMessage.error('批量采纳失败: ' + (error.response?.data?.message || error.message))
@@ -573,18 +525,7 @@ export default {
         return
       }
 
-      try {
-        await ElMessageBox.confirm(
-          `确定要弃用选中的 ${this.selectedCases.length} 条测试用例吗？此操作不可恢复。`,
-          '确认弃用',
-          {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning',
-            confirmButtonClass: 'el-button--danger'
-          }
-        )
-      } catch {
+      if (!confirm(`确定要弃用选中的 ${this.selectedCases.length} 条测试用例吗？此操作不可恢复。`)) {
         return
       }
 
@@ -592,15 +533,15 @@ export default {
         // 获取选中用例的全局索引（不是分页索引）
         const caseIndices = this.selectedCases.map(selectedCase => {
           // 在完整列表中查找索引
-          const globalIndex = this.testCases.findIndex(tc =>
-            tc.scenario === selectedCase.scenario &&
-            tc.steps === selectedCase.steps &&
+          const globalIndex = this.testCases.findIndex(tc => 
+            tc.scenario === selectedCase.scenario && 
+            tc.steps === selectedCase.steps && 
             tc.expected === selectedCase.expected
           )
           return globalIndex
         }).filter(index => index !== -1) // 过滤掉未找到的(-1)
 
-        const response = await api.post(`/requirement-analysis/testcase-generation/${this.taskId}/discard-selected-cases/`, {
+        const response = await api.post(`/requirement-analysis/api/testcase-generation/${this.taskId}/discard_selected_cases/`, {
           case_indices: caseIndices
         })
 
@@ -610,7 +551,7 @@ export default {
           this.$router.push('/generated-testcases')
         } else {
           ElMessage.success(`成功弃用 ${response.data.discarded_count} 条测试用例`)
-
+          
           // 重新解析更新后的测试用例
           if (response.data.updated_test_cases) {
             this.testCases = this.parseTestCases(response.data.updated_test_cases)
@@ -618,7 +559,7 @@ export default {
             this.currentPage = 1 // 重置到第一页
           }
         }
-
+        
       } catch (error) {
         console.error('批量弃用失败:', error)
         ElMessage.error('批量弃用失败: ' + (error.response?.data?.error || error.message))
@@ -706,7 +647,7 @@ export default {
         const updatedTestCases = this.generateTestCasesString()
 
         // 调用后端API保存（使用自定义action接口）
-        await api.post(`/requirement-analysis/testcase-generation/${this.taskId}/update-test-cases/`, {
+        await api.post(`/requirement-analysis/api/testcase-generation/${this.taskId}/update_test_cases/`, {
           final_test_cases: updatedTestCases
         })
 
@@ -761,17 +702,7 @@ export default {
     },
 
     async adoptSingleCase(testCase, index) {
-      try {
-        await ElMessageBox.confirm(
-          `确定要采纳测试用例"${testCase.scenario}"吗？`,
-          '确认采纳',
-          {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'success'
-          }
-        )
-      } catch {
+      if (!confirm(`确定要采纳测试用例"${testCase.scenario}"吗？`)) {
         return
       }
 
@@ -789,29 +720,18 @@ export default {
 
         await api.post('/testcases/', caseData)
         ElMessage.success('测试用例采纳成功！')
-
+        
         // 不再移除已采纳的用例，保留在列表中供多次采纳
         // this.testCases.splice(this.testCases.indexOf(testCase), 1)
-
+        
       } catch (error) {
         console.error('采纳用例失败:', error)
         ElMessage.error('采纳用例失败: ' + (error.response?.data?.message || error.message))
       }
     },
 
-    async discardSingleCase(testCase, index) {
-      try {
-        await ElMessageBox.confirm(
-          `确定要弃用测试用例"${testCase.scenario}"吗？此操作不可恢复。`,
-          '确认弃用',
-          {
-            confirmButtonText: '确定',
-            cancelButtonText: '取消',
-            type: 'warning',
-            confirmButtonClass: 'el-button--danger'
-          }
-        )
-      } catch {
+    discardSingleCase(testCase, index) {
+      if (!confirm(`确定要弃用测试用例"${testCase.scenario}"吗？此操作不可恢复。`)) {
         return
       }
 
@@ -820,31 +740,34 @@ export default {
         const globalIndex = (this.currentPage - 1) * this.pageSize + index
 
         // 调用后端API弃用单个测试用例
-        const response = await api.post(`/requirement-analysis/testcase-generation/${this.taskId}/discard-single-case/`, {
+        api.post(`/requirement-analysis/api/testcase-generation/${this.taskId}/discard_single_case/`, {
           case_index: globalIndex
-        })
-
-        if (response.data.task_deleted) {
-          ElMessage.success('所有测试用例已弃用，任务已删除')
-          // 返回到AI生成用例记录列表
-          this.$router.push('/generated-testcases')
-        } else {
-          ElMessage.success('测试用例已弃用')
-
-          // 重新解析更新后的测试用例
-          if (response.data.updated_test_cases) {
-            this.testCases = this.parseTestCases(response.data.updated_test_cases)
-
-            // 如果当前页没有数据了，回到上一页
-            if (this.currentPage > 1 && this.paginatedTestCases.length === 0) {
-              this.currentPage--
+        }).then(response => {
+          if (response.data.task_deleted) {
+            ElMessage.success('所有测试用例已弃用，任务已删除')
+            // 返回到AI生成用例记录列表
+            this.$router.push('/generated-testcases')
+          } else {
+            ElMessage.success('测试用例已弃用')
+            
+            // 重新解析更新后的测试用例
+            if (response.data.updated_test_cases) {
+              this.testCases = this.parseTestCases(response.data.updated_test_cases)
+              
+              // 如果当前页没有数据了，回到上一页
+              if (this.currentPage > 1 && this.paginatedTestCases.length === 0) {
+                this.currentPage--
+              }
             }
           }
-        }
-
+        }).catch(error => {
+          console.error('弃用用例失败:', error)
+          ElMessage.error('弃用用例失败: ' + (error.response?.data?.error || error.message))
+        })
+        
       } catch (error) {
         console.error('弃用用例失败:', error)
-        ElMessage.error('弃用用例失败: ' + (error.response?.data?.error || error.message))
+        ElMessage.error('弃用用例失败')
       }
     },
 

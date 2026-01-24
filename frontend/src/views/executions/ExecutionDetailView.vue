@@ -17,7 +17,7 @@
           <span v-if="testPlan.projects && testPlan.projects.length > 0">
             {{ testPlan.projects.join(', ') }}
           </span>
-          <span v-else class="no-data">未关联项目</span>
+          <span v-else class="no-data">{{ $t('execution.noProject') }}</span>
         </div>
       </div>
     </div>
@@ -40,35 +40,35 @@
               <el-icon class="stat-icon"><Document /></el-icon>
               <div class="stat-content">
                 <div class="stat-value">{{ run.progress.total }}</div>
-                <div class="stat-label">总计</div>
+                <div class="stat-label">{{ $t('execution.total') }}</div>
               </div>
             </div>
             <div class="stat-card passed">
               <el-icon class="stat-icon"><CircleCheck /></el-icon>
               <div class="stat-content">
                 <div class="stat-value">{{ run.progress.passed }}</div>
-                <div class="stat-label">通过</div>
+                <div class="stat-label">{{ $t('execution.passed') }}</div>
               </div>
             </div>
             <div class="stat-card failed">
               <el-icon class="stat-icon"><CircleClose /></el-icon>
               <div class="stat-content">
                 <div class="stat-value">{{ run.progress.failed }}</div>
-                <div class="stat-label">失败</div>
+                <div class="stat-label">{{ $t('execution.failed') }}</div>
               </div>
             </div>
             <div class="stat-card blocked">
               <el-icon class="stat-icon"><WarningFilled /></el-icon>
               <div class="stat-content">
                 <div class="stat-value">{{ run.progress.blocked }}</div>
-                <div class="stat-label">阻塞</div>
+                <div class="stat-label">{{ $t('execution.blocked') }}</div>
               </div>
             </div>
             <div class="stat-card untested">
               <el-icon class="stat-icon"><QuestionFilled /></el-icon>
               <div class="stat-content">
                 <div class="stat-value">{{ run.progress.untested }}</div>
-                <div class="stat-label">未测</div>
+                <div class="stat-label">{{ $t('execution.untested') }}</div>
               </div>
             </div>
           </div>
@@ -89,49 +89,49 @@
 
         <!-- 批量操作按钮 -->
         <div v-if="selectedCases.length > 0" class="batch-actions">
-          <el-button 
-            type="danger" 
+          <el-button
+            type="danger"
             :icon="Delete"
             @click="batchDeleteCases"
             :disabled="isDeleting">
-            批量删除 ({{ selectedCases.length }})
+            {{ $t('execution.batchDelete') }} ({{ selectedCases.length }})
           </el-button>
         </div>
-        
+
         <!-- 优化的用例表格 -->
-        <el-table 
+        <el-table
           ref="tableRef"
-          :data="paginatedCases(run.run_cases)" 
-          style="width: 100%" 
+          :data="paginatedCases(run.run_cases)"
+          style="width: 100%"
           class="execution-table"
           @selection-change="handleSelectionChange"
           :row-key="(row) => row.id">
           <el-table-column type="selection" width="55" :reserve-selection="true" />
-          <el-table-column 
-            type="index" 
-            label="序号" 
-            width="80" 
+          <el-table-column
+            type="index"
+            :label="$t('execution.serialNumber')"
+            width="80"
             :index="getSerialNumber" />
-          <el-table-column prop="testcase" label="测试用例" min-width="250" />
-          <el-table-column label="执行状态" width="150">
+          <el-table-column prop="testcase" :label="$t('execution.testCase')" min-width="250" />
+          <el-table-column :label="$t('execution.executionStatus')" width="150">
             <template #default="scope">
-              <el-select 
-                v-model="scope.row.status" 
+              <el-select
+                v-model="scope.row.status"
                 @change="updateCaseStatus(scope.row)"
                 size="small">
-                <el-option label="未测试" value="untested" />
-                <el-option label="通过" value="passed" />
-                <el-option label="失败" value="failed" />
-                <el-option label="阻塞" value="blocked" />
-                <el-option label="重测" value="retest" />
+                <el-option :label="$t('execution.untested')" value="untested" />
+                <el-option :label="$t('execution.passed')" value="passed" />
+                <el-option :label="$t('execution.failed')" value="failed" />
+                <el-option :label="$t('execution.blocked')" value="blocked" />
+                <el-option :label="$t('execution.retest')" value="retest" />
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="备注" min-width="250">
+          <el-table-column :label="$t('execution.comments')" min-width="250">
             <template #default="scope">
-              <el-input 
-                v-model="scope.row.comments" 
-                placeholder="请输入备注"
+              <el-input
+                v-model="scope.row.comments"
+                :placeholder="$t('execution.commentsPlaceholder')"
                 type="textarea"
                 :rows="2"
                 size="small"
@@ -139,14 +139,14 @@
               </el-input>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="120" fixed="right">
+          <el-table-column :label="$t('execution.actions')" width="120" fixed="right">
             <template #default="scope">
-              <el-button 
-                size="small" 
-                type="primary" 
+              <el-button
+                size="small"
+                type="primary"
                 :icon="Clock"
                 @click="viewCaseHistory(scope.row)">
-                历史
+                {{ $t('execution.viewHistory') }}
               </el-button>
             </template>
           </el-table-column>
@@ -168,26 +168,21 @@
     </div>
 
     <!-- 历史记录对话框 -->
-    <el-dialog 
-      title="执行历史记录" 
+    <el-dialog
+      :title="$t('execution.executionHistory')"
       v-model="historyDialogVisible"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
-      @close="handleDialogClose"
       width="80%">
       <el-table :data="currentCaseHistory" style="width: 100%">
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" :label="$t('execution.status')" width="100">
           <template #default="scope">
             <el-tag :type="getStatusType(scope.row.status)">
               {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="comments" label="备注" show-overflow-tooltip />
-        <el-table-column prop="executed_by.username" label="执行者" width="120" />
-        <el-table-column prop="executed_at" label="执行时间" width="180">
+        <el-table-column prop="comments" :label="$t('execution.comments')" show-overflow-tooltip />
+        <el-table-column prop="executed_by.username" :label="$t('execution.executedBy')" width="120" />
+        <el-table-column prop="executed_at" :label="$t('execution.executedAt')" width="180">
           <template #default="scope">
             {{ formatDate(scope.row.executed_at) }}
           </template>
@@ -200,12 +195,15 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Delete, Clock, Document, CircleCheck, CircleClose, 
-  WarningFilled, QuestionFilled, Stamp, FolderOpened 
+import {
+  Delete, Clock, Document, CircleCheck, CircleClose,
+  WarningFilled, QuestionFilled, Stamp, FolderOpened
 } from '@element-plus/icons-vue'
 import axios from 'axios'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const testPlan = ref({})
@@ -223,7 +221,7 @@ const fetchTestPlan = async () => {
     const response = await axios.get(`/api/executions/plans/${planId}/`)
     testPlan.value = response.data
   } catch (error) {
-    ElMessage.error('获取测试计划失败')
+    ElMessage.error(t('execution.fetchDetailFailed'))
   }
 }
 
@@ -234,9 +232,9 @@ const updateCaseStatus = async (runCase) => {
       comments: runCase.comments || ''
     })
     await fetchTestPlan() // 刷新数据以更新进度和最后执行时间
-    ElMessage.success('状态更新成功')
+    ElMessage.success(t('execution.statusUpdateSuccess'))
   } catch (error) {
-    ElMessage.error('状态更新失败')
+    ElMessage.error(t('execution.statusUpdateFailed'))
   }
 }
 
@@ -246,9 +244,9 @@ const updateCaseDetails = async (runCase) => {
       status: runCase.status,
       comments: runCase.comments || ''
     })
-    ElMessage.success('详细信息更新成功')
+    ElMessage.success(t('execution.detailsUpdateSuccess'))
   } catch (error) {
-    ElMessage.error('详细信息更新失败')
+    ElMessage.error(t('execution.detailsUpdateFailed'))
   }
 }
 
@@ -258,12 +256,8 @@ const viewCaseHistory = async (runCase) => {
     currentCaseHistory.value = response.data
     historyDialogVisible.value = true
   } catch (error) {
-    ElMessage.error('获取历史记录失败')
+    ElMessage.error(t('execution.fetchHistoryFailed'))
   }
-}
-
-const handleDialogClose = () => {
-  historyDialogVisible.value = false
 }
 
 // 处理选择变化
@@ -274,17 +268,17 @@ const handleSelectionChange = (selection) => {
 // 批量删除
 const batchDeleteCases = async () => {
   if (selectedCases.value.length === 0) {
-    ElMessage.warning('请先选择要删除的用例')
+    ElMessage.warning(t('execution.selectCasesFirst'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedCases.value.length} 个用例吗？此操作不可恢复。`,
-      '警告',
+      t('execution.batchDeleteCasesConfirm', { count: selectedCases.value.length }),
+      t('common.warning'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
@@ -304,9 +298,13 @@ const batchDeleteCases = async () => {
     }
 
     if (successCount > 0) {
-      ElMessage.success(`成功删除 ${successCount} 个用例${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+      if (failCount > 0) {
+        ElMessage.success(t('execution.batchDeleteCasesPartialSuccess', { successCount, failCount }))
+      } else {
+        ElMessage.success(t('execution.batchDeleteCasesSuccess', { successCount }))
+      }
     } else {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('execution.batchDeleteFailed'))
     }
 
     selectedCases.value = []
@@ -315,7 +313,7 @@ const batchDeleteCases = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-      ElMessage.error('批量删除失败')
+      ElMessage.error(t('execution.batchDeleteFailed'))
     }
   } finally {
     isDeleting.value = false
@@ -376,9 +374,9 @@ const getRunStatusType = (progress) => {
 }
 
 const getRunStatusText = (progress) => {
-  if (progress.progress === 100) return '已完成'
-  if (progress.untested === progress.total) return '未开始'
-  return '进行中'
+  if (progress.progress === 100) return t('execution.completed')
+  if (progress.untested === progress.total) return t('execution.notStarted')
+  return t('execution.inProgress')
 }
 
 const getStatusType = (status) => {
@@ -394,11 +392,11 @@ const getStatusType = (status) => {
 
 const getStatusText = (status) => {
   const textMap = {
-    'untested': '未测试',
-    'passed': '通过',
-    'failed': '失败',
-    'blocked': '阻塞',
-    'retest': '重测'
+    'untested': t('execution.untested'),
+    'passed': t('execution.passed'),
+    'failed': t('execution.failed'),
+    'blocked': t('execution.blocked'),
+    'retest': t('execution.retest')
   }
   return textMap[status] || status
 }

@@ -3103,16 +3103,9 @@ class AIExecutionRecordViewSet(viewsets.ModelViewSet):
         if not ids:
             return Response({'error': '请选择要删除的记录'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 确保只能删除有权限的记录，重新构建查询以避免 distinct() 限制
-        user = self.request.user
-        accessible_projects = UiProject.objects.filter(
-            models.Q(owner=user) | models.Q(members=user)
-        )
-        deleted_count, _ = AIExecutionRecord.objects.filter(
-            id__in=ids
-        ).filter(
-            models.Q(project__in=accessible_projects) | models.Q(project__isnull=True)
-        ).delete()
+        # 只能删除自己有权限的项目下的记录
+        queryset = self.get_queryset() # Use get_queryset to respect permissions
+        deleted_count, _ = queryset.filter(id__in=ids).delete()
 
         return Response({'message': f'成功删除 {deleted_count} 条记录'})
 

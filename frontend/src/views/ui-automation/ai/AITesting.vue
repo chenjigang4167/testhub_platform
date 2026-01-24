@@ -1,33 +1,33 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">AI 智能测试</h1>
+      <h1 class="page-title">{{ $t('uiAutomation.ai.title') }}</h1>
     </div>
 
     <div class="card-container">
       <el-row :gutter="20">
         <el-col :span="12">
-          <div class="section-title">任务输入</div>
+          <div class="section-title">{{ $t('uiAutomation.ai.taskInput') }}</div>
           <el-form :model="taskForm" label-position="top">
-            <el-form-item label="任务描述" required>
+            <el-form-item :label="$t('uiAutomation.ai.taskDescription')" required>
               <el-input
                 v-model="taskForm.description"
                 type="textarea"
                 :rows="10"
-                placeholder="请用自然语言描述要执行的任务，例如：&#10;1. 访问 https://www.baidu.com&#10;2. 搜索 'TestHub'&#10;3. 点击第一条搜索结果"
+                :placeholder="$t('uiAutomation.ai.taskPlaceholder')"
                 maxlength="2000"
                 show-word-limit
               />
             </el-form-item>
 
-            <el-form-item label="GIF录制">
+            <el-form-item :label="$t('uiAutomation.ai.gifRecording')">
               <el-switch
                 v-model="taskForm.enableGif"
-                active-text="开启"
-                inactive-text="关闭"
+                :active-text="$t('uiAutomation.ai.on')"
+                :inactive-text="$t('uiAutomation.ai.off')"
               />
               <span style="margin-left: 10px; color: #909399; font-size: 12px;">
-                开启后将录制执行过程并生成GIF文件，保存到 ai_agent_history 目录
+                {{ $t('uiAutomation.ai.gifTip') }}
               </span>
             </el-form-item>
 
@@ -39,7 +39,7 @@
                 :disabled="!taskForm.description"
               >
                 <el-icon><VideoPlay /></el-icon>
-                开始执行
+                {{ $t('uiAutomation.ai.startExecution') }}
               </el-button>
               <el-button
                 type="danger"
@@ -48,7 +48,7 @@
                 v-if="running"
               >
                 <el-icon><SwitchButton /></el-icon>
-                停止执行
+                {{ $t('uiAutomation.ai.stopExecution') }}
               </el-button>
               <el-button
                 type="success"
@@ -56,43 +56,43 @@
                 :disabled="!taskForm.description"
               >
                 <el-icon><DocumentAdd /></el-icon>
-                保存为用例
+                {{ $t('uiAutomation.ai.saveAsCase') }}
               </el-button>
             </el-form-item>
           </el-form>
-          
+
           <el-alert
-            title="提示"
+            :title="$t('uiAutomation.ai.tip')"
             type="info"
             :closable="false"
             style="margin-top: 20px;"
           >
             <template #default>
-              <div>AI 模式使用"配置中心-AI智能模式配置"中的模型（如未添加模型，请前往添加）。</div>
-              <div>支持中英文任务描述，任务描述越详细，执行效果越好。</div>
+              <div>{{ $t('uiAutomation.ai.tipContent1') }}</div>
+              <div>{{ $t('uiAutomation.ai.tipContent2') }}</div>
             </template>
           </el-alert>
-          
-          <div class="section-title" style="margin-top: 20px;">执行日志</div>
+
+          <div class="section-title" style="margin-top: 20px;">{{ $t('uiAutomation.ai.executionLogs') }}</div>
           <div class="log-container" ref="logContainer">
             <div v-if="!logs && !running" class="empty-logs">
-              暂无执行日志
+              {{ $t('uiAutomation.ai.noLogs') }}
             </div>
             <pre v-else class="log-content">{{ logs }}</pre>
           </div>
         </el-col>
-        
+
         <el-col :span="12">
-          <div class="section-title">任务明细</div>
+          <div class="section-title">{{ $t('uiAutomation.ai.taskDetails') }}</div>
           <div class="task-list-container">
             <div v-if="analyzing" class="analyzing-state">
               <el-icon class="is-loading"><Loading /></el-icon>
-              <span>任务分析中...</span>
+              <span>{{ $t('uiAutomation.ai.analyzing') }}</span>
             </div>
             <div v-else-if="plannedTasks.length > 0">
-              <div 
-                v-for="task in plannedTasks" 
-                :key="task.id" 
+              <div
+                v-for="task in plannedTasks"
+                :key="task.id"
                 class="task-item"
                 :class="task.status"
               >
@@ -108,7 +108,7 @@
               </div>
             </div>
             <div v-else class="empty-tasks">
-              暂无任务
+              {{ $t('uiAutomation.ai.noTasks') }}
             </div>
           </div>
         </el-col>
@@ -116,19 +116,19 @@
     </div>
 
     <!-- 保存为用例对话框 -->
-    <el-dialog v-model="showSaveDialog" title="保存为 AI 用例" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="500px">
+    <el-dialog v-model="showSaveDialog" :title="$t('uiAutomation.ai.saveAsCaseTitle')" width="500px">
       <el-form :model="saveForm" :rules="saveRules" ref="saveFormRef" label-width="80px">
-        <el-form-item label="用例名称" prop="name">
-          <el-input v-model="saveForm.name" placeholder="请输入用例名称" />
+        <el-form-item :label="$t('uiAutomation.ai.caseName')" prop="name">
+          <el-input v-model="saveForm.name" :placeholder="$t('uiAutomation.ai.caseNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="saveForm.description" type="textarea" placeholder="请输入用例描述" />
+        <el-form-item :label="$t('uiAutomation.common.description')" prop="description">
+          <el-input v-model="saveForm.description" type="textarea" :placeholder="$t('uiAutomation.ai.caseDescPlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showSaveDialog = false">取消</el-button>
-          <el-button type="primary" @click="confirmSaveCase" :loading="saving">保存</el-button>
+          <el-button @click="showSaveDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+          <el-button type="primary" @click="confirmSaveCase" :loading="saving">{{ $t('uiAutomation.common.save') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -136,15 +136,18 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick } from 'vue'
+import { ref, reactive, nextTick, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { VideoPlay, DocumentAdd, CircleCheckFilled, CircleCheck, Loading, SwitchButton } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import {
   runAdhocAITask,
   createAICase,
   getAIExecutionRecordDetail,
   stopAITask
 } from '@/api/ui_automation'
+
+const { t } = useI18n()
 
 const running = ref(false)
 const analyzing = ref(false)
@@ -166,15 +169,15 @@ const saveForm = reactive({
 })
 const saveFormRef = ref(null)
 
-const saveRules = {
-  name: [{ required: true, message: '请输入用例名称', trigger: 'blur' }]
-}
+const saveRules = computed(() => ({
+  name: [{ required: true, message: t('uiAutomation.ai.rules.nameRequired'), trigger: 'blur' }]
+}))
 
 // 执行任务
 const handleRun = async () => {
   running.value = true
   analyzing.value = true
-  logs.value = '正在初始化 AI Agent...\n'
+  logs.value = t('uiAutomation.ai.messages.initAgent')
   plannedTasks.value = []
 
   try {
@@ -185,16 +188,16 @@ const handleRun = async () => {
     })
 
     // analyzing.value = false // 移除过早设置，改为在轮询获取到任务列表后再取消
-    
+
     currentExecutionId.value = response.data.execution_id
-    ElMessage.success('任务开始执行')
-    
+    ElMessage.success(t('uiAutomation.ai.messages.startSuccess'))
+
     // 开始轮询日志
     pollLogs()
-    
+
   } catch (error) {
     console.error('执行失败:', error)
-    ElMessage.error('执行失败: ' + (error.response?.data?.error || error.message))
+    ElMessage.error(t('uiAutomation.ai.messages.startFailed') + ': ' + (error.response?.data?.error || error.message))
     running.value = false
     analyzing.value = false
   }
@@ -203,14 +206,14 @@ const handleRun = async () => {
 // 停止任务
 const handleStop = async () => {
   if (!currentExecutionId.value) return
-  
+
   try {
     await stopAITask(currentExecutionId.value)
-    ElMessage.warning('正在停止任务...')
+    ElMessage.warning(t('uiAutomation.ai.messages.stopping'))
     // 不立即设置 running = false，等待轮询检测到状态变化
   } catch (error) {
     console.error('停止失败:', error)
-    ElMessage.error('停止失败')
+    ElMessage.error(t('uiAutomation.ai.messages.stopFailed'))
   }
 }
 
@@ -246,11 +249,11 @@ const pollLogs = () => {
         running.value = false
         analyzing.value = false // 确保结束时必然取消分析状态
         if (record.status === 'passed') {
-          ElMessage.success('执行成功')
+          ElMessage.success(t('uiAutomation.ai.messages.executionSuccess'))
         } else if (record.status === 'stopped') {
-          ElMessage.warning('任务已停止')
+          ElMessage.warning(t('uiAutomation.ai.messages.taskStopped'))
         } else {
-          ElMessage.error('执行失败')
+          ElMessage.error(t('uiAutomation.ai.messages.executionFailed'))
         }
       }
     } catch (error) {
@@ -280,11 +283,11 @@ const confirmSaveCase = async () => {
           task_description: taskForm.description
         })
 
-        ElMessage.success('保存成功')
+        ElMessage.success(t('uiAutomation.ai.messages.saveSuccess'))
         showSaveDialog.value = false
       } catch (error) {
         console.error('保存失败:', error)
-        ElMessage.error('保存失败')
+        ElMessage.error(t('uiAutomation.ai.messages.saveFailed'))
       } finally {
         saving.value = false
       }

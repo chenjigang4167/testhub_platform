@@ -1,10 +1,10 @@
 <template>
   <div class="automation-testing">
     <div class="header">
-      <h3>自动化测试</h3>
+      <h3>{{ $t('apiTesting.automation.title') }}</h3>
       <el-button type="primary" @click="showCreateSuiteDialog = true">
         <el-icon><Plus /></el-icon>
-        新建测试套件
+        {{ $t('apiTesting.automation.createSuite') }}
       </el-button>
     </div>
 
@@ -12,9 +12,9 @@
       <!-- 左侧项目选择和测试套件列表 -->
       <div class="sidebar">
         <div class="project-selector">
-          <el-select 
-            v-model="selectedProject" 
-            placeholder="选择项目"
+          <el-select
+            v-model="selectedProject"
+            :placeholder="$t('apiTesting.common.selectProject')"
             @change="onProjectChange"
             style="width: 100%;"
           >
@@ -29,7 +29,7 @@
         
         <div class="suite-list">
           <div class="list-header">
-            <span>测试套件</span>
+            <span>{{ $t('apiTesting.automation.testSuites') }}</span>
             <el-button size="small" text @click="loadTestSuites">
               <el-icon><Refresh /></el-icon>
             </el-button>
@@ -46,7 +46,7 @@
               <div class="suite-info">
                 <div class="suite-name">{{ suite.name }}</div>
                 <div class="suite-meta">
-                  {{ suite.suite_requests?.length || 0 }} 个请求
+                  {{ $t('apiTesting.automation.requestCount', { n: suite.suite_requests?.length || 0 }) }}
                 </div>
               </div>
               <el-dropdown @command="handleSuiteAction" trigger="click">
@@ -55,10 +55,10 @@
                 </el-button>
                 <template #dropdown>
                   <el-dropdown-menu>
-                    <el-dropdown-item :command="{ action: 'run', suite }">运行</el-dropdown-item>
-                    <el-dropdown-item :command="{ action: 'edit', suite }">编辑</el-dropdown-item>
-                    <el-dropdown-item :command="{ action: 'duplicate', suite }">复制</el-dropdown-item>
-                    <el-dropdown-item :command="{ action: 'delete', suite }" divided>删除</el-dropdown-item>
+                    <el-dropdown-item :command="{ action: 'run', suite }">{{ $t('apiTesting.automation.run') }}</el-dropdown-item>
+                    <el-dropdown-item :command="{ action: 'edit', suite }">{{ $t('apiTesting.common.edit') }}</el-dropdown-item>
+                    <el-dropdown-item :command="{ action: 'duplicate', suite }">{{ $t('apiTesting.common.copy') }}</el-dropdown-item>
+                    <el-dropdown-item :command="{ action: 'delete', suite }" divided>{{ $t('apiTesting.common.delete') }}</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -70,7 +70,7 @@
       <!-- 右侧测试套件详情 -->
       <div class="main-content">
         <div v-if="!selectedSuite" class="empty-state">
-          <el-empty description="请选择一个测试套件查看详情" />
+          <el-empty :description="$t('apiTesting.automation.selectSuiteHint')" />
         </div>
         
         <div v-else class="suite-detail">
@@ -81,38 +81,38 @@
               <div class="suite-actions">
                 <el-button type="success" @click="runTestSuite(selectedSuite)" :loading="running">
                   <el-icon><VideoPlay /></el-icon>
-                  运行测试
+                  {{ $t('apiTesting.automation.runTest') }}
                 </el-button>
                 <el-button @click="editSuite(selectedSuite)">
                   <el-icon><Edit /></el-icon>
-                  编辑
+                  {{ $t('apiTesting.common.edit') }}
                 </el-button>
               </div>
             </div>
             <div class="suite-description">
-              {{ selectedSuite.description || '暂无描述' }}
+              {{ selectedSuite.description || $t('apiTesting.automation.noDescription') }}
             </div>
             <div class="suite-meta">
               <el-tag size="small">{{ getEnvironmentName(selectedSuite.environment) }}</el-tag>
-              <span class="meta-text">创建者：{{ selectedSuite.created_by?.username }}</span>
-              <span class="meta-text">创建时间：{{ formatDate(selectedSuite.created_at) }}</span>
+              <span class="meta-text">{{ $t('apiTesting.automation.creator') }}{{ selectedSuite.created_by?.username }}</span>
+              <span class="meta-text">{{ $t('apiTesting.automation.createTime') }}{{ formatDate(selectedSuite.created_at) }}</span>
             </div>
           </div>
 
           <!-- 请求列表 -->
           <div class="requests-section">
             <div class="section-header">
-              <h5>测试请求</h5>
+              <h5>{{ $t('apiTesting.automation.testRequests') }}</h5>
               <el-button size="small" @click="showAddRequest">
                 <el-icon><Plus /></el-icon>
-                添加请求
+                {{ $t('apiTesting.automation.addRequest') }}
               </el-button>
             </div>
             
             <el-table :data="selectedSuite.suite_requests" style="width: 100%">
               <el-table-column type="index" width="50" />
-              <el-table-column prop="request.name" label="请求名称" min-width="200" />
-              <el-table-column prop="request.method" label="方法" width="80">
+              <el-table-column prop="request.name" :label="$t('apiTesting.automation.requestName')" min-width="200" />
+              <el-table-column prop="request.method" :label="$t('apiTesting.automation.method')" width="80">
                 <template #default="scope">
                   <el-tag :type="getMethodType(scope.row.request.method)" size="small">
                     {{ scope.row.request.method }}
@@ -120,26 +120,26 @@
                 </template>
               </el-table-column>
               <el-table-column prop="request.url" label="URL" min-width="300" show-overflow-tooltip />
-              <el-table-column prop="enabled" label="启用" width="80">
+              <el-table-column prop="enabled" :label="$t('apiTesting.automation.enabled')" width="80">
                 <template #default="scope">
-                  <el-switch 
-                    v-model="scope.row.enabled" 
+                  <el-switch
+                    v-model="scope.row.enabled"
                     @change="updateRequestEnabled(scope.row)"
                   />
                 </template>
               </el-table-column>
-              <el-table-column label="断言" width="100">
+              <el-table-column :label="$t('apiTesting.automation.assertions')" width="100">
                 <template #default="scope">
-                  {{ scope.row.assertions?.length || 0 }} 个
+                  {{ $t('apiTesting.automation.assertionCount', { n: scope.row.assertions?.length || 0 }) }}
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="150">
+              <el-table-column :label="$t('apiTesting.common.operation')" width="150">
                 <template #default="scope">
                   <el-button link type="primary" @click="editAssertions(scope.row)" size="small">
-                    编辑断言
+                    {{ $t('apiTesting.automation.editAssertions') }}
                   </el-button>
                   <el-button link type="danger" @click="removeRequest(scope.row)" size="small">
-                    移除
+                    {{ $t('apiTesting.automation.remove') }}
                   </el-button>
                 </template>
               </el-table-column>
@@ -149,47 +149,47 @@
           <!-- 执行历史 -->
           <div class="executions-section">
             <div class="section-header">
-              <h5>执行历史</h5>
+              <h5>{{ $t('apiTesting.automation.executionHistory') }}</h5>
               <el-button size="small" @click="loadExecutions">
                 <el-icon><Refresh /></el-icon>
-                刷新
+                {{ $t('apiTesting.automation.refresh') }}
               </el-button>
             </div>
-            
+
             <el-table :data="executions" v-loading="executionsLoading">
-              <el-table-column prop="status" label="状态" width="100">
+              <el-table-column prop="status" :label="$t('apiTesting.common.status')" width="100">
                 <template #default="scope">
                   <el-tag :type="getStatusType(scope.row.status)">
                     {{ getStatusText(scope.row.status) }}
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="total_requests" label="总请求数" width="100" />
-              <el-table-column prop="passed_requests" label="通过数" width="100">
+              <el-table-column prop="total_requests" :label="$t('apiTesting.automation.totalRequests')" width="100" />
+              <el-table-column prop="passed_requests" :label="$t('apiTesting.automation.passedCount')" width="100">
                 <template #default="scope">
                   <span style="color: #67c23a">{{ scope.row.passed_requests }}</span>
                 </template>
               </el-table-column>
-              <el-table-column prop="failed_requests" label="失败数" width="100">
+              <el-table-column prop="failed_requests" :label="$t('apiTesting.automation.failedCount')" width="100">
                 <template #default="scope">
                   <span style="color: #f56c6c">{{ scope.row.failed_requests }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="平均耗时" width="120">
+              <el-table-column :label="$t('apiTesting.automation.averageTime')" width="120">
                 <template #default="scope">
                   {{ getAverageExecutionTime(scope.row) }}
                 </template>
               </el-table-column>
-              <el-table-column prop="executed_by.username" label="执行者" width="120" />
-              <el-table-column prop="created_at" label="执行时间" width="160">
+              <el-table-column prop="executed_by.username" :label="$t('apiTesting.automation.executor')" width="120" />
+              <el-table-column prop="created_at" :label="$t('apiTesting.automation.executionTime')" width="160">
                 <template #default="scope">
                   {{ formatDate(scope.row.created_at) }}
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="120">
+              <el-table-column :label="$t('apiTesting.common.operation')" width="120">
                 <template #default="scope">
                   <el-button link type="primary" @click="viewExecutionDetail(scope.row)" size="small">
-                    查看详情
+                    {{ $t('apiTesting.automation.viewDetails') }}
                   </el-button>
                 </template>
               </el-table-column>
@@ -202,8 +202,7 @@
     <!-- 创建/编辑测试套件对话框 -->
     <el-dialog
       v-model="showCreateSuiteDialog"
-      :title="editingSuite ? '编辑测试套件' : '新建测试套件'"
-      :close-on-click-modal="false"
+      :title="editingSuite ? $t('apiTesting.automation.editSuite') : $t('apiTesting.automation.createSuite')"
       width="600px"
       @close="resetSuiteForm"
     >
@@ -213,21 +212,21 @@
         :rules="suiteRules"
         label-width="100px"
       >
-        <el-form-item label="套件名称" prop="name">
-          <el-input v-model="suiteForm.name" placeholder="请输入套件名称" />
+        <el-form-item :label="$t('apiTesting.automation.suiteName')" prop="name">
+          <el-input v-model="suiteForm.name" :placeholder="$t('apiTesting.automation.inputSuiteName')" />
         </el-form-item>
-        
-        <el-form-item label="套件描述" prop="description">
+
+        <el-form-item :label="$t('apiTesting.automation.suiteDescription')" prop="description">
           <el-input
             v-model="suiteForm.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入套件描述"
+            :placeholder="$t('apiTesting.automation.inputSuiteDescription')"
           />
         </el-form-item>
-        
-        <el-form-item label="所属项目" prop="project">
-          <el-select v-model="suiteForm.project" placeholder="请选择项目">
+
+        <el-form-item :label="$t('apiTesting.automation.belongProject')" prop="project">
+          <el-select v-model="suiteForm.project" :placeholder="$t('apiTesting.automation.selectProject')">
             <el-option
               v-for="project in httpProjects"
               :key="project.id"
@@ -236,9 +235,9 @@
             />
           </el-select>
         </el-form-item>
-        
-        <el-form-item label="执行环境" prop="environment">
-          <el-select v-model="suiteForm.environment" placeholder="请选择执行环境" clearable>
+
+        <el-form-item :label="$t('apiTesting.automation.executionEnvironment')" prop="environment">
+          <el-select v-model="suiteForm.environment" :placeholder="$t('apiTesting.automation.selectEnvironment')" clearable>
             <el-option
               v-for="env in environments"
               :key="env.id"
@@ -248,11 +247,11 @@
           </el-select>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
-        <el-button @click="showCreateSuiteDialog = false">取消</el-button>
+        <el-button @click="showCreateSuiteDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
         <el-button type="primary" @click="submitSuiteForm" :loading="submittingSuite">
-          {{ editingSuite ? '更新' : '创建' }}
+          {{ editingSuite ? $t('apiTesting.common.update') : $t('apiTesting.common.create') }}
         </el-button>
       </template>
     </el-dialog>
@@ -260,8 +259,7 @@
     <!-- 添加请求对话框 -->
     <el-dialog
       v-model="showAddRequestDialog"
-      title="添加请求到测试套件"
-      :close-on-click-modal="false"
+      :title="$t('apiTesting.automation.addRequestToSuite')"
       width="800px"
     >
       <div class="add-request-content">
@@ -294,9 +292,9 @@
       </div>
       
       <template #footer>
-        <el-button @click="showAddRequestDialog = false">取消</el-button>
+        <el-button @click="showAddRequestDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
         <el-button type="primary" @click="addSelectedRequests" :loading="addingRequests">
-          添加选中的请求
+          {{ $t('apiTesting.automation.addSelectedRequests') }}
         </el-button>
       </template>
     </el-dialog>
@@ -304,8 +302,7 @@
     <!-- 执行结果对话框 -->
     <el-dialog
       v-model="showExecutionDialog"
-      title="测试执行结果"
-      :close-on-click-modal="false"
+      :title="$t('apiTesting.automation.testExecutionResult')"
       width="80%"
       :top="'5vh'"
     >
@@ -313,51 +310,51 @@
         <div class="execution-summary">
           <el-row :gutter="20">
             <el-col :span="6">
-              <el-statistic title="总请求数" :value="currentExecution.total_requests" />
+              <el-statistic :title="$t('apiTesting.automation.totalRequests')" :value="currentExecution.total_requests" />
             </el-col>
             <el-col :span="6">
-              <el-statistic title="通过数" :value="currentExecution.passed_requests" />
+              <el-statistic :title="$t('apiTesting.automation.passedCount')" :value="currentExecution.passed_requests" />
             </el-col>
             <el-col :span="6">
-              <el-statistic title="失败数" :value="currentExecution.failed_requests" />
+              <el-statistic :title="$t('apiTesting.automation.failedCount')" :value="currentExecution.failed_requests" />
             </el-col>
             <el-col :span="6">
-              <el-statistic title="通过率" :value="getPassRate(currentExecution)" suffix="%" />
+              <el-statistic :title="$t('apiTesting.automation.passRate')" :value="getPassRate(currentExecution)" suffix="%" />
             </el-col>
           </el-row>
         </div>
-        
+
         <div class="execution-results">
-          <h4>详细结果</h4>
+          <h4>{{ $t('apiTesting.automation.detailedResults') }}</h4>
           <el-table :data="formatExecutionResults(currentExecution.results)">
-            <el-table-column prop="name" label="请求名称" min-width="200" />
-            <el-table-column prop="method" label="方法" width="80">
+            <el-table-column prop="name" :label="$t('apiTesting.automation.requestName')" min-width="200" />
+            <el-table-column prop="method" :label="$t('apiTesting.automation.method')" width="80">
               <template #default="scope">
                 <el-tag :type="getMethodType(scope.row.method)" size="small">
                   {{ scope.row.method }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="status" label="结果" width="100">
+            <el-table-column prop="status" :label="$t('apiTesting.automation.result')" width="100">
               <template #default="scope">
                 <el-tag :type="scope.row.passed ? 'success' : 'danger'" size="small">
-                  {{ scope.row.passed ? '通过' : '失败' }}
+                  {{ scope.row.passed ? $t('apiTesting.automation.status.passed') : $t('apiTesting.automation.status.failed') }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="status_code" label="状态码" width="100" />
-            <el-table-column prop="response_time" label="响应时间" width="120">
+            <el-table-column prop="status_code" :label="$t('apiTesting.automation.statusCode')" width="100" />
+            <el-table-column prop="response_time" :label="$t('apiTesting.automation.responseTime')" width="120">
               <template #default="scope">
                 {{ scope.row.response_time?.toFixed(0) }}ms
               </template>
             </el-table-column>
-            <el-table-column prop="error" label="错误信息" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="error" :label="$t('apiTesting.automation.errorMessage')" min-width="200" show-overflow-tooltip />
           </el-table>
         </div>
       </div>
-      
+
       <template #footer>
-        <el-button @click="showExecutionDialog = false">关闭</el-button>
+        <el-button @click="showExecutionDialog = false">{{ $t('apiTesting.common.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -366,12 +363,15 @@
 <script setup>
 import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Plus, Refresh, MoreFilled, VideoPlay, Edit, 
-  Folder, Document 
+import { useI18n } from 'vue-i18n'
+import {
+  Plus, Refresh, MoreFilled, VideoPlay, Edit,
+  Folder, Document
 } from '@element-plus/icons-vue'
 import api from '@/utils/api'
 import dayjs from 'dayjs'
+
+const { t } = useI18n()
 
 const projects = ref([])
 const selectedProject = ref(null)
@@ -399,10 +399,10 @@ const suiteForm = reactive({
   environment: null
 })
 
-const suiteRules = {
-  name: [{ required: true, message: '请输入套件名称', trigger: 'blur' }],
-  project: [{ required: true, message: '请选择项目', trigger: 'change' }]
-}
+const suiteRules = computed(() => ({
+  name: [{ required: true, message: t('apiTesting.automation.inputSuiteName'), trigger: 'blur' }],
+  project: [{ required: true, message: t('apiTesting.automation.selectProject'), trigger: 'change' }]
+}))
 
 const requestTreeProps = {
   children: 'children',
@@ -436,14 +436,14 @@ const getStatusType = (status) => {
 }
 
 const getStatusText = (status) => {
-  const textMap = {
-    'PENDING': '待执行',
-    'RUNNING': '执行中',
-    'COMPLETED': '已完成',
-    'FAILED': '执行失败',
-    'CANCELLED': '已取消'
-  }
-  return textMap[status] || status
+  const statusKey = {
+    'PENDING': 'pending',
+    'RUNNING': 'running',
+    'COMPLETED': 'completed',
+    'FAILED': 'failed',
+    'CANCELLED': 'cancelled'
+  }[status]
+  return statusKey ? t(`apiTesting.automation.status.${statusKey}`) : status
 }
 
 const formatDate = (dateString) => {
@@ -479,19 +479,19 @@ const getPassRate = (execution) => {
 }
 
 const getEnvironmentName = (environmentId) => {
-  if (!environmentId) return '无环境'
+  if (!environmentId) return t('apiTesting.automation.noEnvironment')
   const env = environments.value.find(e => e.id === environmentId)
-  return env ? env.name : '无环境'
+  return env ? env.name : t('apiTesting.automation.noEnvironment')
 }
 
 const loadProjects = async () => {
   try {
     const response = await api.get('/api-testing/projects/')
     projects.value = response.data.results || response.data
-    
+
     // 过滤出HTTP项目
     const httpProjects = projects.value.filter(project => project.project_type !== 'WEBSOCKET')
-    
+
     if (httpProjects.length > 0 && !selectedProject.value) {
       selectedProject.value = httpProjects[0].id
       await onProjectChange()
@@ -500,20 +500,20 @@ const loadProjects = async () => {
       selectedProject.value = null
     }
   } catch (error) {
-    ElMessage.error('加载项目失败')
+    ElMessage.error(t('apiTesting.messages.error.loadProjects'))
   }
 }
 
 const loadTestSuites = async () => {
   if (!selectedProject.value) return
-  
+
   try {
     const response = await api.get('/api-testing/test-suites/', {
       params: { project: selectedProject.value }
     })
     testSuites.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('加载测试套件失败')
+    ElMessage.error(t('apiTesting.messages.error.loadTestSuites'))
   }
 }
 
@@ -524,35 +524,35 @@ const loadEnvironments = async () => {
       // 不传递project参数，让后端返回所有可访问的环境（全局+当前项目）
     })
     const allEnvironments = response.data.results || response.data
-    
+
     // 过滤当前项目相关或全局环境
-    environments.value = allEnvironments.filter(env => 
-      env.scope === 'GLOBAL' || 
+    environments.value = allEnvironments.filter(env =>
+      env.scope === 'GLOBAL' ||
       (env.scope === 'LOCAL' && (!selectedProject.value || env.project === selectedProject.value))
     )
   } catch (error) {
-    ElMessage.error('加载环境失败')
+    ElMessage.error(t('apiTesting.messages.error.loadEnvironments'))
   }
 }
 
 const loadRequestTree = async () => {
   if (!selectedProject.value) return
-  
+
   try {
     // 加载集合
     const collectionsRes = await api.get('/api-testing/collections/', {
       params: { project: selectedProject.value }
     })
     const collections = collectionsRes.data.results || collectionsRes.data
-    
+
     // 加载请求
     const requestsRes = await api.get('/api-testing/requests/')
     const requests = requestsRes.data.results || requestsRes.data
-    
+
     // 构建树形结构
     requestTree.value = buildRequestTree(collections, requests)
   } catch (error) {
-    ElMessage.error('加载请求树失败')
+    ElMessage.error(t('apiTesting.messages.error.loadRequestTree'))
   }
 }
 
@@ -594,7 +594,7 @@ const buildRequestTree = (collections, requests) => {
 
 const loadExecutions = async () => {
   if (!selectedSuite.value) return
-  
+
   executionsLoading.value = true
   try {
     const response = await api.get('/api-testing/test-executions/', {
@@ -602,7 +602,7 @@ const loadExecutions = async () => {
     })
     executions.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('加载执行历史失败')
+    ElMessage.error(t('apiTesting.messages.error.loadExecutionHistory'))
   } finally {
     executionsLoading.value = false
   }
@@ -612,7 +612,7 @@ const onProjectChange = async () => {
   // 检查选中的项目是否为HTTP项目
   const selectedProjectData = projects.value.find(p => p.id === selectedProject.value)
   if (selectedProjectData && selectedProjectData.project_type === 'WEBSOCKET') {
-    ElMessage.warning('WebSocket项目不支持测试套件功能')
+    ElMessage.warning(t('apiTesting.messages.warning.websocketNotSupported'))
     // 重置为第一个HTTP项目或清空选择
     const httpProjects = projects.value.filter(project => project.project_type !== 'WEBSOCKET')
     if (httpProjects.length > 0) {
@@ -622,7 +622,7 @@ const onProjectChange = async () => {
     }
     return
   }
-  
+
   selectedSuite.value = null
   await Promise.all([
     loadTestSuites(),
@@ -660,9 +660,9 @@ const runTestSuite = async (suite) => {
     currentExecution.value = response.data
     showExecutionDialog.value = true
     await loadExecutions()
-    ElMessage.success('测试套件执行完成')
+    ElMessage.success(t('apiTesting.messages.success.suiteExecuted'))
   } catch (error) {
-    ElMessage.error('执行测试套件失败')
+    ElMessage.error(t('apiTesting.messages.error.executeSuite'))
   } finally {
     running.value = false
   }
@@ -681,65 +681,65 @@ const editSuite = (suite) => {
 const duplicateSuite = async (suite) => {
   try {
     const newSuite = {
-      name: `${suite.name} - 副本`,
+      name: `${suite.name} - ${t('apiTesting.common.copyText')}`,
       description: suite.description,
       project: suite.project,
       environment: suite.environment || null  // 修复：直接使用environment ID
     }
     await api.post('/api-testing/test-suites/', newSuite)
-    ElMessage.success('复制成功')
+    ElMessage.success(t('apiTesting.messages.success.copy'))
     await loadTestSuites()
   } catch (error) {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('apiTesting.messages.error.copyFailed'))
   }
 }
 
 const deleteSuite = async (suite) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除测试套件 "${suite.name}" 吗？`,
-      '确认删除',
+      t('apiTesting.automation.confirmDeleteSuite', { name: suite.name }),
+      t('apiTesting.messages.confirm.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('apiTesting.common.confirm'),
+        cancelButtonText: t('apiTesting.common.cancel'),
         type: 'warning'
       }
     )
-    
+
     await api.delete(`/api-testing/test-suites/${suite.id}/`)
-    ElMessage.success('删除成功')
-    
+    ElMessage.success(t('apiTesting.messages.success.delete'))
+
     if (selectedSuite.value?.id === suite.id) {
       selectedSuite.value = null
     }
     await loadTestSuites()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('apiTesting.messages.error.deleteFailed'))
     }
   }
 }
 
 const submitSuiteForm = async () => {
   if (!suiteFormRef.value) return
-  
+
   const valid = await suiteFormRef.value.validate().catch(() => false)
   if (!valid) return
-  
+
   submittingSuite.value = true
   try {
     if (editingSuite.value) {
       await api.put(`/api-testing/test-suites/${editingSuite.value.id}/`, suiteForm)
-      ElMessage.success('更新成功')
+      ElMessage.success(t('apiTesting.messages.success.suiteUpdated'))
     } else {
       await api.post('/api-testing/test-suites/', suiteForm)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('apiTesting.messages.success.suiteCreated'))
     }
-    
+
     showCreateSuiteDialog.value = false
     await loadTestSuites()
   } catch (error) {
-    ElMessage.error(editingSuite.value ? '更新失败' : '创建失败')
+    ElMessage.error(editingSuite.value ? t('apiTesting.messages.error.updateFailed') : t('apiTesting.messages.error.createFailed'))
   } finally {
     submittingSuite.value = false
   }
@@ -786,25 +786,25 @@ const addSelectedRequests = async () => {
   const requestIds = checkedNodes
     .filter(node => node.type === 'request')
     .map(node => node.id.replace('request_', ''))
-  
+
   if (requestIds.length === 0) {
-    ElMessage.warning('请选择至少一个请求')
+    ElMessage.warning(t('apiTesting.messages.warning.selectAtLeastOneRequest'))
     return
   }
-  
+
   addingRequests.value = true
   try {
     // 这里需要调用添加请求到套件的API
     await api.post(`/api-testing/test-suites/${selectedSuite.value.id}/add-requests/`, {
       request_ids: requestIds
     })
-    
-    ElMessage.success('添加成功')
+
+    ElMessage.success(t('apiTesting.messages.success.addSuccess'))
     showAddRequestDialog.value = false
     // 重新加载当前测试套件详情
     await reloadCurrentSuite()
   } catch (error) {
-    ElMessage.error('添加失败')
+    ElMessage.error(t('apiTesting.messages.error.addFailed'))
   } finally {
     addingRequests.value = false
   }
@@ -816,52 +816,52 @@ const updateRequestEnabled = async (suiteRequest) => {
       enabled: suiteRequest.enabled
     })
   } catch (error) {
-    ElMessage.error('更新失败')
+    ElMessage.error(t('apiTesting.messages.error.updateFailed'))
     suiteRequest.enabled = !suiteRequest.enabled
   }
 }
 
 const editAssertions = (suiteRequest) => {
-  ElMessage.info('断言编辑功能开发中')
+  ElMessage.info(t('apiTesting.messages.info.featureInDevelopment'))
 }
 
 const removeRequest = async (suiteRequest) => {
   try {
-    await ElMessageBox.confirm('确定要移除这个请求吗？', '确认移除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('apiTesting.automation.confirmRemoveRequest'), t('apiTesting.automation.confirmRemove'), {
+      confirmButtonText: t('apiTesting.common.confirm'),
+      cancelButtonText: t('apiTesting.common.cancel'),
       type: 'warning'
     })
-    
+
     await api.delete(`/api-testing/test-suite-requests/${suiteRequest.id}/`)
-    ElMessage.success('移除成功')
+    ElMessage.success(t('apiTesting.messages.success.removeSuccess'))
     // 重新加载当前测试套件详情
     await reloadCurrentSuite()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('移除失败')
+      ElMessage.error(t('apiTesting.messages.error.removeFailed'))
     }
   }
 }
 
 const reloadCurrentSuite = async () => {
   if (!selectedSuite.value) return
-  
+
   try {
     // 重新加载当前测试套件的详细信息
     const response = await api.get(`/api-testing/test-suites/${selectedSuite.value.id}/`)
     const updatedSuite = response.data
-    
+
     // 强制重新设置响应式数据
     selectedSuite.value = { ...updatedSuite }
-    
+
     // 同时更新测试套件列表中对应的套件
     const index = testSuites.value.findIndex(suite => suite.id === updatedSuite.id)
     if (index !== -1) {
       testSuites.value[index] = { ...updatedSuite }
     }
   } catch (error) {
-    ElMessage.error('刷新测试套件失败')
+    ElMessage.error(t('apiTesting.messages.error.refreshSuiteFailed'))
   }
 }
 

@@ -172,10 +172,6 @@
         title="通知详情"
         width="600px"
         :before-close="handleDetailDialogClose"
-        :close-on-click-modal="false"
-        :close-on-press-escape="false"
-        :modal="true"
-        :destroy-on-close="false"
     >
       <el-form
           v-if="selectedLog"

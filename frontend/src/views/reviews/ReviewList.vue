@@ -1,19 +1,19 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">用例评审</h1>
+      <h1 class="page-title">{{ $t('reviewList.title') }}</h1>
       <div>
         <el-button type="primary" @click="createReview">
           <el-icon><Plus /></el-icon>
-          创建评审
+          {{ $t('reviewList.createReview') }}
         </el-button>
       </div>
     </div>
 
     <div class="filter-bar">
       <el-form :inline="true" :model="filters" class="filter-form">
-        <el-form-item label="项目">
-          <el-select v-model="filters.project" placeholder="请选择项目" clearable @change="fetchReviews">
+        <el-form-item :label="$t('reviewList.project')">
+          <el-select v-model="filters.project" :placeholder="$t('reviewList.selectProject')" clearable @change="fetchReviews">
             <el-option
               v-for="project in projects"
               :key="project.id"
@@ -22,17 +22,17 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="filters.status" placeholder="请选择状态" clearable @change="fetchReviews">
-            <el-option label="待评审" value="pending" />
-            <el-option label="评审中" value="in_progress" />
-            <el-option label="已通过" value="approved" />
-            <el-option label="已拒绝" value="rejected" />
-            <el-option label="已取消" value="cancelled" />
+        <el-form-item :label="$t('reviewList.status')">
+          <el-select v-model="filters.status" :placeholder="$t('reviewList.selectStatus')" clearable @change="fetchReviews">
+            <el-option :label="$t('reviewList.statusPending')" value="pending" />
+            <el-option :label="$t('reviewList.statusInProgress')" value="in_progress" />
+            <el-option :label="$t('reviewList.statusApproved')" value="approved" />
+            <el-option :label="$t('reviewList.statusRejected')" value="rejected" />
+            <el-option :label="$t('reviewList.statusCancelled')" value="cancelled" />
           </el-select>
         </el-form-item>
-        <el-form-item label="评审人">
-          <el-select v-model="filters.reviewer" placeholder="请选择评审人" clearable @change="fetchReviews">
+        <el-form-item :label="$t('reviewList.reviewer')">
+          <el-select v-model="filters.reviewer" :placeholder="$t('reviewList.selectReviewer')" clearable @change="fetchReviews">
             <el-option
               v-for="user in users"
               :key="user.id"
@@ -46,8 +46,8 @@
 
     <div class="table-container">
       <el-table :data="reviews" v-loading="loading" stripe>
-        <el-table-column prop="title" label="评审标题" min-width="200" show-overflow-tooltip />
-        <el-table-column label="关联项目" width="200">
+        <el-table-column prop="title" :label="$t('reviewList.reviewTitle')" min-width="200" show-overflow-tooltip />
+        <el-table-column :label="$t('reviewList.reviewProject')" width="200">
           <template #default="{ row }">
             <span v-if="row.projects && row.projects.length > 0">
               {{ row.projects.map(p => p.name).join(', ') }}
@@ -55,53 +55,53 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="评审状态" width="120">
+        <el-table-column :label="$t('reviewList.reviewStatus')" width="120">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="优先级" width="100">
+        <el-table-column :label="$t('reviewList.priority')" width="100">
           <template #default="{ row }">
             <el-tag :class="`priority-tag ${row.priority}`">{{ getPriorityText(row.priority) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="creator.username" label="创建人" width="120" />
-        <el-table-column label="用例数量" width="100">
+        <el-table-column prop="creator.username" :label="$t('reviewList.creator')" width="120" />
+        <el-table-column :label="$t('reviewList.testcaseCount')" width="100">
           <template #default="{ row }">
             {{ row.testcases?.length || 0 }}
           </template>
         </el-table-column>
-        <el-table-column label="评审进度" width="120">
+        <el-table-column :label="$t('reviewList.progress')" width="120">
           <template #default="{ row }">
-            <el-progress 
-              :percentage="getReviewProgress(row)" 
+            <el-progress
+              :percentage="getReviewProgress(row)"
               :color="getProgressColor(row)"
               :stroke-width="6"
             />
           </template>
         </el-table-column>
-        <el-table-column prop="deadline" label="截止时间" width="160">
+        <el-table-column prop="deadline" :label="$t('reviewList.deadline')" width="160">
           <template #default="{ row }">
-            {{ row.deadline ? formatDate(row.deadline) : '无' }}
+            {{ row.deadline ? formatDate(row.deadline) : $t('reviewList.noDeadline') }}
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="160">
+        <el-table-column prop="created_at" :label="$t('reviewList.createdAt')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column :label="$t('reviewList.actions')" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="viewReview(row.id)">详情</el-button>
-            <el-button v-if="canReview(row)" link type="success" @click="submitReview(row)">评审</el-button>
-            <el-button v-if="canEdit(row)" link type="warning" @click="editReview(row.id)">编辑</el-button>
+            <el-button link type="primary" @click="viewReview(row.id)">{{ $t('reviewList.detail') }}</el-button>
+            <el-button v-if="canReview(row)" link type="success" @click="submitReview(row)">{{ $t('reviewList.review') }}</el-button>
+            <el-button v-if="canEdit(row)" link type="warning" @click="editReview(row.id)">{{ $t('reviewList.edit') }}</el-button>
             <el-popconfirm
               v-if="canDelete(row)"
-              title="确定要删除这个评审吗？"
+              :title="$t('reviewList.deleteConfirm')"
               @confirm="deleteReview(row.id)"
             >
               <template #reference>
-                <el-button link type="danger">删除</el-button>
+                <el-button link type="danger">{{ $t('reviewList.delete') }}</el-button>
               </template>
             </el-popconfirm>
           </template>
@@ -122,27 +122,26 @@
     </div>
 
     <!-- 评审对话框 -->
-    <el-dialog v-model="reviewDialogVisible" title="提交评审" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="reviewDialogVisible" :title="$t('reviewList.submitReview')" width="600px">
       <el-form :model="reviewForm" label-width="80px">
-        <el-form-item label="评审结果" required>
+        <el-form-item :label="$t('reviewList.reviewResult')" required>
           <el-radio-group v-model="reviewForm.status">
-            <el-radio-button label="approved">通过</el-radio-button>
-            <el-radio-button label="rejected">拒绝</el-radio-button>
-            <el-radio-button label="abstained">弃权</el-radio-button>
+            <el-radio-button label="approved">{{ $t('reviewList.approved') }}</el-radio-button>
+            <el-radio-button label="rejected">{{ $t('reviewList.rejected') }}</el-radio-button>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="评审意见">
+        <el-form-item :label="$t('reviewList.reviewComment')">
           <el-input
             v-model="reviewForm.comment"
             type="textarea"
             :rows="4"
-            placeholder="请输入评审意见"
+            :placeholder="$t('reviewList.reviewCommentPlaceholder')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="reviewDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmSubmitReview">提交</el-button>
+        <el-button @click="reviewDialogVisible = false">{{ $t('reviewList.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmSubmitReview">{{ $t('reviewList.submit') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -151,6 +150,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import api from '@/utils/api'
@@ -159,6 +159,7 @@ import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const reviews = ref([])
 const projects = ref([])
@@ -193,12 +194,12 @@ const fetchReviews = async () => {
       ...filters
     }
     Object.keys(params).forEach(key => params[key] === '' && delete params[key])
-    
+
     const response = await api.get('/reviews/reviews/', { params })
     reviews.value = response.data.results
     pagination.total = response.data.count
   } catch (error) {
-    ElMessage.error('获取评审列表失败')
+    ElMessage.error(t('reviewList.fetchListFailed'))
   } finally {
     loading.value = false
   }
@@ -244,21 +245,21 @@ const submitReview = (review) => {
 const confirmSubmitReview = async () => {
   try {
     await api.post(`/reviews/reviews/${currentReview.value.id}/submit_review/`, reviewForm)
-    ElMessage.success('评审提交成功')
+    ElMessage.success(t('reviewList.submitSuccess'))
     reviewDialogVisible.value = false
     fetchReviews()
   } catch (error) {
-    ElMessage.error('评审提交失败')
+    ElMessage.error(t('reviewList.submitFailed'))
   }
 }
 
 const deleteReview = async (id) => {
   try {
     await api.delete(`/reviews/reviews/${id}/`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('reviewList.deleteSuccess'))
     fetchReviews()
   } catch (error) {
-    ElMessage.error('删除失败')
+    ElMessage.error(t('reviewList.deleteFailed'))
   }
 }
 
@@ -275,21 +276,21 @@ const getStatusType = (status) => {
 
 const getStatusText = (status) => {
   const textMap = {
-    pending: '待评审',
-    in_progress: '评审中',
-    approved: '已通过',
-    rejected: '已拒绝',
-    cancelled: '已取消'
+    pending: t('reviewList.statusPending'),
+    in_progress: t('reviewList.statusInProgress'),
+    approved: t('reviewList.statusApproved'),
+    rejected: t('reviewList.statusRejected'),
+    cancelled: t('reviewList.statusCancelled')
   }
   return textMap[status] || status
 }
 
 const getPriorityText = (priority) => {
   const textMap = {
-    low: '低',
-    medium: '中',
-    high: '高',
-    urgent: '紧急'
+    low: t('reviewList.priorityLow'),
+    medium: t('reviewList.priorityMedium'),
+    high: t('reviewList.priorityHigh'),
+    urgent: t('reviewList.priorityCritical')
   }
   return textMap[priority] || priority
 }

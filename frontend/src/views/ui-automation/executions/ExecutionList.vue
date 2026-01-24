@@ -1,8 +1,8 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">测试执行记录</h1>
-      <el-select v-model="projectId" placeholder="选择项目" style="width: 200px; margin-right: 15px" @change="onProjectChange">
+      <h1 class="page-title">{{ $t('uiAutomation.execution.title') }}</h1>
+      <el-select v-model="projectId" :placeholder="$t('uiAutomation.common.selectProject')" style="width: 200px; margin-right: 15px" @change="onProjectChange">
         <el-option v-for="project in projects" :key="project.id" :label="project.name" :value="project.id" />
       </el-select>
     </div>
@@ -10,10 +10,10 @@
     <div class="card-container">
       <div class="filter-bar">
         <el-form :inline="true" :model="queryParams" class="demo-form-inline">
-          <el-form-item label="搜索">
+          <el-form-item :label="$t('uiAutomation.common.search')">
             <el-input
               v-model="queryParams.search"
-              placeholder="搜索用例名称"
+              :placeholder="$t('uiAutomation.execution.searchPlaceholder')"
               clearable
               @keyup.enter="handleSearch"
             >
@@ -22,17 +22,17 @@
               </template>
             </el-input>
           </el-form-item>
-          <el-form-item label="状态">
-            <el-select v-model="queryParams.status" placeholder="执行状态" clearable>
-              <el-option label="待执行" value="pending" />
-              <el-option label="执行中" value="running" />
-              <el-option label="通过" value="passed" />
-              <el-option label="失败" value="failed" />
-              <el-option label="错误" value="error" />
+          <el-form-item :label="$t('uiAutomation.common.status')">
+            <el-select v-model="queryParams.status" :placeholder="$t('uiAutomation.execution.statusFilter')" clearable>
+              <el-option :label="$t('uiAutomation.status.pending')" value="pending" />
+              <el-option :label="$t('uiAutomation.status.running')" value="running" />
+              <el-option :label="$t('uiAutomation.status.passed')" value="passed" />
+              <el-option :label="$t('uiAutomation.status.failed')" value="failed" />
+              <el-option :label="$t('uiAutomation.status.error')" value="error" />
             </el-select>
           </el-form-item>
-          <el-form-item label="浏览器">
-            <el-select v-model="queryParams.browser" placeholder="浏览器" clearable>
+          <el-form-item :label="$t('uiAutomation.execution.browserFilter')">
+            <el-select v-model="queryParams.browser" :placeholder="$t('uiAutomation.execution.browserFilter')" clearable>
               <el-option label="Chrome" value="chrome" />
               <el-option label="Firefox" value="firefox" />
               <el-option label="Safari" value="safari" />
@@ -40,14 +40,14 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="handleSearch">查询</el-button>
-            <el-button @click="resetQuery">重置</el-button>
-            <el-button 
-              type="danger" 
+            <el-button type="primary" @click="handleSearch">{{ $t('uiAutomation.common.query') }}</el-button>
+            <el-button @click="resetQuery">{{ $t('uiAutomation.common.reset') }}</el-button>
+            <el-button
+              type="danger"
               :disabled="selectedIds.length === 0"
               @click="handleBatchDelete"
             >
-              批量删除
+              {{ $t('uiAutomation.common.batchDelete') }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -56,60 +56,60 @@
       <el-table :data="executions" v-loading="loading" style="width: 100%" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column prop="id" label="ID" width="80" align="center" />
-        <el-table-column prop="test_case_name" label="用例名称" min-width="200">
+        <el-table-column prop="test_case_name" :label="$t('uiAutomation.execution.caseName')" min-width="200">
           <template #default="{ row }">
             <el-link @click="viewExecutionDetail(row)" type="primary">
               {{ row.test_case_name }}
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column label="关联对象" width="100" align="center">
+        <el-table-column :label="$t('uiAutomation.execution.relatedObject')" width="100" align="center">
           <template #default="{ row }">
-            <el-tag v-if="!row.test_suite" type="info" size="small">用例</el-tag>
-            <el-tag v-else type="warning" size="small">套件</el-tag>
+            <el-tag v-if="!row.test_suite" type="info" size="small">{{ $t('uiAutomation.execution.case') }}</el-tag>
+            <el-tag v-else type="warning" size="small">{{ $t('uiAutomation.execution.suiteTag') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="执行状态" width="100" align="center">
+        <el-table-column prop="status" :label="$t('uiAutomation.execution.statusFilter')" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)" size="small">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="engine" label="测试引擎" width="120" align="center">
+        <el-table-column prop="engine" :label="$t('uiAutomation.execution.testEngine')" width="120" align="center">
           <template #default="{ row }">
             {{ getEngineText(row.engine) }}
           </template>
         </el-table-column>
-        <el-table-column prop="headless" label="执行模式" width="100" align="center">
+        <el-table-column prop="headless" :label="$t('uiAutomation.execution.executionMode')" width="100" align="center">
           <template #default="{ row }">
-            {{ row.headless ? '无头模式' : '有头模式' }}
+            {{ row.headless ? $t('uiAutomation.execution.headlessMode') : $t('uiAutomation.execution.headedMode') }}
           </template>
         </el-table-column>
-        <el-table-column prop="browser" label="浏览器" width="100" align="center">
+        <el-table-column prop="browser" :label="$t('uiAutomation.execution.browserFilter')" width="100" align="center">
           <template #default="{ row }">
             {{ getBrowserText(row.browser) }}
           </template>
         </el-table-column>
-        <el-table-column prop="created_by_name" label="执行人" width="120" align="center" />
-        <el-table-column prop="started_at" label="开始时间" width="180" align="center">
+        <el-table-column prop="created_by_name" :label="$t('uiAutomation.execution.executor')" width="120" align="center" />
+        <el-table-column prop="started_at" :label="$t('uiAutomation.execution.startTime')" width="180" align="center">
           <template #default="{ row }">
             {{ formatDateTime(row.started_at) }}
           </template>
         </el-table-column>
-        <el-table-column prop="finished_at" label="结束时间" width="180" align="center">
+        <el-table-column prop="finished_at" :label="$t('uiAutomation.execution.endTime')" width="180" align="center">
           <template #default="{ row }">
             {{ formatDateTime(row.finished_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="执行时长" width="120" align="center">
+        <el-table-column :label="$t('uiAutomation.execution.duration')" width="120" align="center">
           <template #default="{ row }">
             {{ formatDuration(row.execution_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right" align="center">
+        <el-table-column :label="$t('uiAutomation.common.operation')" width="150" fixed="right" align="center">
           <template #default="{ row }">
             <el-button size="small" type="primary" link @click="viewExecutionDetail(row)">
               <el-icon><View /></el-icon>
-              详情
+              {{ $t('uiAutomation.common.details') }}
             </el-button>
             <el-button
               v-if="row.status === 'failed' || row.status === 'error'"
@@ -119,14 +119,14 @@
               @click="showRerunDialog(row)"
             >
               <el-icon><Refresh /></el-icon>
-              重跑
+              {{ $t('uiAutomation.common.rerun') }}
             </el-button>
-            <el-button 
-              link 
-              type="danger" 
+            <el-button
+              link
+              type="danger"
               @click="handleDelete(row)"
             >
-              删除
+              {{ $t('uiAutomation.common.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -146,31 +146,31 @@
     </div>
 
     <!-- 执行详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="执行详情" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="900px">
+    <el-dialog v-model="showDetailDialog" :title="$t('uiAutomation.execution.executionDetail')" width="900px">
       <div v-if="currentExecution" class="execution-detail">
         <!-- 基本信息 -->
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="用例名称">{{ currentExecution.test_case_name }}</el-descriptions-item>
-          <el-descriptions-item label="执行状态">
+          <el-descriptions-item :label="$t('uiAutomation.execution.caseName')">{{ currentExecution.test_case_name }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.execution.statusFilter')">
             <el-tag :type="getStatusType(currentExecution.status)">{{ getStatusText(currentExecution.status) }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="浏览器">{{ getBrowserText(currentExecution.browser) }}</el-descriptions-item>
-          <el-descriptions-item label="执行人">{{ currentExecution.created_by_name }}</el-descriptions-item>
-          <el-descriptions-item label="开始时间">{{ formatDateTime(currentExecution.started_at) }}</el-descriptions-item>
-          <el-descriptions-item label="结束时间">{{ formatDateTime(currentExecution.finished_at) }}</el-descriptions-item>
-          <el-descriptions-item label="执行时长" :span="2">{{ formatDuration(currentExecution.execution_time) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.execution.browserFilter')">{{ getBrowserText(currentExecution.browser) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.execution.executor')">{{ currentExecution.created_by_name }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.execution.startTime')">{{ formatDateTime(currentExecution.started_at) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.execution.endTime')">{{ formatDateTime(currentExecution.finished_at) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.execution.duration')" :span="2">{{ formatDuration(currentExecution.execution_time) }}</el-descriptions-item>
         </el-descriptions>
 
         <!-- 执行结果选项卡 -->
         <el-tabs v-model="activeTab" class="execution-tabs" style="margin-top: 20px;">
           <!-- 执行日志 - 所有状态都显示 -->
-          <el-tab-pane label="执行日志" name="logs">
+          <el-tab-pane :label="$t('uiAutomation.execution.executionLogs')" name="logs">
             <div class="logs-container">
               <div v-if="currentExecution.execution_logs">
                 <div v-for="(step, index) in parseExecutionLogs(currentExecution.execution_logs)" :key="index" class="log-item">
                   <div class="log-header">
                     <el-tag :type="step.success ? 'success' : 'danger'" size="small">
-                      步骤 {{ step.step_number }}
+                      {{ $t('uiAutomation.execution.step') }} {{ step.step_number }}
                     </el-tag>
                     <span class="log-action">{{ getActionText(step.action_type) }}</span>
                     <span class="log-desc">{{ step.description }}</span>
@@ -181,16 +181,16 @@
                   </div>
                 </div>
               </div>
-              <el-empty v-else description="暂无执行日志" />
+              <el-empty v-else :description="$t('uiAutomation.execution.noLogs')" />
             </div>
           </el-tab-pane>
 
           <!-- 失败截图 - 仅失败或错误状态显示 -->
-          <el-tab-pane label="失败截图" name="screenshots" v-if="currentExecution.status === 'failed' || currentExecution.status === 'error'">
+          <el-tab-pane :label="$t('uiAutomation.execution.failedScreenshots')" name="screenshots" v-if="currentExecution.status === 'failed' || currentExecution.status === 'error'">
             <div class="screenshots-container">
               <div v-if="currentExecution.screenshots && currentExecution.screenshots.length > 0">
                 <div v-for="(screenshot, index) in currentExecution.screenshots" :key="index" class="screenshot-item">
-                  <h5>{{ screenshot.description || `截图 ${index + 1}` }}</h5>
+                  <h5>{{ screenshot.description || `${$t('uiAutomation.execution.screenshot')} ${index + 1}` }}</h5>
                   <!-- 检查截图URL是否有效 -->
                   <div v-if="screenshot.url" class="screenshot-wrapper">
                     <img
@@ -202,43 +202,43 @@
                   </div>
                   <div v-else class="screenshot-error">
                     <el-icon><WarningFilled /></el-icon>
-                    <span>截图失败：{{ screenshot.error || '未知原因' }}</span>
+                    <span>{{ $t('uiAutomation.execution.screenshotFailed') }}{{ screenshot.error || $t('uiAutomation.execution.unknownReason') }}</span>
                   </div>
                   <p class="screenshot-time">{{ formatDateTime(screenshot.timestamp) }}</p>
                 </div>
               </div>
-              <el-empty v-else description="暂无失败截图" />
+              <el-empty v-else :description="$t('uiAutomation.execution.noScreenshots')" />
             </div>
           </el-tab-pane>
 
           <!-- 错误信息 - 仅失败或错误状态显示 -->
-          <el-tab-pane label="错误信息" name="error" v-if="currentExecution.status === 'failed' || currentExecution.status === 'error'">
+          <el-tab-pane :label="$t('uiAutomation.execution.errorInfo')" name="error" v-if="currentExecution.status === 'failed' || currentExecution.status === 'error'">
             <div class="errors-container">
               <div v-if="currentExecution.error_message" class="error-item">
                 <div class="error-content">
                   <pre class="error-text">{{ currentExecution.error_message }}</pre>
                 </div>
               </div>
-              <el-empty v-else description="暂无错误信息" />
+              <el-empty v-else :description="$t('uiAutomation.execution.noError')" />
             </div>
           </el-tab-pane>
         </el-tabs>
       </div>
       <template #footer>
-        <el-button @click="showDetailDialog = false">关闭</el-button>
+        <el-button @click="showDetailDialog = false">{{ $t('uiAutomation.common.close') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 重跑测试用例对话框 -->
-    <el-dialog v-model="showRerunDialogVisible" title="重跑测试用例" :close-on-click-modal="false" width="500px">
+    <el-dialog v-model="showRerunDialogVisible" :title="$t('uiAutomation.execution.rerunTitle')" width="500px">
       <el-form :model="rerunFormData" label-width="100px">
-        <el-form-item label="测试引擎">
+        <el-form-item :label="$t('uiAutomation.execution.testEngine')">
           <el-radio-group v-model="rerunFormData.engine">
             <el-radio label="playwright">Playwright</el-radio>
             <el-radio label="selenium">Selenium</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="浏览器">
+        <el-form-item :label="$t('uiAutomation.execution.browserFilter')">
           <el-select v-model="rerunFormData.browser" style="width: 100%">
             <el-option label="Chrome" value="chrome" />
             <el-option label="Firefox" value="firefox" />
@@ -246,16 +246,16 @@
             <el-option label="Edge" value="edge" />
           </el-select>
         </el-form-item>
-        <el-form-item label="执行模式">
+        <el-form-item :label="$t('uiAutomation.execution.executionMode')">
           <el-radio-group v-model="rerunFormData.headless">
-            <el-radio :label="false">有头模式</el-radio>
-            <el-radio :label="true">无头模式</el-radio>
+            <el-radio :label="false">{{ $t('uiAutomation.execution.headedMode') }}</el-radio>
+            <el-radio :label="true">{{ $t('uiAutomation.execution.headlessMode') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showRerunDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleRerun" :loading="rerunning">确认重跑</el-button>
+        <el-button @click="showRerunDialogVisible = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleRerun" :loading="rerunning">{{ $t('uiAutomation.execution.confirmRerun') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -265,13 +265,16 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, View, WarningFilled, Refresh } from '@element-plus/icons-vue'
-import { 
-  getTestCaseExecutions, 
+import { useI18n } from 'vue-i18n'
+import {
+  getTestCaseExecutions,
   getUiProjects,
   deleteTestCaseExecution,
   batchDeleteTestCaseExecutions,
   runTestCase
 } from '@/api/ui_automation'
+
+const { t } = useI18n()
 
 // 项目和执行数据
 const projects = ref([])
@@ -374,11 +377,11 @@ const getStatusType = (status) => {
 // 获取状态文本
 const getStatusText = (status) => {
   const statusMap = {
-    'pending': '待执行',
-    'running': '执行中',
-    'passed': '通过',
-    'failed': '失败',
-    'error': '错误'
+    'pending': t('uiAutomation.status.pending'),
+    'running': t('uiAutomation.status.running'),
+    'passed': t('uiAutomation.status.passed'),
+    'failed': t('uiAutomation.status.failed'),
+    'error': t('uiAutomation.status.error')
   }
   return statusMap[status] || status
 }
@@ -406,15 +409,15 @@ const getEngineText = (engine) => {
 // 获取操作类型文本
 const getActionText = (actionType) => {
   const actionMap = {
-    'click': '点击',
-    'fill': '填写',
-    'getText': '获取文本',
-    'waitFor': '等待元素',
-    'hover': '悬停',
-    'scroll': '滚动',
-    'screenshot': '截图',
-    'assert': '断言',
-    'wait': '等待'
+    'click': t('uiAutomation.actionTypes.click'),
+    'fill': t('uiAutomation.actionTypes.fill'),
+    'getText': t('uiAutomation.actionTypes.getText'),
+    'waitFor': t('uiAutomation.actionTypes.waitFor'),
+    'hover': t('uiAutomation.actionTypes.hover'),
+    'scroll': t('uiAutomation.actionTypes.scroll'),
+    'screenshot': t('uiAutomation.actionTypes.screenshot'),
+    'assert': t('uiAutomation.actionTypes.assert'),
+    'wait': t('uiAutomation.actionTypes.wait')
   }
   return actionMap[actionType] || actionType
 }
@@ -436,7 +439,7 @@ const loadProjects = async () => {
     const response = await getUiProjects({ page_size: 100 })
     projects.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('获取项目列表失败')
+    ElMessage.error(t('uiAutomation.project.messages.loadFailed'))
     console.error('获取项目列表失败:', error)
   }
 }
@@ -462,7 +465,7 @@ const loadExecutions = async () => {
     executions.value = response.data.results || response.data
     total.value = response.data.count || executions.value.length
   } catch (error) {
-    ElMessage.error('获取执行列表失败')
+    ElMessage.error(t('uiAutomation.execution.messages.loadFailed'))
     console.error('获取执行列表失败:', error)
   } finally {
     loading.value = false
@@ -512,18 +515,18 @@ const handleSelectionChange = (selection) => {
 
 // 删除单个执行记录
 const handleDelete = (row) => {
-  ElMessageBox.confirm('确认删除该执行记录吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('uiAutomation.execution.messages.deleteConfirm'), t('uiAutomation.messages.confirm.tip'), {
+    confirmButtonText: t('uiAutomation.common.confirm'),
+    cancelButtonText: t('uiAutomation.common.cancel'),
     type: 'warning'
   }).then(async () => {
     try {
       await deleteTestCaseExecution(row.id)
-      ElMessage.success('删除成功')
+      ElMessage.success(t('uiAutomation.execution.messages.deleteSuccess'))
       loadExecutions()
     } catch (error) {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('uiAutomation.execution.messages.deleteFailed'))
     }
   })
 }
@@ -531,20 +534,20 @@ const handleDelete = (row) => {
 // 批量删除执行记录
 const handleBatchDelete = () => {
   if (selectedIds.value.length === 0) return
-  
-  ElMessageBox.confirm(`确认删除选中的 ${selectedIds.value.length} 条记录吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+
+  ElMessageBox.confirm(t('uiAutomation.execution.messages.batchDeleteConfirm', { count: selectedIds.value.length }), t('uiAutomation.messages.confirm.tip'), {
+    confirmButtonText: t('uiAutomation.common.confirm'),
+    cancelButtonText: t('uiAutomation.common.cancel'),
     type: 'warning'
   }).then(async () => {
     try {
       await batchDeleteTestCaseExecutions(selectedIds.value)
-      ElMessage.success('批量删除成功')
+      ElMessage.success(t('uiAutomation.execution.messages.batchDeleteSuccess'))
       selectedIds.value = []
       loadExecutions()
     } catch (error) {
       console.error('批量删除失败:', error)
-      ElMessage.error('批量删除失败')
+      ElMessage.error(t('uiAutomation.execution.messages.batchDeleteFailed'))
     }
   })
 }
@@ -568,7 +571,7 @@ const showRerunDialog = (execution) => {
 // 执行重跑
 const handleRerun = async () => {
   if (!rerunFormData.testCaseId) {
-    ElMessage.error('测试用例ID无效')
+    ElMessage.error(t('uiAutomation.execution.messages.invalidCaseId'))
     return
   }
 
@@ -590,13 +593,13 @@ const handleRerun = async () => {
 
     // 根据返回结果显示消息
     if (response.data.success) {
-      ElMessage.success('用例重跑成功')
+      ElMessage.success(t('uiAutomation.execution.messages.rerunSuccess'))
     } else {
-      ElMessage.warning('用例执行完成，但有步骤失败: ' + (response.data.errors?.[0]?.message || '请查看执行详情'))
+      ElMessage.warning(t('uiAutomation.execution.messages.rerunCompleteWithFailure') + ': ' + (response.data.errors?.[0]?.message || t('uiAutomation.execution.messages.viewDetails')))
     }
   } catch (error) {
     showRerunDialogVisible.value = false
-    ElMessage.error('用例重跑失败: ' + (error.response?.data?.message || error.message || '未知错误'))
+    ElMessage.error(t('uiAutomation.execution.messages.rerunFailed') + ': ' + (error.response?.data?.message || error.message || t('uiAutomation.messages.error.unknown')))
     console.error('重跑失败:', error)
     // 即使失败也刷新列表，因为可能已经创建了执行记录
     setTimeout(async () => {

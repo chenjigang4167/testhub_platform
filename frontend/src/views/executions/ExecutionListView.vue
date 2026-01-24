@@ -1,96 +1,96 @@
 <template>
   <div class="execution-list">
     <div class="header">
-      <h1>测试计划</h1>
+      <h1>{{ $t('execution.testPlan') }}</h1>
       <div class="header-actions">
-        <el-button 
-          v-if="selectedPlans.length > 0" 
-          type="danger" 
+        <el-button
+          v-if="selectedPlans.length > 0"
+          type="danger"
           :icon="Delete"
           @click="batchDeletePlans"
           :disabled="isDeleting">
-          批量删除 ({{ selectedPlans.length }})
+          {{ $t('execution.batchDelete') }} ({{ selectedPlans.length }})
         </el-button>
         <el-button type="primary" @click="openCreatePlanDialog">
           <el-icon><Plus /></el-icon>
-          新建测试计划
+          {{ $t('execution.newPlan') }}
         </el-button>
       </div>
     </div>
 
     <div class="filter-bar">
       <el-form :inline="true">
-        <el-form-item label="项目">
-          <el-select v-model="filters.project" placeholder="选择项目" clearable style="width: 200px">
+        <el-form-item :label="$t('execution.project')">
+          <el-select v-model="filters.project" :placeholder="$t('execution.selectProject')" clearable style="width: 200px">
             <el-option v-for="item in projects" :key="item.id" :label="item.name" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="filters.is_active" placeholder="选择状态" clearable style="width: 120px">
-            <el-option label="激活" :value="true"></el-option>
-            <el-option label="已关闭" :value="false"></el-option>
+        <el-form-item :label="$t('execution.status')">
+          <el-select v-model="filters.is_active" :placeholder="$t('execution.selectStatus')" clearable style="width: 120px">
+            <el-option :label="$t('execution.filterActive')" :value="true"></el-option>
+            <el-option :label="$t('execution.filterClosed')" :value="false"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="applyFilters">查询</el-button>
-          <el-button @click="resetFilters">重置</el-button>
+          <el-button type="primary" @click="applyFilters">{{ $t('common.search') }}</el-button>
+          <el-button @click="resetFilters">{{ $t('common.reset') }}</el-button>
         </el-form-item>
       </el-form>
     </div>
 
-    <el-table 
-      :data="testPlans" 
-      style="width: 100%" 
+    <el-table
+      :data="testPlans"
+      style="width: 100%"
       v-loading="loading"
       @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" />
-      <el-table-column 
-        type="index" 
-        label="序号" 
-        width="80" 
+      <el-table-column
+        type="index"
+        :label="$t('execution.serialNumber')"
+        width="80"
         :index="getSerialNumber" />
-      <el-table-column prop="name" label="计划名称" min-width="200">
+      <el-table-column prop="name" :label="$t('execution.planName')" min-width="200">
         <template #default="scope">
           <el-link type="primary" @click="viewPlan(scope.row.id)">
             {{ scope.row.name }}
           </el-link>
         </template>
       </el-table-column>
-      <el-table-column prop="projects" label="项目" width="200">
+      <el-table-column prop="projects" :label="$t('execution.projects')" width="200">
         <template #default="scope">
           <span v-if="scope.row.projects && scope.row.projects.length > 0">
             {{ scope.row.projects.join(', ') }}
           </span>
-          <span v-else>-</span>
+          <span v-else>{{ $t('execution.noData') }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="version" label="版本" width="120"></el-table-column>
-      <el-table-column prop="creator.username" label="创建者" width="120"></el-table-column>
-      <el-table-column label="状态" width="100">
+      <el-table-column prop="version" :label="$t('execution.version')" width="120"></el-table-column>
+      <el-table-column prop="creator.username" :label="$t('execution.creator')" width="120"></el-table-column>
+      <el-table-column :label="$t('execution.status')" width="100">
         <template #default="scope">
           <el-tag :type="scope.row.is_active ? 'success' : 'info'">
-            {{ scope.row.is_active ? '激活' : '已关闭' }}
+            {{ scope.row.is_active ? $t('execution.active') : $t('execution.closed') }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="created_at" label="创建时间" width="180">
+      <el-table-column prop="created_at" :label="$t('execution.createdAt')" width="180">
         <template #default="scope">
           {{ formatDate(scope.row.created_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200" fixed="right">
+      <el-table-column :label="$t('execution.actions')" width="200" fixed="right">
         <template #default="scope">
           <el-button size="small" type="primary" @click="viewPlan(scope.row.id)">
-            查看执行
+            {{ $t('execution.viewExecution') }}
           </el-button>
           <el-button size="small" type="warning" @click="editPlan(scope.row)">
-            编辑
+            {{ $t('common.edit') }}
           </el-button>
-          <el-button 
-            size="small" 
+          <el-button
+            size="small"
             :type="scope.row.is_active ? 'danger' : 'success'"
             @click="togglePlanStatus(scope.row)">
-            {{ scope.row.is_active ? '关闭' : '激活' }}
+            {{ scope.row.is_active ? $t('execution.closePlan') : $t('execution.activatePlan') }}
           </el-button>
         </template>
       </el-table-column>
@@ -110,39 +110,39 @@
     </div>
 
     <!-- 创建测试计划对话框 -->
-    <el-dialog title="新建测试计划" v-model="isCreatePlanDialogOpen" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog :title="$t('execution.createPlanDialog')" v-model="isCreatePlanDialogOpen" width="600px">
       <el-form :model="newPlanForm" :rules="planRules" ref="planFormRef" label-width="100px">
-        <el-form-item label="计划名称" prop="name">
-          <el-input v-model="newPlanForm.name" placeholder="请输入计划名称"></el-input>
+        <el-form-item :label="$t('execution.planName')" prop="name">
+          <el-input v-model="newPlanForm.name" :placeholder="$t('execution.planNamePlaceholder')"></el-input>
         </el-form-item>
-        <el-form-item label="计划描述">
-          <el-input 
-            v-model="newPlanForm.description" 
-            type="textarea" 
+        <el-form-item :label="$t('execution.planDescription')">
+          <el-input
+            v-model="newPlanForm.description"
+            type="textarea"
             :rows="3"
-            placeholder="请输入计划描述">
+            :placeholder="$t('execution.planDescriptionPlaceholder')">
           </el-input>
         </el-form-item>
-        <el-form-item label="关联项目" prop="projects">
-          <el-select 
-            v-model="newPlanForm.projects" 
-            multiple 
-            placeholder="请选择项目" 
+        <el-form-item :label="$t('execution.relatedProjects')" prop="projects">
+          <el-select
+            v-model="newPlanForm.projects"
+            multiple
+            :placeholder="$t('execution.selectProjects')"
             style="width: 100%"
             @change="handleProjectChange">
             <el-option v-for="item in projects" :key="item.id" :label="item.name" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="关联版本">
-          <el-select v-model="newPlanForm.version" placeholder="请选择版本" style="width: 100%">
+        <el-form-item :label="$t('execution.relatedVersion')">
+          <el-select v-model="newPlanForm.version" :placeholder="$t('execution.selectVersion')" style="width: 100%">
             <el-option v-for="item in versions" :key="item.id" :label="item.name" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="测试用例" prop="testcases">
-          <el-select 
-            v-model="newPlanForm.testcases" 
-            multiple 
-            :placeholder="loadingTestcases ? '加载中...' : (!newPlanForm.projects || newPlanForm.projects.length === 0 ? '请先选择项目' : '请选择用例')" 
+        <el-form-item :label="$t('execution.testCases')" prop="testcases">
+          <el-select
+            v-model="newPlanForm.testcases"
+            multiple
+            :placeholder="loadingTestcases ? $t('execution.loadingTestcases') : (!newPlanForm.projects || newPlanForm.projects.length === 0 ? $t('execution.selectTestcasesDisabled') : $t('execution.selectTestcases'))"
             style="width: 100%"
             :disabled="!newPlanForm.projects || newPlanForm.projects.length === 0"
             :loading="loadingTestcases"
@@ -153,61 +153,61 @@
             </el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="指派给">
-          <el-select v-model="newPlanForm.assignees" multiple placeholder="请选择执行人员" style="width: 100%">
+        <el-form-item :label="$t('execution.assignees')">
+          <el-select v-model="newPlanForm.assignees" multiple :placeholder="$t('execution.selectAssignees')" style="width: 100%">
             <el-option v-for="item in users" :key="item.id" :label="item.username" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="isCreatePlanDialogOpen = false">取消</el-button>
-          <el-button type="primary" @click="createPlan" :loading="creating">创建</el-button>
+          <el-button @click="isCreatePlanDialogOpen = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="createPlan" :loading="creating">{{ $t('execution.createPlan') }}</el-button>
         </span>
       </template>
     </el-dialog>
 
     <!-- 编辑测试计划对话框 -->
-    <el-dialog title="编辑测试计划" v-model="isEditPlanDialogOpen" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog :title="$t('execution.editPlanDialog')" v-model="isEditPlanDialogOpen" width="600px">
       <el-form :model="editPlanForm" :rules="planRules" ref="editPlanFormRef" label-width="100px">
-        <el-form-item label="计划名称" prop="name">
-          <el-input v-model="editPlanForm.name" placeholder="请输入计划名称"></el-input>
+        <el-form-item :label="$t('execution.planName')" prop="name">
+          <el-input v-model="editPlanForm.name" :placeholder="$t('execution.planNamePlaceholder')"></el-input>
         </el-form-item>
-        <el-form-item label="计划描述">
-          <el-input 
-            v-model="editPlanForm.description" 
-            type="textarea" 
+        <el-form-item :label="$t('execution.planDescription')">
+          <el-input
+            v-model="editPlanForm.description"
+            type="textarea"
             :rows="3"
-            placeholder="请输入计划描述">
+            :placeholder="$t('execution.planDescriptionPlaceholder')">
           </el-input>
         </el-form-item>
-        <el-form-item label="关联项目" prop="projects">
-          <el-select v-model="editPlanForm.projects" multiple placeholder="请选择项目" style="width: 100%">
+        <el-form-item :label="$t('execution.relatedProjects')" prop="projects">
+          <el-select v-model="editPlanForm.projects" multiple :placeholder="$t('execution.selectProjects')" style="width: 100%">
             <el-option v-for="item in projects" :key="item.id" :label="item.name" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="关联版本">
-          <el-select v-model="editPlanForm.version" placeholder="请选择版本" style="width: 100%">
+        <el-form-item :label="$t('execution.relatedVersion')">
+          <el-select v-model="editPlanForm.version" :placeholder="$t('execution.selectVersion')" style="width: 100%">
             <el-option v-for="item in versions" :key="item.id" :label="item.name" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="指派给">
-          <el-select v-model="editPlanForm.assignees" multiple placeholder="请选择执行人员" style="width: 100%">
+        <el-form-item :label="$t('execution.assignees')">
+          <el-select v-model="editPlanForm.assignees" multiple :placeholder="$t('execution.selectAssignees')" style="width: 100%">
             <el-option v-for="item in users" :key="item.id" :label="item.username" :value="item.id"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
-          <el-switch 
-            v-model="editPlanForm.is_active" 
-            active-text="激活" 
-            inactive-text="已关闭">
+        <el-form-item :label="$t('execution.planStatus')">
+          <el-switch
+            v-model="editPlanForm.is_active"
+            :active-text="$t('execution.activeText')"
+            :inactive-text="$t('execution.inactiveText')">
           </el-switch>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="isEditPlanDialogOpen = false">取消</el-button>
-          <el-button type="primary" @click="updatePlan" :loading="updating">保存</el-button>
+          <el-button @click="isEditPlanDialogOpen = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="updatePlan" :loading="updating">{{ $t('execution.updatePlan') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -215,11 +215,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import api from '@/utils/api'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const loading = ref(false)
@@ -273,21 +276,21 @@ const editPlanForm = reactive({
 
 const planRules = {
   name: [
-    { required: true, message: '请输入计划名称', trigger: 'blur' }
+    { required: true, message: computed(() => t('execution.planNameRequired')), trigger: 'blur' }
   ],
   projects: [
-    { required: true, message: '请选择项目', trigger: 'change' }
+    { required: true, message: computed(() => t('execution.projectsRequired')), trigger: 'change' }
   ],
   testcases: [
-    { 
-      required: true, 
-      message: '请选择至少一个测试用例', 
+    {
+      required: true,
+      message: computed(() => t('execution.testcasesRequired')),
       trigger: 'change',
       validator: (rule, value, callback) => {
         if (!newPlanForm.projects || newPlanForm.projects.length === 0) {
-          callback(new Error('请先选择项目'))
+          callback(new Error(t('execution.selectProjectBeforeTestcases')))
         } else if (!value || value.length === 0) {
-          callback(new Error('请选择至少一个测试用例'))
+          callback(new Error(t('execution.testcasesRequired')))
         } else {
           callback()
         }
@@ -310,12 +313,12 @@ const fetchTestPlans = async () => {
         delete params[key]
       }
     })
-    
+
     const response = await api.get('/executions/plans/', { params })
     testPlans.value = response.data.results || response.data || []
     total.value = response.data.count || testPlans.value.length
   } catch (error) {
-    ElMessage.error('获取测试计划失败')
+    ElMessage.error(t('execution.fetchListFailed'))
   } finally {
     loading.value = false
   }
@@ -343,28 +346,28 @@ const loadTestcasesByProjects = async (projectIds) => {
     filteredTestcases.value = []
     return
   }
-  
+
   loadingTestcases.value = true
-  
+
   try {
     const params = new URLSearchParams()
     projectIds.forEach(id => params.append('project_ids', id))
-    
+
     console.log('API URL:', `/executions/plans/testcases_by_projects/?${params.toString()}`)
-    
+
     const response = await api.get(`/executions/plans/testcases_by_projects/?${params.toString()}`)
     console.log('API Response:', response.data)
-    
+
     filteredTestcases.value = response.data.results || []
     console.log('Filtered testcases:', filteredTestcases.value)
   } catch (error) {
     console.error('Load testcases error:', error)
     if (error.response?.status === 400) {
-      ElMessage.warning(error.response.data.detail || '请先选择项目')
+      ElMessage.warning(error.response.data.detail || t('execution.selectProjectFirst'))
     } else if (error.response?.status === 401) {
-      ElMessage.error('请先登录')
+      ElMessage.error(t('auth.loginFailed'))
     } else {
-      ElMessage.error('获取测试用例失败: ' + (error.response?.data?.detail || error.message))
+      ElMessage.error(t('execution.fetchTestcasesFailed') + ': ' + (error.response?.data?.detail || error.message))
     }
     filteredTestcases.value = []
   } finally {
@@ -375,7 +378,7 @@ const loadTestcasesByProjects = async (projectIds) => {
 // 处理测试用例选择器打开事件
 const handleTestcaseSelectOpen = (visible) => {
   if (visible && (!newPlanForm.projects || newPlanForm.projects.length === 0)) {
-    ElMessage.warning('请先选择项目')
+    ElMessage.warning(t('execution.selectProjectFirst'))
     return false
   }
 }
@@ -397,15 +400,15 @@ const createPlan = async () => {
   try {
     await planFormRef.value.validate()
     creating.value = true
-    
+
     await api.post('/executions/plans/', newPlanForm)
-    ElMessage.success('测试计划创建成功')
+    ElMessage.success(t('execution.createSuccess'))
     isCreatePlanDialogOpen.value = false
     resetPlanForm()
     fetchTestPlans()
   } catch (error) {
     if (error.name !== 'ValidateError') {
-      ElMessage.error('创建测试计划失败')
+      ElMessage.error(t('execution.createFailed'))
     }
   } finally {
     creating.value = false
@@ -421,10 +424,10 @@ const editPlan = async (plan) => {
     // 获取完整的测试计划详情
     const response = await api.get(`/executions/plans/${plan.id}/`)
     const planDetail = response.data
-    
+
     // 设置当前编辑的计划
     currentEditingPlan.value = planDetail
-    
+
     // 填充编辑表单数据
     Object.assign(editPlanForm, {
       id: planDetail.id,
@@ -439,10 +442,10 @@ const editPlan = async (plan) => {
       assignees: planDetail.assignees || [],
       is_active: planDetail.is_active
     })
-    
+
     isEditPlanDialogOpen.value = true
   } catch (error) {
-    ElMessage.error('获取测试计划详情失败')
+    ElMessage.error(t('execution.fetchDetailFailed'))
   }
 }
 
@@ -450,7 +453,7 @@ const updatePlan = async () => {
   try {
     await editPlanFormRef.value.validate()
     updating.value = true
-    
+
     const updateData = {
       name: editPlanForm.name,
       description: editPlanForm.description,
@@ -459,15 +462,15 @@ const updatePlan = async () => {
       assignees: editPlanForm.assignees,
       is_active: editPlanForm.is_active
     }
-    
+
     await api.put(`/executions/plans/${editPlanForm.id}/`, updateData)
-    ElMessage.success('测试计划更新成功')
+    ElMessage.success(t('execution.updateSuccess'))
     isEditPlanDialogOpen.value = false
     resetEditForm()
     fetchTestPlans()
   } catch (error) {
     if (error.name !== 'ValidateError') {
-      ElMessage.error('更新测试计划失败')
+      ElMessage.error(t('execution.updateFailed'))
     }
   } finally {
     updating.value = false
@@ -490,20 +493,20 @@ const resetEditForm = () => {
 
 const togglePlanStatus = async (plan) => {
   try {
-    const action = plan.is_active ? '关闭' : '激活'
-    await ElMessageBox.confirm(`确定要${action}这个测试计划吗？`, '确认操作', {
+    const action = plan.is_active ? t('execution.closePlan') : t('execution.activatePlan')
+    await ElMessageBox.confirm(t('execution.toggleStatusConfirm', { action }), t('common.confirm'), {
       type: 'warning'
     })
-    
+
     await api.patch(`/executions/plans/${plan.id}/`, {
       is_active: !plan.is_active
     })
-    
-    ElMessage.success(`${action}成功`)
+
+    ElMessage.success(t('execution.toggleStatusSuccess', { action }))
     fetchTestPlans()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('操作失败')
+      ElMessage.error(t('execution.toggleStatusFailed'))
     }
   }
 }
@@ -570,17 +573,17 @@ const getSerialNumber = (index) => {
 // 批量删除
 const batchDeletePlans = async () => {
   if (selectedPlans.value.length === 0) {
-    ElMessage.warning('请先选择要删除的测试计划')
+    ElMessage.warning(t('execution.selectFirst'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedPlans.value.length} 个测试计划吗？此操作不可恢复。`,
-      '警告',
+      t('execution.batchDeleteConfirm', { count: selectedPlans.value.length }),
+      t('common.warning'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
@@ -600,9 +603,13 @@ const batchDeletePlans = async () => {
     }
 
     if (successCount > 0) {
-      ElMessage.success(`成功删除 ${successCount} 个测试计划${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+      if (failCount > 0) {
+        ElMessage.success(t('execution.batchDeletePartialSuccess', { successCount, failCount }))
+      } else {
+        ElMessage.success(t('execution.batchDeleteSuccess', { successCount }))
+      }
     } else {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('execution.batchDeleteFailed'))
     }
 
     selectedPlans.value = []
@@ -611,7 +618,7 @@ const batchDeletePlans = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-      ElMessage.error('批量删除失败')
+      ElMessage.error(t('execution.batchDeleteFailed'))
     }
   } finally {
     isDeleting.value = false

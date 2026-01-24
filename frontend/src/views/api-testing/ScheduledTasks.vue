@@ -1,10 +1,10 @@
 <template>
   <div class="scheduled-tasks">
     <div class="header">
-      <h3>定时任务管理</h3>
+      <h3>{{ $t('apiTesting.scheduledTask.title') }}</h3>
       <el-button type="primary" @click="handleCreateClick">
         <el-icon><Plus /></el-icon>
-        新建定时任务
+        {{ $t('apiTesting.scheduledTask.createTask') }}
       </el-button>
     </div>
 
@@ -12,29 +12,29 @@
     <div class="filters">
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-select v-model="filters.task_type" placeholder="任务类型" clearable>
-            <el-option label="测试套件执行" value="TEST_SUITE" />
-            <el-option label="API请求执行" value="API_REQUEST" />
+          <el-select v-model="filters.task_type" :placeholder="$t('apiTesting.scheduledTask.taskType')" clearable>
+            <el-option :label="$t('apiTesting.scheduledTask.taskTypes.testSuite')" value="TEST_SUITE" />
+            <el-option :label="$t('apiTesting.scheduledTask.taskTypes.apiRequest')" value="API_REQUEST" />
           </el-select>
         </el-col>
         <el-col :span="6">
-          <el-select v-model="filters.trigger_type" placeholder="触发器类型" clearable>
-            <el-option label="Cron表达式" value="CRON" />
-            <el-option label="固定间隔" value="INTERVAL" />
-            <el-option label="单次执行" value="ONCE" />
+          <el-select v-model="filters.trigger_type" :placeholder="$t('apiTesting.scheduledTask.triggerType')" clearable>
+            <el-option :label="$t('apiTesting.scheduledTask.triggerTypes.cron')" value="CRON" />
+            <el-option :label="$t('apiTesting.scheduledTask.triggerTypes.interval')" value="INTERVAL" />
+            <el-option :label="$t('apiTesting.scheduledTask.triggerTypes.once')" value="ONCE" />
           </el-select>
         </el-col>
         <el-col :span="6">
-          <el-select v-model="filters.status" placeholder="任务状态" clearable>
-            <el-option label="激活" value="ACTIVE" />
-            <el-option label="暂停" value="PAUSED" />
-            <el-option label="已完成" value="COMPLETED" />
-            <el-option label="失败" value="FAILED" />
+          <el-select v-model="filters.status" :placeholder="$t('apiTesting.scheduledTask.taskStatus')" clearable>
+            <el-option :label="$t('apiTesting.scheduledTask.status.active')" value="ACTIVE" />
+            <el-option :label="$t('apiTesting.scheduledTask.status.paused')" value="PAUSED" />
+            <el-option :label="$t('apiTesting.scheduledTask.status.completed')" value="COMPLETED" />
+            <el-option :label="$t('apiTesting.scheduledTask.status.failed')" value="FAILED" />
           </el-select>
         </el-col>
         <el-col :span="6">
-          <el-button @click="resetFilters">重置</el-button>
-          <el-button type="primary" @click="loadTasks">搜索</el-button>
+          <el-button @click="resetFilters">{{ $t('apiTesting.common.reset') }}</el-button>
+          <el-button type="primary" @click="loadTasks">{{ $t('apiTesting.common.search') }}</el-button>
         </el-col>
       </el-row>
     </div>
@@ -42,64 +42,64 @@
     <!-- 任务列表 -->
     <div class="task-list">
       <el-table :data="tasks" v-loading="loading">
-        <el-table-column prop="name" label="任务名称" min-width="200" />
-        <el-table-column prop="task_type" label="任务类型" width="120">
+        <el-table-column prop="name" :label="$t('apiTesting.scheduledTask.taskName')" min-width="200" />
+        <el-table-column prop="task_type" :label="$t('apiTesting.scheduledTask.taskType')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.task_type === 'TEST_SUITE' ? 'success' : 'primary'">
-              {{ scope.row.task_type === 'TEST_SUITE' ? '测试套件' : 'API请求' }}
+              {{ scope.row.task_type === 'TEST_SUITE' ? $t('apiTesting.scheduledTask.taskTypes.testSuiteShort') : $t('apiTesting.scheduledTask.taskTypes.apiRequestShort') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="trigger_type" label="触发器类型" width="120">
+        <el-table-column prop="trigger_type" :label="$t('apiTesting.scheduledTask.triggerType')" width="120">
           <template #default="scope">
             <el-tag>
-              {{ scope.row.trigger_type === 'CRON' ? 'Cron' : scope.row.trigger_type === 'INTERVAL' ? '间隔' : '单次' }}
+              {{ getTriggerTypeText(scope.row.trigger_type) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" :label="$t('apiTesting.common.status')" width="100">
           <template #default="scope">
             <el-tag :type="scope.row.status === 'ACTIVE' ? 'success' : scope.row.status === 'PAUSED' ? 'warning' : 'info'">
-              {{ scope.row.status === 'ACTIVE' ? '激活' : scope.row.status === 'PAUSED' ? '暂停' : '完成' }}
+              {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="notification_type_display" label="通知类型" width="120">
+        <el-table-column prop="notification_type_display" :label="$t('apiTesting.scheduledTask.notificationType')" width="120">
           <template #default="scope">
-            <el-tag 
-              :type="getNotificationTypeTag(scope.row.notification_type_display)" 
+            <el-tag
+              :type="getNotificationTypeTag(scope.row.notification_type_display)"
               size="small"
             >
               {{ scope.row.notification_type_display || '-' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="next_run_time" label="下次执行时间" width="180">
+        <el-table-column prop="next_run_time" :label="$t('apiTesting.scheduledTask.nextRunTime')" width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.next_run_time) }}
           </template>
         </el-table-column>
-        <el-table-column prop="last_run_time" label="上次执行时间" width="180">
+        <el-table-column prop="last_run_time" :label="$t('apiTesting.scheduledTask.lastRunTime')" width="180">
           <template #default="scope">
             {{ formatDateTime(scope.row.last_run_time) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column :label="$t('apiTesting.common.operation')" width="200" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="runTaskNow(scope.row)" :loading="scope.row.running">
-              立即执行
+              {{ $t('apiTesting.scheduledTask.runNow') }}
             </el-button>
             <el-dropdown @command="(command) => handleTaskAction(command, scope.row)">
               <el-button size="small">
-                更多<el-icon><arrow-down /></el-icon>
+                {{ $t('apiTesting.common.more') }}<el-icon><arrow-down /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="edit">编辑</el-dropdown-item>
-                  <el-dropdown-item command="pause" v-if="scope.row.status === 'ACTIVE'">暂停</el-dropdown-item>
-                  <el-dropdown-item command="activate" v-if="scope.row.status === 'PAUSED'">激活</el-dropdown-item>
-                  <el-dropdown-item command="logs">执行日志</el-dropdown-item>
-                  <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                  <el-dropdown-item command="edit">{{ $t('apiTesting.common.edit') }}</el-dropdown-item>
+                  <el-dropdown-item command="pause" v-if="scope.row.status === 'ACTIVE'">{{ $t('apiTesting.scheduledTask.pause') }}</el-dropdown-item>
+                  <el-dropdown-item command="activate" v-if="scope.row.status === 'PAUSED'">{{ $t('apiTesting.scheduledTask.activate') }}</el-dropdown-item>
+                  <el-dropdown-item command="logs">{{ $t('apiTesting.scheduledTask.executionLogs') }}</el-dropdown-item>
+                  <el-dropdown-item command="delete" divided>{{ $t('apiTesting.common.delete') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -124,40 +124,36 @@
     <!-- 创建/编辑对话框 -->
     <el-dialog
       v-model="showCreateDialog"
-      :title="editingTask ? '编辑定时任务' : '新建定时任务'"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
+      :title="editingTask ? $t('apiTesting.scheduledTask.editTask') : $t('apiTesting.scheduledTask.createTask')"
       width="800px"
       @close="resetTaskForm"
     >
       <el-form :model="taskForm" label-width="120px">
-        <el-form-item label="任务名称" required>
-          <el-input v-model="taskForm.name" placeholder="请输入任务名称" />
+        <el-form-item :label="$t('apiTesting.scheduledTask.taskName')" required>
+          <el-input v-model="taskForm.name" :placeholder="$t('apiTesting.scheduledTask.inputTaskName')" />
         </el-form-item>
-        
-        <el-form-item label="任务描述">
-          <el-input v-model="taskForm.description" type="textarea" placeholder="请输入任务描述" />
+
+        <el-form-item :label="$t('apiTesting.scheduledTask.taskDescription')">
+          <el-input v-model="taskForm.description" type="textarea" :placeholder="$t('apiTesting.scheduledTask.inputTaskDesc')" />
         </el-form-item>
-        
-        <el-form-item label="任务类型" required>
+
+        <el-form-item :label="$t('apiTesting.scheduledTask.taskType')" required>
           <el-radio-group v-model="taskForm.task_type">
-            <el-radio label="TEST_SUITE">测试套件执行</el-radio>
-            <el-radio label="API_REQUEST">API请求执行</el-radio>
+            <el-radio label="TEST_SUITE">{{ $t('apiTesting.scheduledTask.taskTypes.testSuite') }}</el-radio>
+            <el-radio label="API_REQUEST">{{ $t('apiTesting.scheduledTask.taskTypes.apiRequest') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        
-        <el-form-item label="触发器类型" required>
+
+        <el-form-item :label="$t('apiTesting.scheduledTask.triggerType')" required>
           <el-radio-group v-model="taskForm.trigger_type">
-            <el-radio label="CRON">Cron表达式</el-radio>
-            <el-radio label="INTERVAL">固定间隔</el-radio>
-            <el-radio label="ONCE">单次执行</el-radio>
+            <el-radio label="CRON">{{ $t('apiTesting.scheduledTask.triggerTypes.cron') }}</el-radio>
+            <el-radio label="INTERVAL">{{ $t('apiTesting.scheduledTask.triggerTypes.interval') }}</el-radio>
+            <el-radio label="ONCE">{{ $t('apiTesting.scheduledTask.triggerTypes.once') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        
+
         <!-- 根据触发器类型显示不同配置 -->
-        <el-form-item v-if="taskForm.trigger_type === 'CRON'" label="Cron表达式" required>
+        <el-form-item v-if="taskForm.trigger_type === 'CRON'" :label="$t('apiTesting.scheduledTask.cronExpression')" required>
           <el-input v-model="taskForm.cron_expression" placeholder="0 0 * * *" />
           <div class="cron-help">
             <el-tooltip
@@ -166,40 +162,40 @@
             >
               <template #content>
                 <div style="line-height: 1.6; text-align: left;">
-                  <div>Cron表达式格式: 分 时 日 月 周</div>
-                  <div>• 分: 0-59</div>
-                  <div>• 时: 0-23</div>
-                  <div>• 日: 1-31</div>
-                  <div>• 月: 1-12 或 JAN-DEC</div>
-                  <div>• 周: 0-6 或 SUN-SAT (0=周日)</div>
-                  <div style="margin-top: 8px;">常用示例:</div>
-                  <div>• 每天0点: 0 0 * * *</div>
-                  <div>• 每小时: 0 * * * *</div>
-                  <div>• 每周一9点: 0 9 * * 1</div>
-                  <div>• 每月1号0点: 0 0 1 * *</div>
+                  <div>{{ $t('apiTesting.scheduledTask.cronHelp.format') }}</div>
+                  <div>• {{ $t('apiTesting.scheduledTask.cronHelp.minute') }}</div>
+                  <div>• {{ $t('apiTesting.scheduledTask.cronHelp.hour') }}</div>
+                  <div>• {{ $t('apiTesting.scheduledTask.cronHelp.day') }}</div>
+                  <div>• {{ $t('apiTesting.scheduledTask.cronHelp.month') }}</div>
+                  <div>• {{ $t('apiTesting.scheduledTask.cronHelp.week') }}</div>
+                  <div style="margin-top: 8px;">{{ $t('apiTesting.scheduledTask.cronHelp.examples') }}</div>
+                  <div>• {{ $t('apiTesting.scheduledTask.cronHelp.daily') }}</div>
+                  <div>• {{ $t('apiTesting.scheduledTask.cronHelp.hourly') }}</div>
+                  <div>• {{ $t('apiTesting.scheduledTask.cronHelp.weekly') }}</div>
+                  <div>• {{ $t('apiTesting.scheduledTask.cronHelp.monthly') }}</div>
                 </div>
               </template>
-              <span style="cursor: pointer; color: #409EFF;">Cron帮助信息</span>
+              <span style="cursor: pointer; color: #409EFF;">{{ $t('apiTesting.scheduledTask.cronHelpLink') }}</span>
             </el-tooltip>
           </div>
         </el-form-item>
-        
-        <el-form-item v-if="taskForm.trigger_type === 'INTERVAL'" label="间隔时间" required>
+
+        <el-form-item v-if="taskForm.trigger_type === 'INTERVAL'" :label="$t('apiTesting.scheduledTask.intervalTime')" required>
           <el-input-number v-model="taskForm.interval_seconds" :min="60" :step="60" />
-          <span class="unit">秒</span>
+          <span class="unit">{{ $t('apiTesting.scheduledTask.seconds') }}</span>
         </el-form-item>
-        
-        <el-form-item v-if="taskForm.trigger_type === 'ONCE'" label="执行时间" required>
+
+        <el-form-item v-if="taskForm.trigger_type === 'ONCE'" :label="$t('apiTesting.scheduledTask.executeTime')" required>
           <el-date-picker
             v-model="taskForm.execute_at"
             type="datetime"
-            placeholder="选择执行时间"
+            :placeholder="$t('apiTesting.scheduledTask.selectExecuteTime')"
           />
         </el-form-item>
-        
+
         <!-- 根据任务类型显示不同配置 -->
-        <el-form-item v-if="taskForm.task_type === 'TEST_SUITE'" label="测试套件" required>
-          <el-select v-model="taskForm.test_suite" placeholder="请选择测试套件">
+        <el-form-item v-if="taskForm.task_type === 'TEST_SUITE'" :label="$t('apiTesting.automation.testSuite')" required>
+          <el-select v-model="taskForm.test_suite" :placeholder="$t('apiTesting.scheduledTask.selectTestSuite')">
             <el-option
               v-for="suite in testSuites"
               :key="suite.id"
@@ -208,9 +204,9 @@
             />
           </el-select>
         </el-form-item>
-        
-        <el-form-item v-if="taskForm.task_type === 'API_REQUEST'" label="API请求" required>
-          <el-select v-model="taskForm.api_request" placeholder="请选择API请求">
+
+        <el-form-item v-if="taskForm.task_type === 'API_REQUEST'" :label="$t('apiTesting.scheduledTask.apiRequest')" required>
+          <el-select v-model="taskForm.api_request" :placeholder="$t('apiTesting.scheduledTask.selectApiRequest')">
             <el-option
               v-for="request in apiRequests"
               :key="request.id"
@@ -219,9 +215,9 @@
             />
           </el-select>
         </el-form-item>
-        
-        <el-form-item label="执行环境">
-          <el-select v-model="taskForm.environment" placeholder="请选择执行环境">
+
+        <el-form-item :label="$t('apiTesting.scheduledTask.executeEnvironment')">
+          <el-select v-model="taskForm.environment" :placeholder="$t('apiTesting.scheduledTask.selectEnvironment')">
             <el-option
               v-for="env in environments"
               :key="env.id"
@@ -230,26 +226,26 @@
             />
           </el-select>
         </el-form-item>
-        
-        <el-form-item label="通知设置">
-          <el-checkbox v-model="taskForm.notify_on_success">执行成功时通知</el-checkbox>
-          <el-checkbox v-model="taskForm.notify_on_failure">执行失败时通知</el-checkbox>
+
+        <el-form-item :label="$t('apiTesting.scheduledTask.notificationSettings')">
+          <el-checkbox v-model="taskForm.notify_on_success">{{ $t('apiTesting.scheduledTask.notifyOnSuccess') }}</el-checkbox>
+          <el-checkbox v-model="taskForm.notify_on_failure">{{ $t('apiTesting.scheduledTask.notifyOnFailure') }}</el-checkbox>
         </el-form-item>
-        
-        <el-form-item v-if="taskForm.notify_on_success || taskForm.notify_on_failure" label="通知类型">
-          <el-select v-model="taskForm.notification_type" placeholder="请选择通知类型">
-            <el-option label="邮箱通知" value="email" />
-            <el-option label="Webhook机器人" value="webhook" />
-            <el-option label="两种都发送" value="both" />
+
+        <el-form-item v-if="taskForm.notify_on_success || taskForm.notify_on_failure" :label="$t('apiTesting.scheduledTask.notificationType')">
+          <el-select v-model="taskForm.notification_type" :placeholder="$t('apiTesting.scheduledTask.selectNotificationType')">
+            <el-option :label="$t('apiTesting.notification.types.email')" value="email" />
+            <el-option :label="$t('apiTesting.notification.types.webhook')" value="webhook" />
+            <el-option :label="$t('apiTesting.notification.types.both')" value="both" />
           </el-select>
         </el-form-item>
-        
-        <el-form-item v-if="(taskForm.notify_on_success || taskForm.notify_on_failure) && taskForm.notification_type !== 'webhook'" label="通知邮箱">
+
+        <el-form-item v-if="(taskForm.notify_on_success || taskForm.notify_on_failure) && taskForm.notification_type !== 'webhook'" :label="$t('apiTesting.scheduledTask.notifyEmails')">
           <el-select
             v-model="taskForm.notify_emails"
             multiple
             filterable
-            placeholder="请选择通知邮箱"
+            :placeholder="$t('apiTesting.scheduledTask.selectNotifyEmails')"
           >
             <el-option
               v-for="user in users"
@@ -260,58 +256,82 @@
           </el-select>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button @click="showCreateDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
         <el-button type="primary" @click="submitTaskForm" :loading="submitting">
-          {{ editingTask ? '更新' : '创建' }}
+          {{ editingTask ? $t('apiTesting.common.update') : $t('apiTesting.common.create') }}
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 执行日志对话框 -->
-    <el-dialog v-model="showLogsDialog" title="任务执行日志" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="1000px">
+    <el-dialog v-model="showLogsDialog" :title="$t('apiTesting.scheduledTask.executionLogs')" width="1000px">
       <el-table :data="executionLogs" v-loading="logsLoading">
-        <el-table-column prop="start_time" label="开始时间" width="180">
+        <el-table-column prop="start_time" :label="$t('apiTesting.scheduledTask.startTime')" width="180">
           <template #default="scope">
             <div class="time-cell">{{ formatDateTime(scope.row.start_time) }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="end_time" label="结束时间" width="180">
+        <el-table-column prop="end_time" :label="$t('apiTesting.scheduledTask.endTime')" width="180">
           <template #default="scope">
             <div class="time-cell">{{ formatDateTime(scope.row.end_time) }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" :label="$t('apiTesting.common.status')" width="100">
           <template #default="scope">
             <el-tag :type="scope.row.status === 'COMPLETED' ? 'success' : 'danger'">
-              {{ scope.row.status === 'COMPLETED' ? '成功' : '失败' }}
+              {{ scope.row.status === 'COMPLETED' ? $t('apiTesting.common.success') : $t('apiTesting.common.failed') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="error_message" label="错误信息" width="300" show-overflow-tooltip />
+        <el-table-column prop="error_message" :label="$t('apiTesting.scheduledTask.errorMessage')" width="300" show-overflow-tooltip />
       </el-table>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { Plus, ArrowDown } from '@element-plus/icons-vue'
 import api from '@/utils/api'
-import { 
-  getScheduledTasks, 
-  createScheduledTask, 
-  updateScheduledTask, 
-  deleteScheduledTask, 
-  runScheduledTask, 
+import {
+  getScheduledTasks,
+  createScheduledTask,
+  updateScheduledTask,
+  deleteScheduledTask,
+  runScheduledTask,
   getExecutionLogs,
   getTestSuites,
   getApiRequests,
   getEnvironments,
   getUsers
 } from '@/api/api-testing.js'
+
+const { t } = useI18n()
+
+// 获取状态文本
+const getStatusText = (status) => {
+  const statusKey = {
+    'ACTIVE': 'active',
+    'PAUSED': 'paused',
+    'COMPLETED': 'completed',
+    'FAILED': 'failed'
+  }[status]
+  return statusKey ? t(`apiTesting.scheduledTask.status.${statusKey}`) : status
+}
+
+// 获取触发器类型文本
+const getTriggerTypeText = (type) => {
+  const typeKey = {
+    'CRON': 'cron',
+    'INTERVAL': 'interval',
+    'ONCE': 'once'
+  }[type]
+  return typeKey ? t(`apiTesting.scheduledTask.triggerTypes.${typeKey}`) : type
+}
 
 // 数据状态
 const tasks = ref([])
@@ -380,7 +400,7 @@ const loadTasks = async () => {
     tasks.value = response.data.results
     pagination.total = response.data.count
   } catch (error) {
-    ElMessage.error('加载任务列表失败')
+    ElMessage.error(t('apiTesting.messages.error.loadTasksFailed'))
   } finally {
     loading.value = false
   }
@@ -504,18 +524,18 @@ const submitTaskForm = async () => {
 
     if (editingTask.value) {
       await updateScheduledTask(editingTask.value.id, submitData)
-      ElMessage.success('更新任务成功')
+      ElMessage.success(t('apiTesting.messages.success.taskUpdated'))
     } else {
       await createScheduledTask(submitData)
-      ElMessage.success('创建任务成功')
+      ElMessage.success(t('apiTesting.messages.success.taskCreated'))
     }
     showCreateDialog.value = false
     loadTasks()
   } catch (error) {
-    console.error('任务操作失败:', error)
-    ElMessage.error(error.response?.data?.error || 
-                   error.response?.data?.detail || 
-                   (editingTask.value ? '更新任务失败' : '创建任务失败'))
+    console.error('Task operation failed:', error)
+    ElMessage.error(error.response?.data?.error ||
+                   error.response?.data?.detail ||
+                   (editingTask.value ? t('apiTesting.messages.error.updateTaskFailed') : t('apiTesting.messages.error.createTaskFailed')))
   } finally {
     submitting.value = false
   }
@@ -526,13 +546,13 @@ const runTaskNow = async (task) => {
   try {
     task.running = true
     await runScheduledTask(task.id)
-    ElMessage.success('任务已开始执行')
+    ElMessage.success(t('apiTesting.messages.success.taskStarted'))
     // 等待一段时间后刷新任务状态
     setTimeout(() => {
       loadTasks()
     }, 2000)
   } catch (error) {
-    ElMessage.error('执行任务失败')
+    ElMessage.error(t('apiTesting.messages.error.executeTaskFailed'))
   } finally {
     task.running = false
   }
@@ -570,8 +590,8 @@ const viewTaskLogs = async (task) => {
     executionLogs.value = response.data.results || response.data
     showLogsDialog.value = true
   } catch (error) {
-    console.error('加载执行日志失败:', error)
-    ElMessage.error('加载执行日志失败')
+    console.error('Load execution logs failed:', error)
+    ElMessage.error(t('apiTesting.messages.error.loadLogsFailed'))
   } finally {
     logsLoading.value = false
   }
@@ -630,11 +650,11 @@ const editTask = (task) => {
 const pauseTask = async (task) => {
   try {
     await api.post(`/api-testing/scheduled-tasks/${task.id}/pause/`)
-    ElMessage.success('任务已暂停')
+    ElMessage.success(t('apiTesting.messages.success.taskPaused'))
     loadTasks()
   } catch (error) {
-    console.error('暂停任务失败:', error)
-    ElMessage.error('暂停任务失败')
+    console.error('Pause task failed:', error)
+    ElMessage.error(t('apiTesting.messages.error.pauseTaskFailed'))
   }
 }
 
@@ -642,27 +662,31 @@ const pauseTask = async (task) => {
 const activateTask = async (task) => {
   try {
     await api.post(`/api-testing/scheduled-tasks/${task.id}/activate/`)
-    ElMessage.success('任务已激活')
+    ElMessage.success(t('apiTesting.messages.success.taskActivated'))
     loadTasks()
   } catch (error) {
-    ElMessage.error('激活任务失败')
+    ElMessage.error(t('apiTesting.messages.error.activateTaskFailed'))
   }
 }
 
 // 删除任务
 const deleteTask = async (task) => {
   try {
-    await ElMessageBox.confirm('确定要删除这个定时任务吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      t('apiTesting.scheduledTask.confirmDeleteTask'),
+      t('apiTesting.common.tip'),
+      {
+        confirmButtonText: t('apiTesting.common.confirm'),
+        cancelButtonText: t('apiTesting.common.cancel'),
+        type: 'warning'
+      }
+    )
     await deleteScheduledTask(task.id)
-    ElMessage.success('删除任务成功')
+    ElMessage.success(t('apiTesting.messages.success.taskDeleted'))
     loadTasks()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除任务失败')
+      ElMessage.error(t('apiTesting.messages.error.deleteTaskFailed'))
     }
   }
 }

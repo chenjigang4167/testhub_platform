@@ -1,13 +1,13 @@
 <template>
   <div class="page-container">
     <div class="page-header" style="display: flex; align-items: center;">
-      <h1 class="page-title" style="margin-right: 20px; margin-bottom: 0;">UI元素管理</h1>
-      <el-select v-model="projectId" placeholder="选择项目" style="width: 200px; margin-right: 15px" @change="onProjectChange">
+      <h1 class="page-title" style="margin-right: 20px; margin-bottom: 0;">{{ $t('uiAutomation.element.title') }}</h1>
+      <el-select v-model="projectId" :placeholder="$t('uiAutomation.common.selectProject')" style="width: 200px; margin-right: 15px" @change="onProjectChange">
         <el-option v-for="project in projects" :key="project.id" :label="project.name" :value="project.id" />
       </el-select>
       <el-button type="primary" @click="handleShowCreateDialog">
         <el-icon><Plus /></el-icon>
-        新增元素
+        {{ $t('uiAutomation.element.newElement') }}
       </el-button>
     </div>
     
@@ -17,7 +17,7 @@
           <el-col :span="6">
             <el-input
               v-model="searchText"
-              placeholder="搜索元素名称或定位值"
+              :placeholder="$t('uiAutomation.element.searchPlaceholder')"
               clearable
               @input="handleSearch"
             >
@@ -27,12 +27,12 @@
             </el-input>
           </el-col>
           <el-col :span="4">
-            <el-select v-model="strategyFilter" placeholder="定位策略" clearable @change="handleFilter">
+            <el-select v-model="strategyFilter" :placeholder="$t('uiAutomation.element.strategyFilter')" clearable @change="handleFilter">
               <el-option v-for="strategy in strategies" :key="strategy.id" :label="strategy.name" :value="strategy.id" />
             </el-select>
           </el-col>
           <el-col :span="4">
-            <el-select v-model="pageFilter" placeholder="所属页面" clearable @change="handleFilter">
+            <el-select v-model="pageFilter" :placeholder="$t('uiAutomation.element.pageFilter')" clearable @change="handleFilter">
               <el-option v-for="page in pages" :key="page" :label="page" :value="page" />
             </el-select>
           </el-col>
@@ -41,36 +41,36 @@
       
       <el-table :data="elements" v-loading="loading" style="width: 100%">
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="name" label="元素名称" min-width="150">
+        <el-table-column prop="name" :label="$t('uiAutomation.element.elementName')" min-width="150">
           <template #default="{ row }">
             <el-link @click="showElementDetail(row.id)" type="primary">
               {{ row.name }}
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="page" label="所属页面" width="120" />
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="定位策略" width="100">
+        <el-table-column prop="page" :label="$t('uiAutomation.element.page')" width="120" />
+        <el-table-column prop="description" :label="$t('uiAutomation.common.description')" min-width="200" show-overflow-tooltip />
+        <el-table-column :label="$t('uiAutomation.element.locatorStrategy')" width="100">
           <template #default="{ row }">
-            {{ row.locator_strategy?.name || '未知' }}
+            {{ row.locator_strategy?.name || $t('uiAutomation.element.unknown') }}
           </template>
         </el-table-column>
-        <el-table-column prop="locator_value" label="定位值" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="created_at" label="创建时间" width="180" :formatter="formatDate" />
-        <el-table-column prop="updated_at" label="更新时间" width="180" :formatter="formatDate" />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column prop="locator_value" :label="$t('uiAutomation.element.locatorValue')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="created_at" :label="$t('uiAutomation.common.createTime')" width="180" :formatter="formatDate" />
+        <el-table-column prop="updated_at" :label="$t('uiAutomation.common.updateTime')" width="180" :formatter="formatDate" />
+        <el-table-column :label="$t('uiAutomation.common.operation')" width="180" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="showElementDetail(row.id)">
               <el-icon><View /></el-icon>
-              查看
+              {{ $t('uiAutomation.common.view') }}
             </el-button>
             <el-button size="small" @click="editElement(row)">
               <el-icon><Edit /></el-icon>
-              编辑
+              {{ $t('uiAutomation.common.edit') }}
             </el-button>
             <el-button size="small" type="danger" @click="handleDeleteElement(row.id)">
               <el-icon><Delete /></el-icon>
-              删除
+              {{ $t('uiAutomation.common.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -90,124 +90,124 @@
     </div>
     
     <!-- 创建元素对话框 -->
-    <el-dialog v-model="showCreateDialog" title="新增UI元素" :close-on-click-modal="false" width="600px">
+    <el-dialog v-model="showCreateDialog" :title="$t('uiAutomation.element.createElement')" width="600px">
       <el-form ref="createFormRef" :model="createForm" :rules="formRules" label-width="100px">
-        <el-form-item label="元素名称" prop="name">
-          <el-input v-model="createForm.name" placeholder="请输入元素名称" />
+        <el-form-item :label="$t('uiAutomation.element.elementName')" prop="name">
+          <el-input v-model="createForm.name" :placeholder="$t('uiAutomation.element.rules.nameRequired')" />
         </el-form-item>
-        <el-form-item label="所属页面" prop="page">
-          <el-input v-model="createForm.page" placeholder="请输入所属页面" />
+        <el-form-item :label="$t('uiAutomation.element.page')" prop="page">
+          <el-input v-model="createForm.page" :placeholder="$t('uiAutomation.element.rules.pageRequired')" />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="createForm.description" type="textarea" placeholder="请输入元素描述" />
+        <el-form-item :label="$t('uiAutomation.common.description')" prop="description">
+          <el-input v-model="createForm.description" type="textarea" :placeholder="$t('uiAutomation.common.description')" />
         </el-form-item>
-        <el-form-item label="定位策略" prop="strategy">
-          <el-select v-model="createForm.strategy" placeholder="请选择定位策略" @change="onStrategyChange">
+        <el-form-item :label="$t('uiAutomation.element.locatorStrategy')" prop="strategy">
+          <el-select v-model="createForm.strategy" :placeholder="$t('uiAutomation.element.rules.strategyRequired')" @change="onStrategyChange">
             <el-option v-for="strategy in strategies" :key="strategy.id" :label="strategy.name" :value="strategy.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="定位值" prop="locator_value">
-          <el-input v-model="createForm.locator_value" placeholder="请输入定位值" />
+        <el-form-item :label="$t('uiAutomation.element.locatorValue')" prop="locator_value">
+          <el-input v-model="createForm.locator_value" :placeholder="$t('uiAutomation.element.rules.locatorRequired')" />
           <div class="el-form-item__help">
             <small style="color: #606266;">
-              提示：根据定位策略输入对应的定位值<br>
-              - ID: 输入元素的id属性值<br>
-              - CSS Selector: 输入CSS选择器，如 .class 或 #id<br>
-              - XPath: 输入XPath表达式，如 //input[@name='username']<br>
-              - 其他策略请输入对应属性的值
+              {{ $t('uiAutomation.element.locatorTip.title') }}<br>
+              - {{ $t('uiAutomation.element.locatorTip.id') }}<br>
+              - {{ $t('uiAutomation.element.locatorTip.css') }}<br>
+              - {{ $t('uiAutomation.element.locatorTip.xpath') }}<br>
+              - {{ $t('uiAutomation.element.locatorTip.other') }}
             </small>
           </div>
         </el-form-item>
-        <el-form-item label="是否唯一" prop="is_unique">
+        <el-form-item :label="$t('uiAutomation.element.isUnique')" prop="is_unique">
           <el-switch v-model="createForm.is_unique" />
         </el-form-item>
-        <el-form-item label="等待超时" prop="wait_timeout">
-          <el-input-number v-model="createForm.wait_timeout" :min="0" :max="30" :step="1" placeholder="等待超时(秒)" />
+        <el-form-item :label="$t('uiAutomation.element.waitTimeout')" prop="wait_timeout">
+          <el-input-number v-model="createForm.wait_timeout" :min="0" :max="30" :step="1" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showCreateDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleCreate">确定</el-button>
+          <el-button @click="showCreateDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleCreate">{{ $t('uiAutomation.common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
     
     <!-- 编辑元素对话框 -->
-    <el-dialog v-model="showEditDialog" title="编辑UI元素" :close-on-click-modal="false" width="600px">
+    <el-dialog v-model="showEditDialog" :title="$t('uiAutomation.element.editElement')" width="600px">
       <el-form ref="editFormRef" :model="editForm" :rules="formRules" label-width="100px">
-        <el-form-item label="元素名称" prop="name">
-          <el-input v-model="editForm.name" placeholder="请输入元素名称" />
+        <el-form-item :label="$t('uiAutomation.element.elementName')" prop="name">
+          <el-input v-model="editForm.name" :placeholder="$t('uiAutomation.element.rules.nameRequired')" />
         </el-form-item>
-        <el-form-item label="所属页面" prop="page">
-          <el-input v-model="editForm.page" placeholder="请输入所属页面" />
+        <el-form-item :label="$t('uiAutomation.element.page')" prop="page">
+          <el-input v-model="editForm.page" :placeholder="$t('uiAutomation.element.rules.pageRequired')" />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="editForm.description" type="textarea" placeholder="请输入元素描述" />
+        <el-form-item :label="$t('uiAutomation.common.description')" prop="description">
+          <el-input v-model="editForm.description" type="textarea" :placeholder="$t('uiAutomation.common.description')" />
         </el-form-item>
-        <el-form-item label="定位策略" prop="strategy">
-          <el-select v-model="editForm.strategy" placeholder="请选择定位策略" @change="onEditStrategyChange">
+        <el-form-item :label="$t('uiAutomation.element.locatorStrategy')" prop="strategy">
+          <el-select v-model="editForm.strategy" :placeholder="$t('uiAutomation.element.rules.strategyRequired')" @change="onEditStrategyChange">
             <el-option v-for="strategy in strategies" :key="strategy.id" :label="strategy.name" :value="strategy.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="定位值" prop="locator_value">
-          <el-input v-model="editForm.locator_value" placeholder="请输入定位值" />
+        <el-form-item :label="$t('uiAutomation.element.locatorValue')" prop="locator_value">
+          <el-input v-model="editForm.locator_value" :placeholder="$t('uiAutomation.element.rules.locatorRequired')" />
           <div class="el-form-item__help">
             <small style="color: #606266;">
-              提示：根据定位策略输入对应的定位值<br>
-              - ID: 输入元素的id属性值<br>
-              - CSS Selector: 输入CSS选择器，如 .class 或 #id<br>
-              - XPath: 输入XPath表达式，如 //input[@name='username']<br>
-              - 其他策略请输入对应属性的值
+              {{ $t('uiAutomation.element.locatorTip.title') }}<br>
+              - {{ $t('uiAutomation.element.locatorTip.id') }}<br>
+              - {{ $t('uiAutomation.element.locatorTip.css') }}<br>
+              - {{ $t('uiAutomation.element.locatorTip.xpath') }}<br>
+              - {{ $t('uiAutomation.element.locatorTip.other') }}
             </small>
           </div>
         </el-form-item>
-        <el-form-item label="是否唯一" prop="is_unique">
+        <el-form-item :label="$t('uiAutomation.element.isUnique')" prop="is_unique">
           <el-switch v-model="editForm.is_unique" />
         </el-form-item>
-        <el-form-item label="等待超时" prop="wait_timeout">
-          <el-input-number v-model="editForm.wait_timeout" :min="0" :max="30" :step="1" placeholder="等待超时(秒)" />
+        <el-form-item :label="$t('uiAutomation.element.waitTimeout')" prop="wait_timeout">
+          <el-input-number v-model="editForm.wait_timeout" :min="0" :max="30" :step="1" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showEditDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleEdit">确定</el-button>
+          <el-button @click="showEditDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleEdit">{{ $t('uiAutomation.common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
     
     <!-- 元素详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="元素详情" :close-on-click-modal="false" width="600px">
+    <el-dialog v-model="showDetailDialog" :title="$t('uiAutomation.element.elementDetail')" width="600px">
       <div v-if="Object.keys(currentElementDetail).length > 0" class="element-detail">
         <el-descriptions border column="2" :column="{ xs: 1, sm: 2 }">
-          <el-descriptions-item label="元素名称">{{ currentElementDetail.name }}</el-descriptions-item>
-          <el-descriptions-item label="所属页面">{{ currentElementDetail.page }}</el-descriptions-item>
-          <el-descriptions-item label="所属项目">{{ currentElementDetail.project?.name || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="定位策略">{{ currentElementDetail.locator_strategy?.name || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="定位值" :span="2">
+          <el-descriptions-item :label="$t('uiAutomation.element.elementName')">{{ currentElementDetail.name }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.element.page')">{{ currentElementDetail.page }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.element.project')">{{ currentElementDetail.project?.name || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.element.locatorStrategy')">{{ currentElementDetail.locator_strategy?.name || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.element.locatorValue')" :span="2">
             <el-tag type="info" style="word-break: break-all; display: block; text-align: left;">
               {{ currentElementDetail.locator_value }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="是否唯一">
+          <el-descriptions-item :label="$t('uiAutomation.element.isUnique')">
             <el-tag :type="currentElementDetail.is_unique ? 'success' : 'warning'">
-              {{ currentElementDetail.is_unique ? '是' : '否' }}
+              {{ currentElementDetail.is_unique ? $t('uiAutomation.common.yes') : $t('uiAutomation.common.no') }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="等待超时">{{ currentElementDetail.wait_timeout || 5 }}秒</el-descriptions-item>
-          <el-descriptions-item label="描述" :span="2">{{ currentElementDetail.description === undefined ? '-' : currentElementDetail.description }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ formatDate(null, null, currentElementDetail.created_at) }}</el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ formatDate(null, null, currentElementDetail.updated_at) }}</el-descriptions-item>
-          <el-descriptions-item label="创建人" :span="2">{{ currentElementDetail.created_by?.username || '-' }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.element.waitTimeout')">{{ currentElementDetail.wait_timeout || 5 }}{{ $t('uiAutomation.element.waitTimeoutUnit') }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.common.description')" :span="2">{{ currentElementDetail.description === undefined ? '-' : currentElementDetail.description }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.common.createTime')">{{ formatDate(null, null, currentElementDetail.created_at) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.common.updateTime')">{{ formatDate(null, null, currentElementDetail.updated_at) }}</el-descriptions-item>
+          <el-descriptions-item :label="$t('uiAutomation.element.createdBy')" :span="2">{{ currentElementDetail.created_by?.username || '-' }}</el-descriptions-item>
         </el-descriptions>
       </div>
       <div v-else class="text-center text-gray-500 py-10">
-        加载元素详情中...
+        {{ $t('uiAutomation.element.loadingDetail') }}
       </div>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showDetailDialog = false">关闭</el-button>
+          <el-button @click="showDetailDialog = false">{{ $t('uiAutomation.common.close') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -215,7 +215,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, View, Edit, Delete } from '@element-plus/icons-vue'
 import {
@@ -227,6 +227,9 @@ import {
   getElementDetail,
   getLocatorStrategies
 } from '@/api/ui_automation'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 项目和元素数据
 const projects = ref([])
@@ -281,21 +284,21 @@ const editForm = reactive({
 })
 
 // 表单验证规则
-const formRules = {
+const formRules = computed(() => ({
   name: [
-    { required: true, message: '请输入元素名称', trigger: 'blur' },
-    { min: 2, max: 100, message: '元素名称长度在 2 到 100 个字符', trigger: 'blur' }
+    { required: true, message: t('uiAutomation.element.rules.nameRequired'), trigger: 'blur' },
+    { min: 2, max: 100, message: t('uiAutomation.element.rules.nameLength'), trigger: 'blur' }
   ],
   page: [
-    { required: true, message: '请输入所属页面', trigger: 'blur' }
+    { required: true, message: t('uiAutomation.element.rules.pageRequired'), trigger: 'blur' }
   ],
   strategy: [
-    { required: true, message: '请选择定位策略', trigger: 'change' }
+    { required: true, message: t('uiAutomation.element.rules.strategyRequired'), trigger: 'change' }
   ],
   locator_value: [
-    { required: true, message: '请输入定位值', trigger: 'blur' }
+    { required: true, message: t('uiAutomation.element.rules.locatorRequired'), trigger: 'blur' }
   ]
-}
+}))
 
 // 格式化日期
 const formatDate = (row, column, cellValue) => {
@@ -315,7 +318,7 @@ const loadProjects = async () => {
     const response = await getUiProjects({ page_size: 100 })
     projects.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('获取项目列表失败')
+    ElMessage.error(t('uiAutomation.project.messages.loadFailed'))
     console.error('获取项目列表失败:', error)
   }
 }
@@ -326,7 +329,7 @@ const loadStrategies = async () => {
     const response = await getLocatorStrategies()
     strategies.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('获取定位策略失败')
+    ElMessage.error(t('uiAutomation.element.messages.loadStrategiesFailed'))
     console.error('获取定位策略失败:', error)
   }
 }
@@ -375,7 +378,7 @@ const loadElements = async () => {
     const pageNames = [...new Set(elements.value.map(el => el.page))]
     pages.value = pageNames.filter(name => name)
   } catch (error) {
-    ElMessage.error('获取元素列表失败')
+    ElMessage.error(t('uiAutomation.element.messages.loadFailed'))
     console.error('获取元素列表失败:', error)
   } finally {
     loading.value = false
@@ -433,7 +436,7 @@ const showElementDetail = async (id) => {
     currentElementDetail.value = response.data
     showDetailDialog.value = true
   } catch (error) {
-    ElMessage.error('获取元素详情失败')
+    ElMessage.error(t('uiAutomation.element.messages.loadDetailFailed'))
     console.error('获取元素详情失败:', error)
   }
 }
@@ -463,18 +466,18 @@ const editElement = (element) => {
 // 删除元素
 const handleDeleteElement = async (id) => {
   try {
-    await ElMessageBox.confirm('确定要删除这个元素吗？删除后数据将无法恢复。', '确认删除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('uiAutomation.element.messages.deleteConfirm'), t('uiAutomation.messages.confirm.delete'), {
+      confirmButtonText: t('uiAutomation.common.confirm'),
+      cancelButtonText: t('uiAutomation.common.cancel'),
       type: 'warning'
     })
-    
+
     await deleteElement(id)
-    ElMessage.success('元素删除成功')
+    ElMessage.success(t('uiAutomation.element.messages.deleteSuccess'))
     loadElements()
   } catch (error) {
     if (error === 'cancel') return
-    ElMessage.error('元素删除失败')
+    ElMessage.error(t('uiAutomation.element.messages.deleteFailed'))
     console.error('删除元素失败:', error)
   }
 }
@@ -508,7 +511,7 @@ const handleCreate = async () => {
     
     console.log('提交的API数据:', apiFormData)
     await createElement(apiFormData)
-    ElMessage.success('元素创建成功')
+    ElMessage.success(t('uiAutomation.element.messages.createSuccess'))
     showCreateDialog.value = false
     
     // 重置表单
@@ -532,10 +535,10 @@ const handleCreate = async () => {
       } else if (errorData.project_id) {
         ElMessage.error(errorData.project_id[0])
       } else {
-        ElMessage.error('元素创建失败: ' + JSON.stringify(errorData))
+        ElMessage.error(t('uiAutomation.element.messages.createFailed') + ': ' + JSON.stringify(errorData))
       }
     } else {
-      ElMessage.error('元素创建失败')
+      ElMessage.error(t('uiAutomation.element.messages.createFailed'))
     }
   }
 }
@@ -563,11 +566,11 @@ const handleEdit = async () => {
     
     console.log('提交的API数据:', apiFormData)
     await updateElement(currentEditId.value, apiFormData)
-    ElMessage.success('元素更新成功')
+    ElMessage.success(t('uiAutomation.element.messages.updateSuccess'))
     showEditDialog.value = false
     loadElements()
   } catch (error) {
-    ElMessage.error('元素更新失败')
+    ElMessage.error(t('uiAutomation.element.messages.updateFailed'))
     console.error('更新元素失败:', error)
   }
 }

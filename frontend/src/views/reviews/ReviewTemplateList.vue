@@ -1,19 +1,19 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">评审模板</h1>
+      <h1 class="page-title">{{ $t('reviewTemplate.title') }}</h1>
       <div>
         <el-button type="primary" @click="createTemplate">
           <el-icon><Plus /></el-icon>
-          创建模板
+          {{ $t('reviewTemplate.createTemplate') }}
         </el-button>
       </div>
     </div>
 
     <div class="filter-bar">
       <el-form :inline="true" :model="filters" class="filter-form">
-        <el-form-item label="项目">
-          <el-select v-model="filters.project" placeholder="请选择项目" clearable @change="fetchTemplates">
+        <el-form-item :label="$t('reviewTemplate.project')">
+          <el-select v-model="filters.project" :placeholder="$t('reviewTemplate.selectProject')" clearable @change="fetchTemplates">
             <el-option
               v-for="project in projects"
               :key="project.id"
@@ -36,14 +36,14 @@
           <div class="card-header">
             <span class="template-name">{{ template.name }}</span>
             <div class="card-actions">
-              <el-button link type="primary" @click="useTemplate(template)">使用</el-button>
-              <el-button link type="warning" @click="editTemplate(template)">编辑</el-button>
+              <el-button link type="primary" @click="useTemplate(template)">{{ $t('reviewTemplate.useTemplate') }}</el-button>
+              <el-button link type="warning" @click="editTemplate(template)">{{ $t('reviewTemplate.edit') }}</el-button>
               <el-popconfirm
-                title="确定要删除这个模板吗？"
+                :title="$t('reviewTemplate.deleteConfirm')"
                 @confirm="deleteTemplate(template.id)"
               >
                 <template #reference>
-                  <el-button link type="danger">删除</el-button>
+                  <el-button link type="danger">{{ $t('reviewTemplate.delete') }}</el-button>
                 </template>
               </el-popconfirm>
             </div>
@@ -53,42 +53,42 @@
         <div class="template-content">
           <div class="template-info">
             <div class="info-item">
-              <span class="info-label">项目:</span>
+              <span class="info-label">{{ $t('reviewTemplate.projectLabel') }}</span>
               <span class="info-value">
-                {{ Array.isArray(template.project) 
-                    ? template.project.map(p => p.name).join(', ') 
-                    : (template.project?.name || '未设置') }}
+                {{ Array.isArray(template.project)
+                    ? template.project.map(p => p.name).join(', ')
+                    : (template.project?.name || $t('reviewTemplate.noData')) }}
               </span>
             </div>
             <div class="info-item">
-              <span class="info-label">创建人:</span>
+              <span class="info-label">{{ $t('reviewTemplate.creatorLabel') }}</span>
               <span class="info-value">{{ template.creator?.username }}</span>
             </div>
             <div class="info-item">
-              <span class="info-label">创建时间:</span>
+              <span class="info-label">{{ $t('reviewTemplate.createdAtLabel') }}</span>
               <span class="info-value">{{ formatDate(template.created_at) }}</span>
             </div>
           </div>
 
           <div class="template-description">
-            {{ template.description || '暂无描述' }}
+            {{ template.description || $t('reviewTemplate.noDescription') }}
           </div>
 
           <div class="template-checklist">
-            <div class="checklist-title">检查清单:</div>
+            <div class="checklist-title">{{ $t('reviewTemplate.checklistTitle') }}</div>
             <ul v-if="template.checklist?.length">
               <li v-for="(item, index) in template.checklist.slice(0, 3)" :key="index">
                 {{ item }}
               </li>
               <li v-if="template.checklist.length > 3" class="more-items">
-                还有 {{ template.checklist.length - 3 }} 项...
+                {{ $t('reviewTemplate.moreItems', { count: template.checklist.length - 3 }) }}
               </li>
             </ul>
-            <div v-else class="empty-checklist">暂无检查清单</div>
+            <div v-else class="empty-checklist">{{ $t('reviewTemplate.noChecklist') }}</div>
           </div>
 
           <div class="template-reviewers">
-            <div class="reviewers-title">默认评审人:</div>
+            <div class="reviewers-title">{{ $t('reviewTemplate.reviewersTitle') }}</div>
             <div class="reviewers-list">
               <el-tag
                 v-for="reviewer in template.default_reviewers"
@@ -99,7 +99,7 @@
                 {{ reviewer.username }}
               </el-tag>
               <span v-if="!template.default_reviewers?.length" class="empty-reviewers">
-                未设置默认评审人
+                {{ $t('reviewTemplate.noReviewers') }}
               </span>
             </div>
           </div>
@@ -107,30 +107,26 @@
       </el-card>
 
       <div v-if="!templates.length && !loading" class="empty-templates">
-        <el-empty description="暂无评审模板" />
+        <el-empty :description="$t('reviewTemplate.noData')" />
       </div>
     </div>
 
     <!-- 模板表单对话框 -->
-    <el-dialog 
-      v-model="templateDialogVisible" 
-      :title="isEdit ? '编辑模板' : '创建模板'"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
+    <el-dialog
+      v-model="templateDialogVisible"
+      :title="isEdit ? $t('reviewTemplate.editTitle') : $t('reviewTemplate.createTitle')"
       width="800px"
     >
       <el-form :model="templateForm" :rules="templateRules" ref="templateFormRef" label-width="120px">
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="模板名称" prop="name">
-              <el-input v-model="templateForm.name" placeholder="请输入模板名称" />
+            <el-form-item :label="$t('reviewTemplate.templateName')" prop="name">
+              <el-input v-model="templateForm.name" :placeholder="$t('reviewTemplate.templateNamePlaceholder')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="关联项目" prop="project">
-              <el-select v-model="templateForm.project" placeholder="请选择项目" @change="onProjectChange">
+            <el-form-item :label="$t('reviewTemplate.associatedProject')" prop="project">
+              <el-select v-model="templateForm.project" :placeholder="$t('reviewTemplate.selectProject')" @change="onProjectChange">
                 <el-option
                   v-for="project in projects"
                   :key="project.id"
@@ -142,16 +138,16 @@
           </el-col>
         </el-row>
 
-        <el-form-item label="模板描述">
+        <el-form-item :label="$t('reviewTemplate.templateDescription')">
           <el-input
             v-model="templateForm.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入模板描述"
+            :placeholder="$t('reviewTemplate.templateDescriptionPlaceholder')"
           />
         </el-form-item>
 
-        <el-form-item label="检查清单">
+        <el-form-item :label="$t('reviewTemplate.checklist')">
           <div class="checklist-editor">
             <div
               v-for="(item, index) in templateForm.checklist"
@@ -160,27 +156,27 @@
             >
               <el-input
                 v-model="templateForm.checklist[index]"
-                placeholder="请输入检查项"
+                :placeholder="$t('reviewTemplate.checklistItemPlaceholder')"
               />
-              <el-button 
-                type="danger" 
-                size="small" 
+              <el-button
+                type="danger"
+                size="small"
                 @click="removeChecklistItem(index)"
                 :icon="Delete"
               />
             </div>
             <el-button type="primary" size="small" @click="addChecklistItem">
               <el-icon><Plus /></el-icon>
-              添加检查项
+              {{ $t('reviewTemplate.addChecklistItem') }}
             </el-button>
           </div>
         </el-form-item>
 
-        <el-form-item label="默认评审人">
+        <el-form-item :label="$t('reviewTemplate.defaultReviewers')">
           <el-select
             v-model="templateForm.default_reviewers"
             multiple
-            placeholder="请选择默认评审人"
+            :placeholder="$t('reviewTemplate.selectDefaultReviewers')"
           >
             <el-option
               v-for="user in projectUsers"
@@ -193,8 +189,8 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="templateDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveTemplate" :loading="saving">保存</el-button>
+        <el-button @click="templateDialogVisible = false">{{ $t('reviewTemplate.cancel') }}</el-button>
+        <el-button type="primary" @click="saveTemplate" :loading="saving">{{ $t('reviewTemplate.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -203,12 +199,14 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
 import api from '@/utils/api'
 import dayjs from 'dayjs'
 
 const router = useRouter()
+const { t } = useI18n()
 
 const templates = ref([])
 const projects = ref([])
@@ -233,8 +231,8 @@ const templateForm = reactive({
 })
 
 const templateRules = {
-  name: [{ required: true, message: '请输入模板名称', trigger: 'blur' }],
-  project: [{ required: true, message: '请选择项目', trigger: 'change' }]
+  name: [{ required: true, message: t('reviewTemplate.nameRequired'), trigger: 'blur' }],
+  project: [{ required: true, message: t('reviewTemplate.projectRequired'), trigger: 'change' }]
 }
 
 const fetchTemplates = async () => {
@@ -244,11 +242,11 @@ const fetchTemplates = async () => {
     if (filters.project) {
       params.project = filters.project
     }
-    
+
     const response = await api.get('/reviews/review-templates/', { params })
     templates.value = response.data.results || response.data || []
   } catch (error) {
-    ElMessage.error('获取模板列表失败')
+    ElMessage.error(t('reviewTemplate.fetchListFailed'))
   } finally {
     loading.value = false
   }
@@ -259,7 +257,7 @@ const fetchProjects = async () => {
     const response = await api.get('/projects/')
     projects.value = response.data.results || response.data || []
   } catch (error) {
-    ElMessage.error('获取项目列表失败')
+    ElMessage.error(t('reviewTemplate.fetchProjectsFailed'))
   }
 }
 
@@ -269,7 +267,7 @@ const fetchProjectUsers = async () => {
     projectUsers.value = response.data.results || response.data || []
   } catch (error) {
     console.error('获取用户列表失败:', error)
-    ElMessage.error('获取用户列表失败')
+    ElMessage.error(t('reviewTemplate.fetchUsersFailed'))
     projectUsers.value = []
   }
 }
@@ -311,32 +309,32 @@ const useTemplate = (template) => {
 
 const saveTemplate = async () => {
   if (!templateFormRef.value) return
-  
+
   try {
     await templateFormRef.value.validate()
     saving.value = true
-    
+
     const data = {
       ...templateForm,
       checklist: templateForm.checklist.filter(item => item.trim()),
       // 将project转换为数组格式，因为后端期望的是列表
       project: templateForm.project ? [templateForm.project] : []
     }
-    
+
     if (isEdit.value) {
       await api.put(`/reviews/review-templates/${editingTemplateId.value}/`, data)
-      ElMessage.success('模板更新成功')
+      ElMessage.success(t('reviewTemplate.updateSuccess'))
     } else {
       await api.post('/reviews/review-templates/', data)
-      ElMessage.success('模板创建成功')
+      ElMessage.success(t('reviewTemplate.createSuccess'))
     }
-    
+
     templateDialogVisible.value = false
     fetchTemplates()
-    
+
   } catch (error) {
     console.error('保存模板失败:', error)
-    ElMessage.error(isEdit.value ? '模板更新失败' : '模板创建失败')
+    ElMessage.error(isEdit.value ? t('reviewTemplate.updateFailed') : t('reviewTemplate.createFailed'))
   } finally {
     saving.value = false
   }
@@ -345,10 +343,10 @@ const saveTemplate = async () => {
 const deleteTemplate = async (id) => {
   try {
     await api.delete(`/reviews/review-templates/${id}/`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('reviewTemplate.deleteSuccess'))
     fetchTemplates()
   } catch (error) {
-    ElMessage.error('删除失败')
+    ElMessage.error(t('reviewTemplate.deleteFailed'))
   }
 }
 

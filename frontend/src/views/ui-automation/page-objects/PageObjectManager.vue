@@ -1,14 +1,14 @@
 <template>
   <div class="page-object-manager">
     <div class="page-header">
-      <h1 class="page-title">页面对象管理</h1>
+      <h1 class="page-title">{{ $t('uiAutomation.pageObject.title') }}</h1>
       <div class="header-actions">
-        <el-select v-model="projectId" placeholder="选择项目" style="width: 200px; margin-right: 15px" @change="onProjectChange">
+        <el-select v-model="projectId" :placeholder="$t('uiAutomation.common.selectProject')" style="width: 200px; margin-right: 15px" @change="onProjectChange">
           <el-option v-for="project in projects" :key="project.id" :label="project.name" :value="project.id" />
         </el-select>
         <el-button type="primary" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
-          新增页面对象
+          {{ $t('uiAutomation.pageObject.newPageObject') }}
         </el-button>
       </div>
     </div>
@@ -17,10 +17,10 @@
       <!-- 页面对象列表 -->
       <div class="left-panel">
         <div class="panel-header">
-          <h3>页面对象列表</h3>
+          <h3>{{ $t('uiAutomation.pageObject.pageObjectList') }}</h3>
           <el-input
             v-model="searchText"
-            placeholder="搜索页面对象..."
+            :placeholder="$t('uiAutomation.pageObject.searchPlaceholder')"
             clearable
             size="small"
             style="width: 200px"
@@ -52,7 +52,7 @@
             </div>
             <div class="item-meta">
               <span class="class-name">{{ pageObject.class_name }}</span>
-              <el-tag size="small" type="info">{{ pageObject.elements_count || 0 }} 个元素</el-tag>
+              <el-tag size="small" type="info">{{ pageObject.elements_count || 0 }} {{ $t('uiAutomation.pageObject.elementsCount') }}</el-tag>
             </div>
             <div class="item-description" v-if="pageObject.description">
               {{ pageObject.description }}
@@ -69,24 +69,24 @@
             <div class="header-actions">
               <el-button size="small" @click="showAddElementDialog = true">
                 <el-icon><Plus /></el-icon>
-                添加元素
+                {{ $t('uiAutomation.pageObject.addElement') }}
               </el-button>
               <el-button size="small" type="success" @click="generateCode">
                 <el-icon><Document /></el-icon>
-                生成代码
+                {{ $t('uiAutomation.pageObject.generateCode') }}
               </el-button>
             </div>
           </div>
 
           <el-tabs v-model="activeTab" type="border-card">
             <!-- 元素设计 -->
-            <el-tab-pane label="元素设计" name="design">
+            <el-tab-pane :label="$t('uiAutomation.pageObject.elementsDesign')" name="design">
               <div class="design-area">
                 <div class="element-library">
-                  <h4>可用元素</h4>
+                  <h4>{{ $t('uiAutomation.pageObject.availableElements') }}</h4>
                   <el-input
                     v-model="elementFilter"
-                    placeholder="搜索元素..."
+                    :placeholder="$t('uiAutomation.pageObject.searchElements')"
                     clearable
                     size="small"
                     style="margin-bottom: 10px"
@@ -116,7 +116,7 @@
                 </div>
 
                 <div class="design-canvas">
-                  <h4>页面对象元素</h4>
+                  <h4>{{ $t('uiAutomation.pageObject.pageObjectElements') }}</h4>
                   <div
                     class="canvas-drop-zone"
                     @drop="handleDrop"
@@ -124,7 +124,7 @@
                     @dragenter.prevent
                   >
                     <div v-if="pageObjectElements.length === 0" class="empty-canvas">
-                      <el-empty description="从左侧拖拽元素到这里" />
+                      <el-empty :description="$t('uiAutomation.pageObject.dragElementHint')" />
                     </div>
                     <div v-else class="element-canvas">
                       <div
@@ -150,7 +150,7 @@
                         <div class="element-meta">
                           <span class="element-name">{{ poElement.element.name }}</span>
                           <el-tag size="small" :type="poElement.is_property ? 'success' : 'primary'">
-                            {{ poElement.is_property ? '属性' : '方法' }}
+                            {{ poElement.is_property ? $t('uiAutomation.pageObject.property') : $t('uiAutomation.pageObject.method') }}
                           </el-tag>
                         </div>
                       </div>
@@ -161,7 +161,7 @@
             </el-tab-pane>
 
             <!-- 代码预览 -->
-            <el-tab-pane label="代码预览" name="code">
+            <el-tab-pane :label="$t('uiAutomation.pageObject.codePreview')" name="code">
               <div class="code-preview">
                 <div class="code-controls">
                   <el-select v-model="codeLanguage" size="small" style="width: 120px">
@@ -169,10 +169,10 @@
                     <el-option label="Python" value="python" />
                   </el-select>
                   <el-button size="small" type="primary" @click="generateCode">
-                    刷新代码
+                    {{ $t('uiAutomation.pageObject.refreshCode') }}
                   </el-button>
                   <el-button size="small" @click="copyCode">
-                    复制代码
+                    {{ $t('uiAutomation.pageObject.copyCode') }}
                   </el-button>
                 </div>
                 <div class="code-display">
@@ -188,109 +188,109 @@
             </el-tab-pane>
 
             <!-- 属性配置 -->
-            <el-tab-pane label="属性配置" name="properties">
+            <el-tab-pane :label="$t('uiAutomation.pageObject.propertiesConfig')" name="properties">
               <div class="properties-panel" v-if="selectedCanvasElement">
-                <h4>元素属性配置</h4>
+                <h4>{{ $t('uiAutomation.pageObject.elementPropertiesConfig') }}</h4>
                 <el-form :model="selectedCanvasElement" label-width="100px">
-                  <el-form-item label="方法名称">
+                  <el-form-item :label="$t('uiAutomation.pageObject.methodName')">
                     <el-input v-model="selectedCanvasElement.method_name" @change="updateCanvasElement" />
                   </el-form-item>
-                  <el-form-item label="类型">
+                  <el-form-item :label="$t('uiAutomation.pageObject.type')">
                     <el-radio-group v-model="selectedCanvasElement.is_property" @change="updateCanvasElement">
-                      <el-radio :label="true">属性</el-radio>
-                      <el-radio :label="false">方法</el-radio>
+                      <el-radio :label="true">{{ $t('uiAutomation.pageObject.property') }}</el-radio>
+                      <el-radio :label="false">{{ $t('uiAutomation.pageObject.method') }}</el-radio>
                     </el-radio-group>
                   </el-form-item>
-                  <el-form-item label="排序">
+                  <el-form-item :label="$t('uiAutomation.pageObject.order')">
                     <el-input-number v-model="selectedCanvasElement.order" @change="updateCanvasElement" />
                   </el-form-item>
                 </el-form>
 
-                <h4>元素信息</h4>
+                <h4>{{ $t('uiAutomation.pageObject.elementInfo') }}</h4>
                 <el-descriptions :column="1" border>
-                  <el-descriptions-item label="元素名称">
+                  <el-descriptions-item :label="$t('uiAutomation.pageObject.elementName')">
                     {{ selectedCanvasElement.element.name }}
                   </el-descriptions-item>
-                  <el-descriptions-item label="元素类型">
+                  <el-descriptions-item :label="$t('uiAutomation.pageObject.elementType')">
                     {{ getElementTypeText(selectedCanvasElement.element.element_type) }}
                   </el-descriptions-item>
-                  <el-descriptions-item label="定位器">
+                  <el-descriptions-item :label="$t('uiAutomation.pageObject.locator')">
                     {{ selectedCanvasElement.element.locator_value }}
                   </el-descriptions-item>
                 </el-descriptions>
               </div>
               <div v-else class="no-selection">
-                <el-empty description="请选择画布中的元素进行配置" />
+                <el-empty :description="$t('uiAutomation.pageObject.selectElementToConfig')" />
               </div>
             </el-tab-pane>
           </el-tabs>
         </div>
 
         <div v-else class="no-page-object">
-          <el-empty description="请从左侧选择页面对象进行编辑" />
+          <el-empty :description="$t('uiAutomation.pageObject.selectPageObjectToEdit')" />
         </div>
       </div>
     </div>
 
     <!-- 新增页面对象对话框 -->
-    <el-dialog v-model="showCreateDialog" title="新增页面对象" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="showCreateDialog" :title="$t('uiAutomation.pageObject.createPageObject')" width="600px">
       <el-form ref="createFormRef" :model="createForm" :rules="formRules" label-width="120px">
-        <el-form-item label="页面对象名称" prop="name">
-          <el-input v-model="createForm.name" placeholder="请输入页面对象名称" />
+        <el-form-item :label="$t('uiAutomation.pageObject.pageObjectName')" prop="name">
+          <el-input v-model="createForm.name" :placeholder="$t('uiAutomation.pageObject.rules.nameRequired')" />
         </el-form-item>
-        <el-form-item label="类名" prop="class_name">
-          <el-input v-model="createForm.class_name" placeholder="请输入类名" />
+        <el-form-item :label="$t('uiAutomation.pageObject.className')" prop="class_name">
+          <el-input v-model="createForm.class_name" :placeholder="$t('uiAutomation.pageObject.rules.classNameRequired')" />
         </el-form-item>
-        <el-form-item label="URL模式">
-          <el-input v-model="createForm.url_pattern" placeholder="请输入URL模式（可选）" />
+        <el-form-item :label="$t('uiAutomation.pageObject.urlPattern')">
+          <el-input v-model="createForm.url_pattern" :placeholder="$t('uiAutomation.pageObject.urlPatternPlaceholder')" />
         </el-form-item>
-        <el-form-item label="描述">
+        <el-form-item :label="$t('uiAutomation.common.description')">
           <el-input
             v-model="createForm.description"
             type="textarea"
-            placeholder="请输入页面对象描述"
+            :placeholder="$t('uiAutomation.common.description')"
             :rows="3"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showCreateDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleCreate">确定</el-button>
+          <el-button @click="showCreateDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleCreate">{{ $t('uiAutomation.common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
 
     <!-- 添加元素对话框 -->
-    <el-dialog v-model="showAddElementDialog" title="添加元素到页面对象" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="showAddElementDialog" :title="$t('uiAutomation.pageObject.addElementToPageObject')" width="600px">
       <el-form ref="addElementFormRef" :model="addElementForm" :rules="addElementRules" label-width="120px">
-        <el-form-item label="选择元素" prop="element_id">
-          <el-select v-model="addElementForm.element_id" placeholder="请选择元素" filterable>
+        <el-form-item :label="$t('uiAutomation.pageObject.selectElement')" prop="element_id">
+          <el-select v-model="addElementForm.element_id" :placeholder="$t('uiAutomation.pageObject.selectElement')" filterable>
             <el-option
               v-for="element in availableElements"
               :key="element.id"
-              :label="`${element.name} (${element.page || '未分类'})`"
+              :label="`${element.name} (${element.page || $t('uiAutomation.pageObject.uncategorized')})`"
               :value="element.id"
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="方法名称" prop="method_name">
-          <el-input v-model="addElementForm.method_name" placeholder="请输入方法名称" />
+        <el-form-item :label="$t('uiAutomation.pageObject.methodName')" prop="method_name">
+          <el-input v-model="addElementForm.method_name" :placeholder="$t('uiAutomation.pageObject.rules.methodNameRequired')" />
         </el-form-item>
-        <el-form-item label="类型">
+        <el-form-item :label="$t('uiAutomation.pageObject.type')">
           <el-radio-group v-model="addElementForm.is_property">
-            <el-radio :label="true">属性</el-radio>
-            <el-radio :label="false">方法</el-radio>
+            <el-radio :label="true">{{ $t('uiAutomation.pageObject.property') }}</el-radio>
+            <el-radio :label="false">{{ $t('uiAutomation.pageObject.method') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="排序">
+        <el-form-item :label="$t('uiAutomation.pageObject.order')">
           <el-input-number v-model="addElementForm.order" :min="0" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showAddElementDialog = false">取消</el-button>
-          <el-button type="primary" @click="handleAddElement">确定</el-button>
+          <el-button @click="showAddElementDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleAddElement">{{ $t('uiAutomation.common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -299,6 +299,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus, Search, Edit, Delete, Document,
@@ -318,6 +319,8 @@ import {
   deletePageObjectElement,
   getElements
 } from '@/api/ui_automation'
+
+const { t } = useI18n()
 
 // 响应式数据
 const projects = ref([])
@@ -357,26 +360,26 @@ const addElementForm = reactive({
 const createFormRef = ref(null)
 const addElementFormRef = ref(null)
 
-// 表单验证规则
-const formRules = {
+// 表单验证规则 - 使用computed使其响应式
+const formRules = computed(() => ({
   name: [
-    { required: true, message: '请输入页面对象名称', trigger: 'blur' }
+    { required: true, message: t('uiAutomation.pageObject.rules.nameRequired'), trigger: 'blur' }
   ],
   class_name: [
-    { required: true, message: '请输入类名', trigger: 'blur' },
-    { pattern: /^[A-Z][a-zA-Z0-9]*$/, message: '类名必须以大写字母开头，只能包含字母和数字', trigger: 'blur' }
+    { required: true, message: t('uiAutomation.pageObject.rules.classNameRequired'), trigger: 'blur' },
+    { pattern: /^[A-Z][a-zA-Z0-9]*$/, message: t('uiAutomation.pageObject.rules.classNamePattern'), trigger: 'blur' }
   ]
-}
+}))
 
-const addElementRules = {
+const addElementRules = computed(() => ({
   element_id: [
-    { required: true, message: '请选择元素', trigger: 'change' }
+    { required: true, message: t('uiAutomation.pageObject.rules.elementRequired'), trigger: 'change' }
   ],
   method_name: [
-    { required: true, message: '请输入方法名称', trigger: 'blur' },
-    { pattern: /^[a-zA-Z_][a-zA-Z0-9_]*$/, message: '方法名称只能包含字母、数字和下划线，且不能以数字开头', trigger: 'blur' }
+    { required: true, message: t('uiAutomation.pageObject.rules.methodNameRequired'), trigger: 'blur' },
+    { pattern: /^[a-zA-Z_][a-zA-Z0-9_]*$/, message: t('uiAutomation.pageObject.rules.methodNamePattern'), trigger: 'blur' }
   ]
-}
+}))
 
 // 计算属性
 const filteredPageObjects = computed(() => {
@@ -402,7 +405,7 @@ const loadProjects = async () => {
     const response = await getUiProjects({ page_size: 100 })
     projects.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('获取项目列表失败')
+    ElMessage.error(t('uiAutomation.pageObject.messages.loadProjectsFailed'))
     console.error('获取项目列表失败:', error)
   }
 }
@@ -470,7 +473,7 @@ const handleDragStart = (event, element) => {
 const handleDrop = (event) => {
   event.preventDefault()
   if (!selectedPageObject.value) {
-    ElMessage.warning('请先选择页面对象')
+    ElMessage.warning(t('uiAutomation.pageObject.messages.selectPageObjectFirst'))
     return
   }
 
@@ -479,7 +482,7 @@ const handleDrop = (event) => {
   // 检查元素是否已经存在
   const exists = pageObjectElements.value.some(pe => pe.element.id === elementData.id)
   if (exists) {
-    ElMessage.warning('该元素已经存在于页面对象中')
+    ElMessage.warning(t('uiAutomation.pageObject.messages.elementAlreadyExists'))
     return
   }
 
@@ -488,7 +491,7 @@ const handleDrop = (event) => {
     .replace(/^./, elementData.name.charAt(0).toLowerCase())
 
   // 添加元素到页面对象
-  addElementToPageObject({
+  addElementToPageObjectFn({
     element_id: elementData.id,
     method_name: methodName,
     is_property: true,
@@ -496,7 +499,7 @@ const handleDrop = (event) => {
   })
 }
 
-const addElementToPageObject = async (elementData) => {
+const addElementToPageObjectFn = async (elementData) => {
   try {
     const response = await createPageObjectElement({
       page_object_id: selectedPageObject.value.id,
@@ -505,10 +508,10 @@ const addElementToPageObject = async (elementData) => {
 
     // 重新加载页面对象元素
     await selectPageObject(selectedPageObject.value)
-    ElMessage.success('元素添加成功')
+    ElMessage.success(t('uiAutomation.pageObject.messages.addElementSuccess'))
   } catch (error) {
     console.error('添加元素失败:', error)
-    ElMessage.error('元素添加失败')
+    ElMessage.error(t('uiAutomation.pageObject.messages.addElementFailed'))
   }
 }
 
@@ -527,20 +530,24 @@ const updateCanvasElement = async () => {
       order: selectedCanvasElement.value.order
     })
 
-    ElMessage.success('元素配置已更新')
+    ElMessage.success(t('uiAutomation.pageObject.messages.updateConfigSuccess'))
   } catch (error) {
     console.error('更新元素配置失败:', error)
-    ElMessage.error('更新元素配置失败')
+    ElMessage.error(t('uiAutomation.pageObject.messages.updateConfigFailed'))
   }
 }
 
 const removeCanvasElement = async (elementId) => {
   try {
-    await ElMessageBox.confirm('确定要移除这个元素吗？', '确认移除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      t('uiAutomation.pageObject.messages.removeElementConfirm'),
+      t('uiAutomation.pageObject.messages.confirmRemove'),
+      {
+        confirmButtonText: t('uiAutomation.common.confirm'),
+        cancelButtonText: t('uiAutomation.common.cancel'),
+        type: 'warning'
+      }
+    )
 
     await deletePageObjectElement(elementId)
 
@@ -552,17 +559,17 @@ const removeCanvasElement = async (elementId) => {
       selectedCanvasElement.value = null
     }
 
-    ElMessage.success('元素移除成功')
+    ElMessage.success(t('uiAutomation.pageObject.messages.removeElementSuccess'))
   } catch (error) {
     if (error === 'cancel') return
     console.error('移除元素失败:', error)
-    ElMessage.error('元素移除失败')
+    ElMessage.error(t('uiAutomation.pageObject.messages.removeElementFailed'))
   }
 }
 
 const generateCode = async () => {
   if (!selectedPageObject.value) {
-    ElMessage.warning('请先选择页面对象')
+    ElMessage.warning(t('uiAutomation.pageObject.messages.selectPageObjectFirst'))
     return
   }
 
@@ -575,38 +582,42 @@ const generateCode = async () => {
 
     generatedCode.value = response.data.code
     activeTab.value = 'code'
-    ElMessage.success('代码生成成功')
+    ElMessage.success(t('uiAutomation.pageObject.messages.generateCodeSuccess'))
   } catch (error) {
     console.error('生成代码失败:', error)
-    ElMessage.error('代码生成失败')
+    ElMessage.error(t('uiAutomation.pageObject.messages.generateCodeFailed'))
   }
 }
 
 const copyCode = () => {
   if (!generatedCode.value) {
-    ElMessage.warning('没有可复制的代码')
+    ElMessage.warning(t('uiAutomation.pageObject.messages.noCodeToCopy'))
     return
   }
 
   navigator.clipboard.writeText(generatedCode.value).then(() => {
-    ElMessage.success('代码已复制到剪贴板')
+    ElMessage.success(t('uiAutomation.pageObject.messages.codeCopied'))
   }).catch(() => {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('uiAutomation.pageObject.messages.copyFailed'))
   })
 }
 
 const editPageObject = (pageObject) => {
   // TODO: 实现页面对象编辑功能
-  ElMessage.info('编辑功能即将开放')
+  ElMessage.info(t('uiAutomation.pageObject.messages.editFeatureComingSoon'))
 }
 
 const deletePageObject = async (id) => {
   try {
-    await ElMessageBox.confirm('确定要删除这个页面对象吗？删除后数据将无法恢复。', '确认删除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      t('uiAutomation.pageObject.messages.deletePageObjectConfirm'),
+      t('uiAutomation.pageObject.messages.confirmDelete'),
+      {
+        confirmButtonText: t('uiAutomation.common.confirm'),
+        cancelButtonText: t('uiAutomation.common.cancel'),
+        type: 'warning'
+      }
+    )
 
     await deletePageObjectAPI(id)
 
@@ -618,11 +629,11 @@ const deletePageObject = async (id) => {
     }
 
     await loadPageObjects()
-    ElMessage.success('页面对象删除成功')
+    ElMessage.success(t('uiAutomation.pageObject.messages.deletePageObjectSuccess'))
   } catch (error) {
     if (error === 'cancel') return
     console.error('删除页面对象失败:', error)
-    ElMessage.error('页面对象删除失败')
+    ElMessage.error(t('uiAutomation.pageObject.messages.deletePageObjectFailed'))
   }
 }
 
@@ -632,7 +643,7 @@ const handleCreate = async () => {
 
   try {
     await createPageObject(createForm)
-    ElMessage.success('页面对象创建成功')
+    ElMessage.success(t('uiAutomation.pageObject.messages.createPageObjectSuccess'))
     showCreateDialog.value = false
 
     // 重置表单
@@ -646,7 +657,7 @@ const handleCreate = async () => {
     await loadPageObjects()
   } catch (error) {
     console.error('创建页面对象失败:', error)
-    ElMessage.error('页面对象创建失败')
+    ElMessage.error(t('uiAutomation.pageObject.messages.createPageObjectFailed'))
   }
 }
 
@@ -660,7 +671,7 @@ const handleAddElement = async () => {
       ...addElementForm
     })
 
-    ElMessage.success('元素添加成功')
+    ElMessage.success(t('uiAutomation.pageObject.messages.addElementSuccess'))
     showAddElementDialog.value = false
 
     // 重置表单
@@ -675,7 +686,7 @@ const handleAddElement = async () => {
     await selectPageObject(selectedPageObject.value)
   } catch (error) {
     console.error('添加元素失败:', error)
-    ElMessage.error('元素添加失败')
+    ElMessage.error(t('uiAutomation.pageObject.messages.addElementFailed'))
   }
 }
 
@@ -701,18 +712,18 @@ const getElementTypeTag = (type) => {
 
 const getElementTypeText = (type) => {
   const typeMap = {
-    'BUTTON': '按钮',
-    'INPUT': '输入框',
-    'LINK': '链接',
-    'DROPDOWN': '下拉框',
-    'CHECKBOX': '复选框',
-    'RADIO': '单选框',
-    'TEXT': '文本',
-    'IMAGE': '图片',
-    'CONTAINER': '容器',
-    'TABLE': '表格',
-    'FORM': '表单',
-    'MODAL': '弹窗'
+    'BUTTON': t('uiAutomation.element.elementTypes.button'),
+    'INPUT': t('uiAutomation.element.elementTypes.input'),
+    'LINK': t('uiAutomation.element.elementTypes.link'),
+    'DROPDOWN': t('uiAutomation.element.elementTypes.dropdown'),
+    'CHECKBOX': t('uiAutomation.element.elementTypes.checkbox'),
+    'RADIO': t('uiAutomation.element.elementTypes.radio'),
+    'TEXT': t('uiAutomation.element.elementTypes.text'),
+    'IMAGE': t('uiAutomation.element.elementTypes.image'),
+    'CONTAINER': t('uiAutomation.element.elementTypes.container'),
+    'TABLE': t('uiAutomation.element.elementTypes.table'),
+    'FORM': t('uiAutomation.element.elementTypes.form'),
+    'MODAL': t('uiAutomation.element.elementTypes.modal')
   }
   return typeMap[type] || type
 }

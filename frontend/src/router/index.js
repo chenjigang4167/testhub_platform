@@ -320,16 +320,6 @@ const routes = [
             component: () => import('@/views/requirement-analysis/AIModelConfig.vue')
           },
           {
-            path: 'prompt-config',
-            name: 'ConfigPromptConfig',
-            component: () => import('@/views/requirement-analysis/PromptConfig.vue')
-          },
-          {
-            path: 'generation-config',
-            name: 'ConfigGenerationConfig',
-            component: () => import('@/views/requirement-analysis/GenerationConfigView.vue')
-          },
-          {
             path: 'ui-env',
             name: 'ConfigUIEnv',
             component: () => import('@/views/configuration/UIEnvironmentConfig.vue')

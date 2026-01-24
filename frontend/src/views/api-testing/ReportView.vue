@@ -1,44 +1,44 @@
 <template>
   <div class="report-view">
     <div class="header">
-      <h3>测试报告</h3>
+      <h3>{{ $t('apiTesting.report.title') }}</h3>
       <div class="actions">
-        <el-button type="primary" @click="refreshReports">刷新报告</el-button>
-        <el-button @click="openAllureReport">查看Allure报告说明</el-button>
+        <el-button type="primary" @click="refreshReports">{{ $t('apiTesting.report.refreshReport') }}</el-button>
+        <el-button @click="openAllureReport">{{ $t('apiTesting.report.viewAllureReport') }}</el-button>
       </div>
     </div>
-    
+
     <div class="content">
       <el-table :data="reports" v-loading="loading" style="width: 100%">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="test_suite_name" label="测试套件" min-width="200" />
-        <el-table-column prop="status" label="状态" width="120">
+        <el-table-column prop="test_suite_name" :label="$t('apiTesting.report.testSuite')" min-width="200" />
+        <el-table-column prop="status" :label="$t('apiTesting.common.status')" width="120">
           <template #default="scope">
             <el-tag :type="getStatusType(scope.row.status)">
               {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="total_requests" label="总请求数" width="100" />
-        <el-table-column prop="passed_requests" label="通过数" width="100">
+        <el-table-column prop="total_requests" :label="$t('apiTesting.report.totalRequests')" width="100" />
+        <el-table-column prop="passed_requests" :label="$t('apiTesting.report.passedCount')" width="100">
           <template #default="scope">
             <span style="color: #67c23a">{{ scope.row.passed_requests }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="failed_requests" label="失败数" width="100">
+        <el-table-column prop="failed_requests" :label="$t('apiTesting.report.failedCount')" width="100">
           <template #default="scope">
             <span style="color: #f56c6c">{{ scope.row.failed_requests }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="executed_by.username" label="执行者" width="120" />
-        <el-table-column prop="created_at" label="执行时间" width="180">
+        <el-table-column prop="executed_by.username" :label="$t('apiTesting.report.executor')" width="120" />
+        <el-table-column prop="created_at" :label="$t('apiTesting.report.executionTime')" width="180">
           <template #default="scope">
             {{ formatDate(scope.row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150">
+        <el-table-column :label="$t('apiTesting.common.operation')" width="150">
           <template #default="scope">
-            <el-button link type="primary" @click="viewReportDetail(scope.row)">生成并查看报告</el-button>
+            <el-button link type="primary" @click="viewReportDetail(scope.row)">{{ $t('apiTesting.report.generateAndViewReport') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -49,9 +49,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import api from '@/utils/api'
 import dayjs from 'dayjs'
 
+const { t } = useI18n()
 const reports = ref([])
 const loading = ref(false)
 
@@ -61,7 +63,7 @@ const loadReports = async () => {
     const response = await api.get('/api-testing/test-executions/')
     reports.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('加载测试报告失败')
+    ElMessage.error(t('apiTesting.messages.error.loadReports'))
   } finally {
     loading.value = false
   }
@@ -75,19 +77,19 @@ const generateAndOpenAllureReport = async (executionId) => {
   try {
     // 调用API生成Allure报告数据
     const response = await api.post(`/api-testing/test-executions/${executionId}/generate-allure-report/`)
-    ElMessage.success('报告生成成功')
-    
+    ElMessage.success(t('apiTesting.messages.success.reportGenerated'))
+
     // 通过当前窗口的origin构造完整的URL，确保通过Vite代理访问
     const fullUrl = `${window.location.origin}${response.data.report_url}`;
     window.open(fullUrl, '_blank')
   } catch (error) {
-    ElMessage.error('生成报告失败')
+    ElMessage.error(t('apiTesting.messages.error.reportGenerateFailed'))
   }
 }
 
 const openAllureReport = () => {
   // 提示用户需要先选择一个执行记录来生成报告
-  ElMessage.info('请先在下方表格中选择一个测试执行记录，然后点击"生成并查看报告"按钮来生成并查看详细的测试报告')
+  ElMessage.info(t('apiTesting.report.selectExecutionTip'))
 }
 
 const viewReportDetail = (report) => {
@@ -107,14 +109,14 @@ const getStatusType = (status) => {
 }
 
 const getStatusText = (status) => {
-  const textMap = {
-    'PENDING': '待执行',
-    'RUNNING': '执行中',
-    'COMPLETED': '已完成',
-    'FAILED': '执行失败',
-    'CANCELLED': '已取消'
-  }
-  return textMap[status] || status
+  const statusKey = {
+    'PENDING': 'pending',
+    'RUNNING': 'running',
+    'COMPLETED': 'completed',
+    'FAILED': 'failed',
+    'CANCELLED': 'cancelled'
+  }[status]
+  return statusKey ? t(`apiTesting.report.status.${statusKey}`) : status
 }
 
 const formatDate = (dateString) => {

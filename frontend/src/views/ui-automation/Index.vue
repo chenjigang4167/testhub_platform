@@ -2,16 +2,21 @@
   <div class="ui-automation-container">
     <!-- 页面头部 -->
     <div class="page-header">
-      <h1 class="page-title">UI自动化测试平台</h1>
-      <p class="page-subtitle">自动化测试解决方案，提高测试效率与质量</p>
+      <h1 class="page-title">{{ $t('uiAutomation.nav.title') }}</h1>
+      <p class="page-subtitle">{{ $t('uiAutomation.nav.subtitle') }}</p>
     </div>
-    
+
     <!-- 子路由内容显示区域 -->
     <router-view></router-view>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+
+// 初始化国际化
+const { t } = useI18n()
+
 // 主页面仅包含布局和router-view，所有具体内容已移至各个子页面
 </script>
 

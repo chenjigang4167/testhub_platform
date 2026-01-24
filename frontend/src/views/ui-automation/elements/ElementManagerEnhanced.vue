@@ -4,7 +4,7 @@
       <!-- 左侧页面树 -->
       <div class="sidebar">
         <div class="sidebar-header">
-          <el-select v-model="selectedProject" placeholder="选择项目" @change="onProjectChange">
+          <el-select v-model="selectedProject" :placeholder="$t('common.selectProject')" @change="onProjectChange">
             <el-option
               v-for="project in projects"
               :key="project.id"
@@ -13,10 +13,10 @@
             />
           </el-select>
           <div class="header-actions">
-            <el-button type="primary" size="small" @click="showCreatePageDialog = true" title="创建页面">
+            <el-button type="primary" size="small" @click="showCreatePageDialog = true" :title="$t('uiAutomation.element.createPage')">
               <el-icon><Folder /></el-icon>
             </el-button>
-            <el-button type="success" size="small" @click="createEmptyElement" title="添加元素">
+            <el-button type="success" size="small" @click="createEmptyElement" :title="$t('uiAutomation.element.addElement')">
               <el-icon><Plus /></el-icon>
             </el-button>
           </div>
@@ -72,8 +72,8 @@
       <!-- 右侧元素详情 -->
       <div class="main-content">
         <div v-if="!selectedElement" class="empty-state">
-          <el-empty description="请选择一个元素查看详情，或点击上方绿色按钮创建新元素">
-            <el-button type="primary" @click="createEmptyElement">创建新元素</el-button>
+          <el-empty :description="$t('uiAutomation.element.emptyElementTip')">
+            <el-button type="primary" @click="createEmptyElement">{{ $t('uiAutomation.element.createNewElement') }}</el-button>
           </el-empty>
         </div>
 
@@ -83,25 +83,25 @@
             <div class="element-info">
               <el-input
                 v-model="selectedElement.name"
-                placeholder="元素名称"
+                :placeholder="$t('uiAutomation.element.elementNamePlaceholder')"
                 size="small"
                 style="width: 300px; margin-right: 10px"
               />
-              <el-select v-model="selectedElement.element_type" placeholder="元素类型" size="small" style="width: 120px;">
-                <el-option label="按钮" value="BUTTON" />
-                <el-option label="输入框" value="INPUT" />
-                <el-option label="链接" value="LINK" />
-                <el-option label="下拉框" value="DROPDOWN" />
-                <el-option label="复选框" value="CHECKBOX" />
-                <el-option label="单选框" value="RADIO" />
-                <el-option label="文本" value="TEXT" />
-                <el-option label="图片" value="IMAGE" />
-                <el-option label="表格" value="TABLE" />
-                <el-option label="表单" value="FORM" />
-                <el-option label="弹窗" value="MODAL" />
+              <el-select v-model="selectedElement.element_type" :placeholder="$t('uiAutomation.element.elementType')" size="small" style="width: 120px;">
+                <el-option :label="$t('uiAutomation.element.elementTypes.button')" value="BUTTON" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.input')" value="INPUT" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.link')" value="LINK" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.dropdown')" value="DROPDOWN" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.checkbox')" value="CHECKBOX" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.radio')" value="RADIO" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.text')" value="TEXT" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.image')" value="IMAGE" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.table')" value="TABLE" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.form')" value="FORM" />
+                <el-option :label="$t('uiAutomation.element.elementTypes.modal')" value="MODAL" />
               </el-select>
               <el-button size="small" @click="saveElement" :loading="saving" ref="saveButtonRef">
-                保存
+                {{ $t('uiAutomation.common.save') }}
               </el-button>
             </div>
           </div>
@@ -111,8 +111,8 @@
             <el-form :key="formKey" :model="selectedElement" label-width="100px" size="small">
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="所属页面">
-                    <el-select v-model="selectedElement.page" placeholder="请选择页面">
+                  <el-form-item :label="$t('uiAutomation.element.page')">
+                    <el-select v-model="selectedElement.page" :placeholder="$t('uiAutomation.element.selectPage')">
                       <el-option
                         v-for="page in pages"
                         :key="page.id"
@@ -123,19 +123,19 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="组件名称">
-                    <el-input v-model="selectedElement.component_name" placeholder="请输入组件名称（可选）" />
+                  <el-form-item :label="$t('uiAutomation.element.componentName')">
+                    <el-input v-model="selectedElement.component_name" :placeholder="$t('uiAutomation.element.componentNamePlaceholder')" />
                   </el-form-item>
                 </el-col>
               </el-row>
 
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="定位策略" prop="locator_strategy_id">
+                  <el-form-item :label="$t('uiAutomation.element.locatorStrategy')" prop="locator_strategy_id">
                     <el-select
                       v-model="selectedElement.locator_strategy_id"
                       :key="`strategy-${formKey}-${selectedElement.locator_strategy_id || 'null'}`"
-                      placeholder="请选择定位策略"
+                      :placeholder="$t('uiAutomation.element.rules.strategyRequired')"
                       value-key="id"
                     >
                       <el-option
@@ -147,12 +147,12 @@
                     </el-select>
                     <!-- 调试信息 -->
                     <div style="font-size: 10px; color: #666; margin-top: 2px;">
-                      调试: 当前值={{selectedElement.locator_strategy_id}} ({{typeof selectedElement.locator_strategy_id}})
+                      {{ $t('uiAutomation.element.debugInfo') }}: {{ $t('uiAutomation.element.currentValue') }}={{selectedElement.locator_strategy_id}} ({{typeof selectedElement.locator_strategy_id}})
                     </div>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="等待超时(秒)">
+                  <el-form-item :label="$t('uiAutomation.element.waitTimeout') + '(' + $t('uiAutomation.element.waitTimeoutUnit') + ')'">
                     <el-input-number v-model="selectedElement.wait_timeout" :min="1" :max="60" style="width: 100%" />
                   </el-form-item>
                 </el-col>
@@ -160,32 +160,32 @@
 
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="强制操作">
+                  <el-form-item :label="$t('uiAutomation.element.forceAction')">
                     <el-switch
                       v-model="selectedElement.force_action"
-                      active-text="启用"
-                      inactive-text="禁用"
+                      :active-text="$t('uiAutomation.element.forceActionEnabled')"
+                      :inactive-text="$t('uiAutomation.element.forceActionDisabled')"
                     />
                     <div class="form-help-text" style="margin-top: 5px;">
-                      对于 visibility:hidden 的元素，启用此选项可强制执行操作
+                      {{ $t('uiAutomation.element.forceActionTip') }}
                     </div>
                   </el-form-item>
                 </el-col>
               </el-row>
 
-              <el-form-item label="定位表达式" prop="locator_value">
-                <el-input v-model="selectedElement.locator_value" placeholder="请输入定位表达式" />
+              <el-form-item :label="$t('uiAutomation.element.locatorExpression')" prop="locator_value">
+                <el-input v-model="selectedElement.locator_value" :placeholder="$t('uiAutomation.element.locatorExpressionPlaceholder')" />
                 <div class="form-help-text">
-                  提示：根据定位策略输入对应的定位值<br>
-                  - ID: 输入元素的id属性值<br>
-                  - CSS Selector: 输入CSS选择器，如 .class 或 #id<br>
-                  - XPath: 输入XPath表达式，如 //input[@name='username']<br>
-                  - 其他策略请输入对应属性的值
+                  {{ $t('uiAutomation.element.locatorTip.title') }}<br>
+                  - {{ $t('uiAutomation.element.locatorTip.id') }}<br>
+                  - {{ $t('uiAutomation.element.locatorTip.css') }}<br>
+                  - {{ $t('uiAutomation.element.locatorTip.xpath') }}<br>
+                  - {{ $t('uiAutomation.element.locatorTip.other') }}
                 </div>
               </el-form-item>
 
-              <el-form-item label="描述">
-                <el-input v-model="selectedElement.description" type="textarea" :rows="3" placeholder="请输入元素描述" />
+              <el-form-item :label="$t('uiAutomation.common.description')">
+                <el-input v-model="selectedElement.description" type="textarea" :rows="3" :placeholder="$t('uiAutomation.element.descriptionPlaceholder')" />
               </el-form-item>
             </el-form>
           </div>
@@ -194,13 +194,13 @@
     </div>
 
     <!-- 创建页面对话框 -->
-    <el-dialog v-model="showCreatePageDialog" title="创建页面" :close-on-click-modal="false" width="500px">
+    <el-dialog v-model="showCreatePageDialog" :title="$t('uiAutomation.element.createPageTitle')" width="500px">
       <el-form ref="pageFormRef" :model="pageForm" :rules="pageRules" label-width="100px">
-        <el-form-item label="页面名称" prop="name">
-          <el-input v-model="pageForm.name" placeholder="请输入页面名称" />
+        <el-form-item :label="$t('uiAutomation.element.pageName')" prop="name">
+          <el-input v-model="pageForm.name" :placeholder="$t('uiAutomation.element.pageNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="父页面">
-          <el-select v-model="pageForm.parent_page" placeholder="请选择父页面" clearable>
+        <el-form-item :label="$t('uiAutomation.element.parentPage')">
+          <el-select v-model="pageForm.parent_page" :placeholder="$t('uiAutomation.element.selectParentPage')" clearable>
             <el-option
               v-for="page in getAllPages()"
               :key="page.id"
@@ -209,33 +209,33 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="pageForm.description" type="textarea" :rows="3" placeholder="请输入页面描述" />
+        <el-form-item :label="$t('uiAutomation.common.description')" prop="description">
+          <el-input v-model="pageForm.description" type="textarea" :rows="3" :placeholder="$t('uiAutomation.element.descriptionPlaceholder')" />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="showCreatePageDialog = false">取消</el-button>
-        <el-button type="primary" @click="createPage">创建</el-button>
+        <el-button @click="showCreatePageDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+        <el-button type="primary" @click="createPage">{{ $t('uiAutomation.common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 右键菜单 -->
     <ul v-show="showContextMenu" class="context-menu" :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }">
-      <li @click="addContextElement">新增元素</li>
-      <li @click="addSubPage">新增子页面</li>
-      <li @click="editNode">编辑</li>
-      <li @click="deleteNode">删除</li>
+      <li @click="addContextElement">{{ $t('uiAutomation.element.contextMenu.addElement') }}</li>
+      <li @click="addSubPage">{{ $t('uiAutomation.element.contextMenu.addSubPage') }}</li>
+      <li @click="editNode">{{ $t('uiAutomation.element.contextMenu.edit') }}</li>
+      <li @click="deleteNode">{{ $t('uiAutomation.element.contextMenu.delete') }}</li>
     </ul>
 
     <!-- 编辑页面对话框 -->
-    <el-dialog v-model="showEditPageDialog" title="编辑页面" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="500px">
+    <el-dialog v-model="showEditPageDialog" :title="$t('uiAutomation.element.editPageTitle')" width="500px">
       <el-form ref="editPageFormRef" :model="editPageForm" :rules="pageRules" label-width="100px">
-        <el-form-item label="页面名称" prop="name">
-          <el-input v-model="editPageForm.name" placeholder="请输入页面名称" />
+        <el-form-item :label="$t('uiAutomation.element.pageName')" prop="name">
+          <el-input v-model="editPageForm.name" :placeholder="$t('uiAutomation.element.pageNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="父页面">
-          <el-select v-model="editPageForm.parent_page" placeholder="请选择父页面" clearable>
+        <el-form-item :label="$t('uiAutomation.element.parentPage')">
+          <el-select v-model="editPageForm.parent_page" :placeholder="$t('uiAutomation.element.selectParentPage')" clearable>
             <el-option
               v-for="page in getAllPagesExceptCurrent(editPageForm.id)"
               :key="page.id"
@@ -244,14 +244,14 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="editPageForm.description" type="textarea" :rows="3" placeholder="请输入页面描述" />
+        <el-form-item :label="$t('uiAutomation.common.description')" prop="description">
+          <el-input v-model="editPageForm.description" type="textarea" :rows="3" :placeholder="$t('uiAutomation.element.descriptionPlaceholder')" />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="showEditPageDialog = false">取消</el-button>
-        <el-button type="primary" @click="updatePage">保存</el-button>
+        <el-button @click="showEditPageDialog = false">{{ $t('uiAutomation.common.cancel') }}</el-button>
+        <el-button type="primary" @click="updatePage">{{ $t('uiAutomation.common.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -259,6 +259,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Plus, FolderAdd, Document, Search, Edit, Delete,
@@ -281,6 +282,9 @@ import {
   validateElementLocator,
   generateElementSuggestions
 } from '@/api/ui_automation'
+
+// 国际化
+const { t } = useI18n()
 
 // 响应式数据
 const projects = ref([])
@@ -329,30 +333,29 @@ const treeProps = {
 }
 
 // 表单验证规则
-const pageRules = {
+const pageRules = computed(() => ({
   name: [
-    { required: true, message: '请输入页面名称', trigger: 'blur' }
+    { required: true, message: t('uiAutomation.element.rules.pageNameRequired'), trigger: 'blur' }
   ]
-}
-
-// 元素类型标签映射
-const elementTypeMap = {
-  'BUTTON': '按钮',
-  'INPUT': '输入框',
-  'LINK': '链接',
-  'DROPDOWN': '下拉框',
-  'CHECKBOX': '复选框',
-  'RADIO': '单选框',
-  'TEXT': '文本',
-  'IMAGE': '图片',
-  'TABLE': '表格',
-  'FORM': '表单',
-  'MODAL': '弹窗'
-}
+}))
 
 // 获取元素类型标签
 const getElementTypeLabel = (type) => {
-  return elementTypeMap[type] || type
+  const typeKey = type?.toLowerCase()
+  const typeMap = {
+    'button': t('uiAutomation.element.elementTypes.button'),
+    'input': t('uiAutomation.element.elementTypes.input'),
+    'link': t('uiAutomation.element.elementTypes.link'),
+    'dropdown': t('uiAutomation.element.elementTypes.dropdown'),
+    'checkbox': t('uiAutomation.element.elementTypes.checkbox'),
+    'radio': t('uiAutomation.element.elementTypes.radio'),
+    'text': t('uiAutomation.element.elementTypes.text'),
+    'image': t('uiAutomation.element.elementTypes.image'),
+    'table': t('uiAutomation.element.elementTypes.table'),
+    'form': t('uiAutomation.element.elementTypes.form'),
+    'modal': t('uiAutomation.element.elementTypes.modal')
+  }
+  return typeMap[typeKey] || type
 }
 
 // 获取所有页面
@@ -702,7 +705,7 @@ const createPage = async () => {
 
     await createElementGroup(pageData)
 
-    ElMessage.success('页面创建成功')
+    ElMessage.success(t('uiAutomation.element.messages.pageCreateSuccess'))
     showCreatePageDialog.value = false
 
     // 重置表单
@@ -722,7 +725,7 @@ const createPage = async () => {
     treeKey.value += 1
   } catch (error) {
     console.error('创建页面失败:', error)
-    ElMessage.error('页面创建失败')
+    ElMessage.error(t('uiAutomation.element.messages.pageCreateFailed'))
   }
 }
 
@@ -859,7 +862,7 @@ const saveElement = async () => {
       await nextTick()
       console.log('DOM已更新，当前下拉框绑定值:', selectedElement.value.locator_strategy_id)
 
-      ElMessage.success('元素保存成功')
+      ElMessage.success(t('uiAutomation.element.messages.saveSuccess'))
     } else {
       // 创建元素
       // 确保传递正确的字段名 project_id 而不是 project
@@ -924,7 +927,7 @@ const saveElement = async () => {
       await nextTick()
       console.log('DOM已更新，当前下拉框绑定值:', selectedElement.value.locator_strategy_id)
 
-      ElMessage.success('元素创建成功')
+      ElMessage.success(t('uiAutomation.element.messages.createSuccess'))
     }
 
     // 重新加载树
@@ -953,7 +956,7 @@ const saveElement = async () => {
     })
   } catch (error) {
     console.error('保存元素失败:', error)
-    ElMessage.error('元素保存失败: ' + (error.response?.data?.message || error.message || '未知错误'))
+    ElMessage.error(t('uiAutomation.element.messages.saveFailed') + ': ' + (error.response?.data?.message || error.message || t('uiAutomation.messages.error.unknown')))
   } finally {
     saving.value = false
   }
@@ -969,12 +972,12 @@ const validateElement = async () => {
     const result = response.data
 
     if (result.is_valid) {
-      ElMessage.success('元素定位器验证通过')
+      ElMessage.success(t('uiAutomation.element.messages.validateSuccess'))
     } else {
-      ElMessage.error(`验证失败: ${result.validation_message}`)
+      ElMessage.error(`${t('uiAutomation.element.messages.validateFailed')}: ${result.validation_message}`)
     }
   } catch (error) {
-    ElMessage.error('验证失败')
+    ElMessage.error(t('uiAutomation.element.messages.validateFailed'))
     console.error('验证元素失败:', error)
   } finally {
     validating.value = false
@@ -1073,7 +1076,7 @@ const editNode = async () => {
       console.log('编辑时formKey更新为:', formKey.value)
     } catch (error) {
       console.error('获取元素详情失败:', error)
-      ElMessage.error('获取元素详情失败')
+      ElMessage.error(t('uiAutomation.element.messages.getDetailFailed'))
     }
   } else {
     console.log('Unknown node type:', rightClickedNode.value.type)
@@ -1089,12 +1092,12 @@ const deleteNode = async () => {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除 "${rightClickedNode.value.name}" 吗？此操作不可恢复。`,
-      '确认删除',
+      t('uiAutomation.element.messages.confirmDeleteNode', { name: rightClickedNode.value.name }),
+      t('uiAutomation.common.confirmDelete'),
       {
         type: 'warning',
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
+        confirmButtonText: t('uiAutomation.common.confirm'),
+        cancelButtonText: t('uiAutomation.common.cancel')
       }
     )
 
@@ -1104,12 +1107,12 @@ const deleteNode = async () => {
       // 删除页面（分组）
       console.log('Calling deleteElementGroup with id:', rightClickedNode.value.id)
       await deleteElementGroup(rightClickedNode.value.id)
-      ElMessage.success('页面删除成功')
+      ElMessage.success(t('uiAutomation.element.messages.pageDeleteSuccess'))
     } else if (rightClickedNode.value.type === 'element') {
       // 删除元素
       console.log('Calling deleteElement with id:', rightClickedNode.value.id)
       await deleteElement(rightClickedNode.value.id)
-      ElMessage.success('元素删除成功')
+      ElMessage.success(t('uiAutomation.element.messages.deleteSuccess'))
       // 如果当前选中的是被删除的元素，清空选中
       if (selectedElement.value && selectedElement.value.id === rightClickedNode.value.id) {
         selectedElement.value = null
@@ -1129,7 +1132,7 @@ const deleteNode = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('uiAutomation.element.messages.deleteFailed'))
     }
   }
 }
@@ -1169,7 +1172,7 @@ const updatePage = async () => {
 
     await updateElementGroup(editPageForm.id, pageData)
 
-    ElMessage.success('页面更新成功')
+    ElMessage.success(t('uiAutomation.element.messages.pageUpdateSuccess'))
     showEditPageDialog.value = false
 
     // 重新加载页面和树
@@ -1182,7 +1185,7 @@ const updatePage = async () => {
     treeKey.value += 1
   } catch (error) {
     console.error('更新页面失败:', error)
-    ElMessage.error('页面更新失败')
+    ElMessage.error(t('uiAutomation.element.messages.pageUpdateFailed'))
   }
 }
 </script>

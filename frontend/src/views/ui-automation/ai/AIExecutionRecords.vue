@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">AI 测试报告</h1>
+      <h1 class="page-title">{{ $t('uiAutomation.ai.executionRecords.title') }}</h1>
       <div class="header-actions">
         <el-button
           type="danger"
@@ -10,48 +10,48 @@
           :loading="isDeleting"
         >
           <el-icon><Delete /></el-icon>
-          批量删除
+          {{ $t('uiAutomation.common.batchDelete') }}
         </el-button>
       </div>
     </div>
 
     <div class="card-container">
-      <el-table 
-        :data="records" 
-        v-loading="loading" 
+      <el-table
+        :data="records"
+        v-loading="loading"
         style="width: 100%"
         @selection-change="handleSelectionChange"
         ref="tableRef"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column label="序号" width="80">
+        <el-table-column :label="$t('uiAutomation.ai.executionRecords.serialNumber')" width="80">
           <template #default="{ $index }">
             {{ getSerialNumber($index) }}
           </template>
         </el-table-column>
-        <el-table-column prop="case_name" label="用例名称" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="case_name" :label="$t('uiAutomation.ai.executionRecords.caseName')" min-width="200" show-overflow-tooltip />
 
-        <el-table-column prop="status" label="状态" width="120">
+        <el-table-column prop="status" :label="$t('uiAutomation.ai.executionRecords.status')" width="120">
           <template #default="{ row }">
             <el-tag :type="getStatusTag(row.status)">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="duration" label="耗时(秒)" width="120">
+        <el-table-column prop="duration" :label="$t('uiAutomation.ai.executionRecords.durationSeconds')" width="120">
           <template #default="{ row }">
             {{ row.duration ? row.duration.toFixed(2) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="start_time" label="开始时间" width="180" :formatter="formatDate" />
-        <el-table-column prop="executed_by.username" label="执行人" width="120" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column prop="start_time" :label="$t('uiAutomation.ai.executionRecords.startTime')" width="180" :formatter="formatDate" />
+        <el-table-column prop="executed_by.username" :label="$t('uiAutomation.ai.executionRecords.executor')" width="120" />
+        <el-table-column :label="$t('uiAutomation.common.operation')" width="200" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="viewDetail(row)">
-              查看详情
+              {{ $t('uiAutomation.ai.executionRecords.viewDetail') }}
             </el-button>
             <el-button size="small" type="success" @click="viewReport(row)">
-              查看报告
+              {{ $t('uiAutomation.ai.executionRecords.viewReport') }}
             </el-button>
           </template>
         </el-table-column>
@@ -71,31 +71,31 @@
     </div>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="执行详情" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="800px">
+    <el-dialog v-model="showDetailDialog" :title="$t('uiAutomation.ai.executionRecords.executionDetail')" width="800px">
       <div v-if="currentRecord" class="record-detail">
         <div class="detail-item">
-          <span class="label">用例名称:</span>
+          <span class="label">{{ $t('uiAutomation.ai.executionRecords.caseName') }}:</span>
           <span class="value">{{ currentRecord.case_name }}</span>
         </div>
 
         <div class="detail-item">
-          <span class="label">状态:</span>
+          <span class="label">{{ $t('uiAutomation.ai.executionRecords.status') }}:</span>
           <el-tag :type="getStatusTag(currentRecord.status)">
             {{ getStatusText(currentRecord.status) }}
           </el-tag>
         </div>
         <div class="detail-item">
-          <span class="label">开始时间:</span>
+          <span class="label">{{ $t('uiAutomation.ai.executionRecords.startTime') }}:</span>
           <span>{{ formatDate(null, null, currentRecord.start_time) }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">耗时:</span>
-          <span>{{ currentRecord.duration ? currentRecord.duration.toFixed(2) + ' 秒' : '未知' }}</span>
+          <span class="label">{{ $t('uiAutomation.ai.executionRecords.duration') }}:</span>
+          <span>{{ currentRecord.duration ? currentRecord.duration.toFixed(2) + ' ' + $t('uiAutomation.ai.executionRecords.seconds') : $t('uiAutomation.ai.executionRecords.unknown') }}</span>
         </div>
 
         <!-- 任务描述 -->
         <div v-if="currentRecord.task_description" class="detail-item mt-15">
-          <span class="label">任务描述:</span>
+          <span class="label">{{ $t('uiAutomation.ai.executionRecords.taskDescription') }}:</span>
         </div>
         <div v-if="currentRecord.task_description" class="task-description-container">
           <div class="task-description-content">{{ currentRecord.task_description }}</div>
@@ -103,7 +103,7 @@
 
         <!-- 执行日志 -->
         <div class="detail-item mt-15">
-          <span class="label">执行日志:</span>
+          <span class="label">{{ $t('uiAutomation.ai.executionRecords.executionLogs') }}:</span>
         </div>
         <div class="log-container">
           <pre>{{ currentRecord.logs }}</pre>
@@ -112,8 +112,8 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="success" @click="openReportFromDetail">查看报告</el-button>
-          <el-button @click="showDetailDialog = false">关闭</el-button>
+          <el-button type="success" @click="openReportFromDetail">{{ $t('uiAutomation.ai.executionRecords.viewReport') }}</el-button>
+          <el-button @click="showDetailDialog = false">{{ $t('uiAutomation.common.close') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -128,11 +128,13 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
 import { getAIExecutionRecords, batchDeleteAIExecutionRecords } from '@/api/ui_automation'
 import AIExecutionReport from './AIExecutionReport.vue'
 
+const { t } = useI18n()
 const records = ref([])
 const loading = ref(false)
 const total = ref(0)
@@ -170,7 +172,7 @@ const loadRecords = async () => {
     }
   } catch (error) {
     console.error('获取执行记录失败:', error)
-    ElMessage.error('获取执行记录失败')
+    ElMessage.error(t('uiAutomation.ai.executionRecords.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -216,10 +218,10 @@ const getStatusTag = (status) => {
 
 const getStatusText = (status) => {
   const map = {
-    'pending': '等待中',
-    'running': '执行中',
-    'passed': '成功',
-    'failed': '失败'
+    'pending': t('uiAutomation.status.pending'),
+    'running': t('uiAutomation.status.running'),
+    'passed': t('uiAutomation.status.success'),
+    'failed': t('uiAutomation.status.failed')
   }
   return map[status] || status
 }
@@ -245,12 +247,12 @@ const batchDeleteRecords = async () => {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRecords.value.length} 条记录吗？此操作不可恢复。`,
-      '批量删除确认',
+      t('uiAutomation.ai.executionRecords.messages.batchDeleteConfirm', { count: selectedRecords.value.length }),
+      t('uiAutomation.ai.executionRecords.messages.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: '警告'
+        confirmButtonText: t('uiAutomation.common.confirm'),
+        cancelButtonText: t('uiAutomation.common.cancel'),
+        type: 'warning'
       }
     )
 
@@ -258,7 +260,7 @@ const batchDeleteRecords = async () => {
     const ids = selectedRecords.value.map(item => item.id)
     await batchDeleteAIExecutionRecords(ids)
 
-    ElMessage.success('删除成功')
+    ElMessage.success(t('uiAutomation.ai.executionRecords.messages.deleteSuccess'))
 
     // 如果当前页数据全部被删除，且不是第一页，则跳转到上一页
     if (records.value.length === ids.length && pagination.currentPage > 1) {
@@ -269,7 +271,7 @@ const batchDeleteRecords = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-      ElMessage.error('批量删除失败')
+      ElMessage.error(t('uiAutomation.ai.executionRecords.messages.batchDeleteFailed'))
     }
   } finally {
     isDeleting.value = false
@@ -326,13 +328,13 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  
+
   .page-title {
     font-size: 20px;
     font-weight: 600;
     margin: 0;
   }
-  
+
   .header-actions {
     display: flex;
     align-items: center;

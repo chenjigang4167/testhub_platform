@@ -1,20 +1,20 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">项目管理</h1>
+      <h1 class="page-title">{{ $t('project.projectManagement') }}</h1>
       <el-button type="primary" @click="showCreateDialog = true">
         <el-icon><Plus /></el-icon>
-        新建项目
+        {{ $t('project.newProject') }}
       </el-button>
     </div>
-    
+
     <div class="card-container">
       <div class="filter-bar">
         <el-row :gutter="20">
           <el-col :span="6">
             <el-input
               v-model="searchText"
-              placeholder="搜索项目名称"
+              :placeholder="$t('project.searchPlaceholder')"
               clearable
               @input="handleSearch"
             >
@@ -24,40 +24,40 @@
             </el-input>
           </el-col>
           <el-col :span="4">
-            <el-select v-model="statusFilter" placeholder="状态筛选" clearable @change="handleFilter">
-              <el-option label="进行中" value="active" />
-              <el-option label="已暂停" value="paused" />
-              <el-option label="已完成" value="completed" />
-              <el-option label="已归档" value="archived" />
+            <el-select v-model="statusFilter" :placeholder="$t('project.statusFilter')" clearable @change="handleFilter">
+              <el-option :label="$t('project.active')" value="active" />
+              <el-option :label="$t('project.paused')" value="paused" />
+              <el-option :label="$t('project.completed')" value="completed" />
+              <el-option :label="$t('project.archived')" value="archived" />
             </el-select>
           </el-col>
         </el-row>
       </div>
       
       <el-table :data="projects" v-loading="loading" style="width: 100%">
-        <el-table-column prop="name" label="项目名称" min-width="200">
+        <el-table-column prop="name" :label="$t('project.projectName')" min-width="200">
           <template #default="{ row }">
             <el-link @click="goToProject(row.id)" type="primary">
               {{ row.name }}
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="300" show-overflow-tooltip />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="description" :label="$t('project.description')" min-width="300" show-overflow-tooltip />
+        <el-table-column prop="status" :label="$t('project.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="owner.username" label="负责人" width="120" />
-        <el-table-column prop="created_at" label="创建时间" width="180">
+        <el-table-column prop="owner.username" :label="$t('project.owner')" width="120" />
+        <el-table-column prop="created_at" :label="$t('project.createdAt')" width="180">
           <template #default="{ row }">
             {{ formatDate(row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column :label="$t('project.actions')" width="150" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="editProject(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteProject(row)">删除</el-button>
+            <el-button size="small" @click="editProject(row)">{{ $t('common.edit') }}</el-button>
+            <el-button size="small" type="danger" @click="deleteProject(row)">{{ $t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -75,40 +75,36 @@
     
     <!-- 创建/编辑项目对话框 -->
     <el-dialog
-      :title="isEdit ? '编辑项目' : '新建项目'"
+      :title="isEdit ? $t('project.editProject') : $t('project.createProject')"
       v-model="showCreateDialog"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
       width="600px"
     >
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="项目名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入项目名称" />
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item :label="$t('project.projectName')" prop="name">
+          <el-input v-model="form.name" :placeholder="$t('project.projectNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="项目描述" prop="description">
+        <el-form-item :label="$t('project.projectDescription')" prop="description">
           <el-input
             v-model="form.description"
             type="textarea"
             :rows="4"
-            placeholder="请输入项目描述"
+            :placeholder="$t('project.projectDescriptionPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择状态">
-            <el-option label="进行中" value="active" />
-            <el-option label="已暂停" value="paused" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="已归档" value="archived" />
+        <el-form-item :label="$t('project.status')" prop="status">
+          <el-select v-model="form.status" :placeholder="$t('project.selectStatus')">
+            <el-option :label="$t('project.active')" value="active" />
+            <el-option :label="$t('project.paused')" value="paused" />
+            <el-option :label="$t('project.completed')" value="completed" />
+            <el-option :label="$t('project.archived')" value="archived" />
           </el-select>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button @click="showCreateDialog = false">{{ $t('common.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          {{ isEdit ? '更新' : '创建' }}
+          {{ isEdit ? $t('project.update') : $t('project.create') }}
         </el-button>
       </template>
     </el-dialog>
@@ -116,13 +112,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/utils/api'
 import dayjs from 'dayjs'
 
 const router = useRouter()
+const { t } = useI18n()
 const loading = ref(false)
 const submitting = ref(false)
 const showCreateDialog = ref(false)
@@ -145,11 +143,11 @@ const form = reactive({
 
 const rules = {
   name: [
-    { required: true, message: '请输入项目名称', trigger: 'blur' },
-    { min: 2, max: 200, message: '项目名称长度在 2 到 200 个字符', trigger: 'blur' }
+    { required: true, message: computed(() => t('project.projectNameRequired')), trigger: 'blur' },
+    { min: 2, max: 200, message: computed(() => t('project.projectNameLength')), trigger: 'blur' }
   ],
   status: [
-    { required: true, message: '请选择项目状态', trigger: 'change' }
+    { required: true, message: computed(() => t('project.projectStatusRequired')), trigger: 'change' }
   ]
 }
 
@@ -165,7 +163,7 @@ const fetchProjects = async () => {
     projects.value = response.data.results
     total.value = response.data.count
   } catch (error) {
-    ElMessage.error('获取项目列表失败')
+    ElMessage.error(t('project.fetchListFailed'))
   } finally {
     loading.value = false
   }
@@ -208,23 +206,23 @@ const resetForm = () => {
 
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   await formRef.value.validate(async (valid) => {
     if (valid) {
       submitting.value = true
       try {
         if (isEdit.value) {
           await api.put(`/projects/${form.id}/`, form)
-          ElMessage.success('项目更新成功')
+          ElMessage.success(t('project.updateSuccess'))
         } else {
           await api.post('/projects/', form)
-          ElMessage.success('项目创建成功')
+          ElMessage.success(t('project.createSuccess'))
         }
         showCreateDialog.value = false
         resetForm()
         fetchProjects()
       } catch (error) {
-        ElMessage.error(isEdit.value ? '项目更新失败' : '项目创建失败')
+        ElMessage.error(isEdit.value ? t('project.updateFailed') : t('project.createFailed'))
       } finally {
         submitting.value = false
       }
@@ -234,18 +232,18 @@ const handleSubmit = async () => {
 
 const deleteProject = async (project) => {
   try {
-    await ElMessageBox.confirm('确定要删除这个项目吗？', '警告', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('project.deleteConfirm'), t('common.warning'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
-    
+
     await api.delete(`/projects/${project.id}/`)
-    ElMessage.success('项目删除成功')
+    ElMessage.success(t('project.deleteSuccess'))
     fetchProjects()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('项目删除失败')
+      ElMessage.error(t('project.deleteFailed'))
     }
   }
 }
@@ -262,10 +260,10 @@ const getStatusType = (status) => {
 
 const getStatusText = (status) => {
   const textMap = {
-    active: '进行中',
-    paused: '已暂停',
-    completed: '已完成',
-    archived: '已归档'
+    active: t('project.active'),
+    paused: t('project.paused'),
+    completed: t('project.completed'),
+    archived: t('project.archived')
   }
   return textMap[status] || status
 }

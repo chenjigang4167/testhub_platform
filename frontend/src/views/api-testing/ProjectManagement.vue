@@ -1,46 +1,46 @@
 <template>
   <div class="project-management">
     <div class="header">
-      <h2>项目管理</h2>
+      <h2>{{ $t('apiTesting.project.title') }}</h2>
       <el-button type="primary" @click="showCreateDialog = true">
         <el-icon><Plus /></el-icon>
-        新建项目
+        {{ $t('apiTesting.project.createProject') }}
       </el-button>
     </div>
-    
+
 
     <!-- 项目列表 -->
     <el-table :data="projects" v-loading="loading" style="width: 100%">
-      <el-table-column prop="name" label="项目名称" min-width="200" />
-      <el-table-column prop="project_type" label="项目类型" width="120">
+      <el-table-column prop="name" :label="$t('apiTesting.project.projectName')" min-width="200" />
+      <el-table-column prop="project_type" :label="$t('apiTesting.project.projectType')" width="120">
         <template #default="scope">
           <el-tag :type="scope.row.project_type === 'HTTP' ? 'primary' : 'success'">
             {{ scope.row.project_type }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="status" label="项目状态" width="120">
+      <el-table-column prop="status" :label="$t('apiTesting.project.projectStatus')" width="120">
         <template #default="scope">
-          <el-tag 
+          <el-tag
             :type="getStatusType(scope.row.status)"
           >
             {{ getStatusText(scope.row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="owner.username" label="负责人" width="150" />
-      <el-table-column prop="start_date" label="开始日期" width="120" />
-      <el-table-column prop="end_date" label="结束日期" width="120" />
-      <el-table-column prop="created_at" label="创建时间" width="180">
+      <el-table-column prop="owner.username" :label="$t('apiTesting.project.owner')" width="150" />
+      <el-table-column prop="start_date" :label="$t('apiTesting.project.startDate')" width="120" />
+      <el-table-column prop="end_date" :label="$t('apiTesting.project.endDate')" width="120" />
+      <el-table-column prop="created_at" :label="$t('apiTesting.project.createdAt')" width="180">
         <template #default="scope">
           {{ formatDate(scope.row.created_at) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="200">
+      <el-table-column :label="$t('apiTesting.common.operation')" width="200">
         <template #default="scope">
-          <el-button link type="primary" @click="editProject(scope.row)">编辑</el-button>
-          <el-button link type="primary" @click="viewProject(scope.row)">查看</el-button>
-          <el-button link type="danger" @click="deleteProject(scope.row)">删除</el-button>
+          <el-button link type="primary" @click="editProject(scope.row)">{{ $t('apiTesting.common.edit') }}</el-button>
+          <el-button link type="primary" @click="viewProject(scope.row)">{{ $t('apiTesting.common.view') }}</el-button>
+          <el-button link type="danger" @click="deleteProject(scope.row)">{{ $t('apiTesting.common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -60,11 +60,7 @@
     <!-- 新建/编辑项目对话框 -->
     <el-dialog
       v-model="showCreateDialog"
-      :title="editingProject ? '编辑项目' : '新建项目'"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
+      :title="editingProject ? $t('apiTesting.project.editProject') : $t('apiTesting.project.createProject')"
       width="600px"
       @close="resetForm"
     >
@@ -74,36 +70,36 @@
         :rules="rules"
         label-width="100px"
       >
-        <el-form-item label="项目名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入项目名称" />
+        <el-form-item :label="$t('apiTesting.project.projectName')" prop="name">
+          <el-input v-model="form.name" :placeholder="$t('apiTesting.project.inputProjectName')" />
         </el-form-item>
-        
-        <el-form-item label="项目描述" prop="description">
+
+        <el-form-item :label="$t('apiTesting.project.projectDescription')" prop="description">
           <el-input
             v-model="form.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入项目描述"
+            :placeholder="$t('apiTesting.project.inputProjectDesc')"
           />
         </el-form-item>
-        
-        <el-form-item label="项目类型" prop="project_type">
+
+        <el-form-item :label="$t('apiTesting.project.projectType')" prop="project_type">
           <el-radio-group v-model="form.project_type">
             <el-radio value="HTTP">HTTP</el-radio>
             <el-radio value="WEBSOCKET">WebSocket</el-radio>
           </el-radio-group>
         </el-form-item>
-        
-        <el-form-item label="项目状态" prop="status">
-          <el-select v-model="form.status" placeholder="请选择项目状态">
-            <el-option label="未开始" value="NOT_STARTED" />
-            <el-option label="进行中" value="IN_PROGRESS" />
-            <el-option label="已结束" value="COMPLETED" />
+
+        <el-form-item :label="$t('apiTesting.project.projectStatus')" prop="status">
+          <el-select v-model="form.status" :placeholder="$t('apiTesting.project.selectStatus')">
+            <el-option :label="$t('apiTesting.project.status.notStarted')" value="NOT_STARTED" />
+            <el-option :label="$t('apiTesting.project.status.inProgress')" value="IN_PROGRESS" />
+            <el-option :label="$t('apiTesting.project.status.completed')" value="COMPLETED" />
           </el-select>
         </el-form-item>
-        
-        <el-form-item label="负责人" prop="owner">
-          <el-select v-model="form.owner" placeholder="请选择负责人" filterable>
+
+        <el-form-item :label="$t('apiTesting.project.owner')" prop="owner">
+          <el-select v-model="form.owner" :placeholder="$t('apiTesting.project.selectOwner')" filterable>
             <el-option
               v-for="user in users"
               :key="user.id"
@@ -112,12 +108,12 @@
             />
           </el-select>
         </el-form-item>
-        
-        <el-form-item label="团队成员" prop="member_ids">
+
+        <el-form-item :label="$t('apiTesting.project.teamMembers')" prop="member_ids">
           <el-select
             v-model="form.member_ids"
             multiple
-            placeholder="请选择团队成员"
+            :placeholder="$t('apiTesting.project.selectMembers')"
             filterable
           >
             <el-option
@@ -128,30 +124,30 @@
             />
           </el-select>
         </el-form-item>
-        
-        <el-form-item label="开始日期" prop="start_date">
+
+        <el-form-item :label="$t('apiTesting.project.startDate')" prop="start_date">
           <el-date-picker
             v-model="form.start_date"
             type="date"
-            placeholder="请选择开始日期"
+            :placeholder="$t('apiTesting.project.selectStartDate')"
             style="width: 100%"
           />
         </el-form-item>
-        
-        <el-form-item label="结束日期" prop="end_date">
+
+        <el-form-item :label="$t('apiTesting.project.endDate')" prop="end_date">
           <el-date-picker
             v-model="form.end_date"
             type="date"
-            placeholder="请选择结束日期"
+            :placeholder="$t('apiTesting.project.selectEndDate')"
             style="width: 100%"
           />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
-        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button @click="showCreateDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
         <el-button type="primary" @click="submitForm" :loading="submitting">
-          {{ editingProject ? '更新' : '创建' }}
+          {{ editingProject ? $t('apiTesting.common.update') : $t('apiTesting.common.create') }}
         </el-button>
       </template>
     </el-dialog>
@@ -159,25 +155,24 @@
     <!-- 查看项目详情对话框 -->
     <el-dialog
       v-model="showViewDialog"
-      title="项目详情"
-      :close-on-click-modal="false"
+      :title="$t('apiTesting.project.viewProject')"
       width="600px"
     >
       <el-descriptions :column="1" border>
-        <el-descriptions-item label="项目名称">{{ viewedProject?.name }}</el-descriptions-item>
-        <el-descriptions-item label="项目描述">{{ viewedProject?.description || '无' }}</el-descriptions-item>
-        <el-descriptions-item label="项目类型">
+        <el-descriptions-item :label="$t('apiTesting.project.projectName')">{{ viewedProject?.name }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('apiTesting.project.projectDescription')">{{ viewedProject?.description || $t('apiTesting.project.none') }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('apiTesting.project.projectType')">
           <el-tag :type="viewedProject?.project_type === 'HTTP' ? 'primary' : 'success'">
             {{ viewedProject?.project_type }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="项目状态">
+        <el-descriptions-item :label="$t('apiTesting.project.projectStatus')">
           <el-tag :type="getStatusType(viewedProject?.status)">
             {{ getStatusText(viewedProject?.status) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="负责人">{{ viewedProject?.owner?.username }}</el-descriptions-item>
-        <el-descriptions-item label="团队成员">
+        <el-descriptions-item :label="$t('apiTesting.project.owner')">{{ viewedProject?.owner?.username }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('apiTesting.project.teamMembers')">
           <div v-if="viewedProject?.members?.length">
             <el-tag
               v-for="member in viewedProject.members"
@@ -188,29 +183,31 @@
               {{ member.username }}
             </el-tag>
           </div>
-          <span v-else>无</span>
+          <span v-else>{{ $t('apiTesting.project.none') }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="开始日期">{{ viewedProject?.start_date || '未设置' }}</el-descriptions-item>
-        <el-descriptions-item label="结束日期">{{ viewedProject?.end_date || '未设置' }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ formatDate(viewedProject?.created_at) }}</el-descriptions-item>
-        <el-descriptions-item label="更新时间">{{ formatDate(viewedProject?.updated_at) }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('apiTesting.project.startDate')">{{ viewedProject?.start_date || $t('apiTesting.project.notSet') }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('apiTesting.project.endDate')">{{ viewedProject?.end_date || $t('apiTesting.project.notSet') }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('apiTesting.project.createdAt')">{{ formatDate(viewedProject?.created_at) }}</el-descriptions-item>
+        <el-descriptions-item :label="$t('apiTesting.project.updatedAt')">{{ formatDate(viewedProject?.updated_at) }}</el-descriptions-item>
       </el-descriptions>
-      
+
       <template #footer>
-        <el-button @click="showViewDialog = false">关闭</el-button>
-        <el-button type="primary" @click="editProject(viewedProject)">编辑</el-button>
+        <el-button @click="showViewDialog = false">{{ $t('apiTesting.common.close') }}</el-button>
+        <el-button type="primary" @click="editProject(viewedProject)">{{ $t('apiTesting.common.edit') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, ElDescriptions, ElDescriptionsItem } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { Plus } from '@element-plus/icons-vue'
 import api from '@/utils/api'
 import dayjs from 'dayjs'
 
+const { t } = useI18n()
 const loading = ref(false)
 const projects = ref([])
 const users = ref([])
@@ -235,20 +232,20 @@ const form = reactive({
   end_date: ''
 })
 
-const rules = {
+const rules = computed(() => ({
   name: [
-    { required: true, message: '请输入项目名称', trigger: 'blur' }
+    { required: true, message: t('apiTesting.project.inputProjectName'), trigger: 'blur' }
   ],
   project_type: [
-    { required: true, message: '请选择项目类型', trigger: 'change' }
+    { required: true, message: t('apiTesting.common.pleaseSelect'), trigger: 'change' }
   ],
   status: [
-    { required: true, message: '请选择项目状态', trigger: 'change' }
+    { required: true, message: t('apiTesting.project.selectStatus'), trigger: 'change' }
   ],
   owner: [
-    { required: true, message: '请选择负责人', trigger: 'change' }
+    { required: true, message: t('apiTesting.project.selectOwner'), trigger: 'change' }
   ]
-}
+}))
 
 const getStatusType = (status) => {
   const typeMap = {
@@ -260,12 +257,12 @@ const getStatusType = (status) => {
 }
 
 const getStatusText = (status) => {
-  const textMap = {
-    'NOT_STARTED': '未开始',
-    'IN_PROGRESS': '进行中',
-    'COMPLETED': '已结束'
-  }
-  return textMap[status] || status
+  const statusKey = {
+    'NOT_STARTED': 'notStarted',
+    'IN_PROGRESS': 'inProgress',
+    'COMPLETED': 'completed'
+  }[status]
+  return statusKey ? t(`apiTesting.project.status.${statusKey}`) : status
 }
 
 const formatDate = (dateString) => {
@@ -284,7 +281,7 @@ const loadProjects = async () => {
     projects.value = response.data.results
     total.value = response.data.count
   } catch (error) {
-    ElMessage.error('加载项目列表失败')
+    ElMessage.error(t('apiTesting.messages.error.loadProjects'))
     console.error(error)
   } finally {
     loading.value = false
@@ -296,7 +293,7 @@ const loadUsers = async () => {
     const response = await api.get('/api-testing/users/')
     users.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('加载用户列表失败')
+    ElMessage.error(t('apiTesting.messages.error.loadUsers'))
     console.error(error)
   }
 }
@@ -304,13 +301,13 @@ const loadUsers = async () => {
 const createSampleProject = async () => {
   try {
     await api.post('/api-testing/projects/create-sample/')
-    ElMessage.success('示例项目创建成功')
+    ElMessage.success(t('apiTesting.messages.success.sampleProjectCreated'))
     await loadProjects()
   } catch (error) {
     if (error.response?.data?.message) {
       ElMessage.warning(error.response.data.message)
     } else {
-      ElMessage.error('创建示例项目失败')
+      ElMessage.error(t('apiTesting.messages.error.createFailed'))
     }
   }
 }
@@ -347,21 +344,21 @@ const viewProject = (project) => {
 const deleteProject = async (project) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除项目 "${project.name}" 吗？`,
-      '确认删除',
+      t('apiTesting.project.confirmDelete', { name: project.name }),
+      t('apiTesting.messages.confirm.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('apiTesting.common.confirm'),
+        cancelButtonText: t('apiTesting.common.cancel'),
         type: 'warning'
       }
     )
-    
+
     await api.delete(`/api-testing/projects/${project.id}/`)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('apiTesting.messages.success.delete'))
     await loadProjects()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error(t('apiTesting.messages.error.deleteFailed'))
       console.error(error)
     }
   }
@@ -385,16 +382,16 @@ const submitForm = async () => {
     
     if (editingProject.value) {
       await api.put(`/api-testing/projects/${editingProject.value.id}/`, data)
-      ElMessage.success('项目更新成功')
+      ElMessage.success(t('apiTesting.messages.success.projectUpdated'))
     } else {
       await api.post('/api-testing/projects/', data)
-      ElMessage.success('项目创建成功')
+      ElMessage.success(t('apiTesting.messages.success.projectCreated'))
     }
-    
+
     showCreateDialog.value = false
     await loadProjects()
   } catch (error) {
-    ElMessage.error(editingProject.value ? '更新项目失败' : '创建项目失败')
+    ElMessage.error(editingProject.value ? t('apiTesting.messages.error.updateFailed') : t('apiTesting.messages.error.createFailed'))
     console.error(error)
   } finally {
     submitting.value = false
@@ -418,16 +415,16 @@ const resetForm = () => {
 
 onMounted(async () => {
   await Promise.all([loadProjects(), loadUsers()])
-  
+
   // 如果没有项目，询问是否创建示例项目
   if (projects.value.length === 0) {
     try {
       await ElMessageBox.confirm(
-        '当前没有任何项目，是否创建宠物店示例项目？',
-        '提示',
+        t('apiTesting.project.noProjectTip'),
+        t('apiTesting.common.tip'),
         {
-          confirmButtonText: '创建示例项目',
-          cancelButtonText: '稍后再说',
+          confirmButtonText: t('apiTesting.project.createSampleProject'),
+          cancelButtonText: t('apiTesting.project.laterTip'),
           type: 'info'
         }
       )
