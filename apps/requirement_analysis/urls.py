@@ -2,13 +2,15 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     RequirementDocumentViewSet,
-    RequirementAnalysisViewSet, 
+    RequirementAnalysisViewSet,
     BusinessRequirementViewSet,
     GeneratedTestCaseViewSet,
     AnalysisTaskViewSet,
     AIModelConfigViewSet,
     PromptConfigViewSet,
+    GenerationConfigViewSet,
     TestCaseGenerationTaskViewSet,
+    ConfigStatusViewSet,
     upload_and_analyze,
     analyze_text
 )
@@ -22,15 +24,17 @@ router.register(r'test-cases', GeneratedTestCaseViewSet, basename='generatedtest
 router.register(r'tasks', AnalysisTaskViewSet, basename='analysistask')
 router.register(r'ai-models', AIModelConfigViewSet, basename='aimodelconfig')
 router.register(r'prompts', PromptConfigViewSet, basename='promptconfig')
+router.register(r'generation-config', GenerationConfigViewSet, basename='generationconfig')
 router.register(r'testcase-generation', TestCaseGenerationTaskViewSet, basename='testcasegenerationtask')
+router.register(r'config', ConfigStatusViewSet, basename='configstatus')
 
 app_name = 'requirement_analysis'
 
 urlpatterns = [
     # DRF路由
-    path('api/', include(router.urls)),
-    
+    path('', include(router.urls)),
+
     # 特殊API端点
-    path('api/upload-and-analyze/', upload_and_analyze, name='upload-and-analyze'),
-    path('api/analyze-text/', analyze_text, name='analyze-text'),
+    path('upload-and-analyze/', upload_and_analyze, name='upload-and-analyze'),
+    path('analyze-text/', analyze_text, name='analyze-text'),
 ]

@@ -213,9 +213,33 @@ if DEBUG:
         "http://127.0.0.1:5173",
     ]
     CORS_ALLOW_CREDENTIALS = True
+    # 支持EventSource (SSE) 的额外CORS头部
+    CORS_ALLOW_HEADERS = [
+        'accept',
+        'accept-encoding',
+        'authorization',
+        'content-type',
+        'dnt',
+        'origin',
+        'user-agent',
+        'x-csrftoken',
+        'x-requested-with',
+    ]
 else:
     CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000',
                                   cast=lambda v: [s.strip() for s in v.split(',')])
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_ALLOW_HEADERS = [
+        'accept',
+        'accept-encoding',
+        'authorization',
+        'content-type',
+        'dnt',
+        'origin',
+        'user-agent',
+        'x-csrftoken',
+        'x-requested-with',
+    ]
 
 # CSRF Settings
 CSRF_TRUSTED_ORIGINS = [

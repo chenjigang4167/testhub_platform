@@ -7,6 +7,9 @@ import subprocess
 import platform
 import os
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class EnvironmentConfigViewSet(viewsets.ViewSet):
     """
@@ -380,16 +383,28 @@ class AIIntelligentModeConfigViewSet(viewsets.ViewSet):
                 "max_tokens": 1
             }
 
-            response = requests.post(url, headers=headers, json=data, timeout=10)
+            logger.info(f"AI智能模式预览 - 发送POST请求到: {url}")
+            # 增加超时时间：连接超时60秒，读取超时900秒
+            response = requests.post(url, headers=headers, json=data, timeout=(60, 900))
+
+            logger.info(f"AI智能模式预览 - 收到响应: status_code={response.status_code}")
 
             if response.status_code == 200:
                 return Response({'message': '连接成功'})
             else:
+                logger.error(f"AI智能模式 - API调用返回错误: Status={response.status_code}, Body={response.text}")
                 return Response(
                     {'error': f'连接失败: {response.status_code} - {response.text}'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+        except requests.exceptions.Timeout as e:
+            logger.error(f"AI智能模式 - API连接测试超时: {repr(e)}")
+            return Response(
+                {'error': '连接测试超时: 请检查网络连接或API地址是否正确'},
+                status=status.HTTP_408_REQUEST_TIMEOUT
+            )
         except Exception as e:
+            logger.error(f"AI智能模式 - API连接测试异常: {repr(e)}")
             return Response(
                 {'error': f'连接异常: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -407,6 +422,12 @@ class AIIntelligentModeConfigViewSet(viewsets.ViewSet):
                 {'error': 'Config not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+        logger.info(f"=== AI智能模式 - 开始测试模型连接 ===")
+        logger.info(f"模型类型: {config.model_type}")
+        logger.info(f"模型名称: {config.model_name}")
+        logger.info(f"API URL: {config.base_url}")
+        logger.info(f"API Key前缀: {config.api_key[:10]}..." if len(config.api_key) > 10 else f"API Key: {config.api_key}")
 
         base_url = config.base_url
         if not base_url:
@@ -442,16 +463,29 @@ class AIIntelligentModeConfigViewSet(viewsets.ViewSet):
                 "max_tokens": 1
             }
 
-            response = requests.post(url, headers=headers, json=data, timeout=10)
+            logger.info(f"AI智能模式 - 发送POST请求到: {url}")
+            # 增加超时时间：连接超时60秒，读取超时900秒
+            response = requests.post(url, headers=headers, json=data, timeout=(60, 900))
+
+            logger.info(f"AI智能模式 - 收到响应: status_code={response.status_code}")
 
             if response.status_code == 200:
+                logger.info("AI智能模式 - API连接测试成功")
                 return Response({'message': '连接成功'})
             else:
+                logger.error(f"AI智能模式 - API调用返回错误: Status={response.status_code}, Body={response.text}")
                 return Response(
                     {'error': f'连接失败: {response.status_code} - {response.text}'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+        except requests.exceptions.Timeout as e:
+            logger.error(f"AI智能模式 - API连接测试超时: {repr(e)}")
+            return Response(
+                {'error': '连接测试超时: 请检查网络连接或API地址是否正确'},
+                status=status.HTTP_408_REQUEST_TIMEOUT
+            )
         except Exception as e:
+            logger.error(f"AI智能模式 - API连接测试异常: {repr(e)}")
             return Response(
                 {'error': f'连接异常: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

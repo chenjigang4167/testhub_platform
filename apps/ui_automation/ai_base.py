@@ -66,10 +66,10 @@ try:
         response = None
         for attempt in range(max_retries):
             try:
-                # 添加超时控制，设置为30秒
+                # 添加超时控制，设置为60秒（支持硅基流动等大模型API的响应时间）
                 response = await asyncio.wait_for(
                     self.llm.ainvoke(input_messages, **kwargs),
-                    timeout=30.0  # 超时时间30秒
+                    timeout=60.0  # 超时时间60秒
                 )
                 break
             except asyncio.TimeoutError as te:
@@ -849,7 +849,7 @@ class BaseBrowserAgent:
             max_actions_per_step=10, # 增加步进密度，减少总步骤数，降低超时风险
             max_retries=1, # 减少重试次数以提高速度 (从2改为1)
             max_failures=2, # 减少最大失败次数，避免过长等待 (从默认3改为2)
-            llm_timeout=45, # 设置LLM调用超时为45秒
+            llm_timeout=60, # 设置LLM调用超时为60秒（支持硅基流动等大模型API）
             step_timeout=90, # 设置每步超时为90秒
             generate_gif=self.enable_gif, # 根据开关决定是否生成GIF
         )

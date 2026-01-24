@@ -1,28 +1,45 @@
 import asyncio
 import logging
 import re
-import os # Added import
+import os  # Added import
+import json
+import time
 from rest_framework import viewsets, status
-from django.conf import settings # Added import
-from rest_framework.decorators import action
+from django.conf import settings  # Added import
+from rest_framework.decorators import action, permission_classes
 from rest_framework.response import Response
+from rest_framework.renderers import BaseRenderer
+from rest_framework.permissions import AllowAny
+
+
+class PassThroughRenderer(BaseRenderer):
+    """直接透传StreamingHttpResponse，不进行任何渲染处理"""
+    media_type = 'text/event-stream'
+    format = 'event-stream'
+    render_level = 0
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        # 直接返回data，不做任何处理
+        return data
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
+from asgiref.sync import sync_to_async
 
 from .models import (
-    RequirementDocument, RequirementAnalysis, BusinessRequirement, 
+    RequirementDocument, RequirementAnalysis, BusinessRequirement,
     GeneratedTestCase, AnalysisTask, AIModelConfig, PromptConfig, TestCaseGenerationTask,
-    AIModelService
+    GenerationConfig, AIModelService
 )
 from .serializers import (
-    RequirementDocumentSerializer, RequirementAnalysisSerializer, 
-    BusinessRequirementSerializer, GeneratedTestCaseSerializer, 
+    RequirementDocumentSerializer, RequirementAnalysisSerializer,
+    BusinessRequirementSerializer, GeneratedTestCaseSerializer,
     AnalysisTaskSerializer, DocumentUploadSerializer,
     TestCaseGenerationRequestSerializer, TestCaseReviewRequestSerializer,
-    AIModelConfigSerializer, PromptConfigSerializer, TestCaseGenerationTaskSerializer
+    AIModelConfigSerializer, PromptConfigSerializer, TestCaseGenerationTaskSerializer,
+    GenerationConfigSerializer
 )
 from .services import RequirementAnalysisService, DocumentProcessor
 
@@ -912,44 +929,64 @@ class AIModelConfigViewSet(viewsets.ModelViewSet):
         """测试模型连接"""
         try:
             config = self.get_object()
-            
+
+            logger.info(f"=== 开始测试模型连接 ===")
+            logger.info(f"模型类型: {config.model_type}")
+            logger.info(f"模型名称: {config.model_name}")
+            logger.info(f"API URL: {config.base_url}")
+            logger.info(f"API Key前缀: {config.api_key[:10]}..." if len(config.api_key) > 10 else f"API Key: {config.api_key}")
+
             # 准备测试消息
             test_messages = [
                 {"role": "system", "content": "你是一个AI助手"},
                 {"role": "user", "content": "请回复'连接成功'"}
             ]
-            
-            # 异步测试连接
+
+            # 异步测试连接 - 统一使用OpenAI兼容API
             def test_api_connection():
                 try:
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-                    
+
                     try:
-                        if config.model_type == 'deepseek':
-                            result = loop.run_until_complete(
-                                AIModelService.call_deepseek_api(config, test_messages)
+                        logger.info("开始调用API...")
+                        # 设置60秒超时，统一使用OpenAI兼容API
+                        result = loop.run_until_complete(
+                            asyncio.wait_for(
+                                AIModelService.call_openai_compatible_api(config, test_messages),
+                                timeout=60.0
                             )
-                        else:
-                            result = loop.run_until_complete(
-                                AIModelService.call_qwen_api(config, test_messages)
-                            )
-                        
+                        )
+
+                        logger.info(f"API调用成功: {result}")
                         return {
                             'success': True,
                             'message': '连接测试成功',
                             'response': result.get('choices', [{}])[0].get('message', {}).get('content', '')
                         }
+                    except asyncio.TimeoutError:
+                        logger.error(f"API连接测试超时 (60秒), URL: {config.base_url}, Model: {config.model_name}")
+                        return {
+                            'success': False,
+                            'message': '连接测试超时: 请检查网络连接或API地址是否正确'
+                        }
                     finally:
-                        loop.close()
-                        
+                        try:
+                            loop.run_until_complete(loop.shutdown_asyncgens())
+                        except Exception:
+                            pass
+                        finally:
+                            loop.close()
+
                 except Exception as e:
-                    logger.error(f"API连接测试失败: {e}")
+                    logger.error(f"API连接测试异常: {repr(e)}, URL: {config.base_url}, Model: {config.model_name}")
+                    import traceback
+                    logger.error(f"详细错误堆栈:\n{traceback.format_exc()}")
                     return {
                         'success': False,
                         'message': f'连接测试失败: {str(e)}'
                     }
-            
+
             result = test_api_connection()
             
             if result['success']:
@@ -960,9 +997,45 @@ class AIModelConfigViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"测试连接时出错: {e}")
             return Response(
-                {'success': False, 'message': f'测试失败: {str(e)}'}, 
+                {'success': False, 'message': f'测试失败: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=['post'])
+    def enable(self, request, pk=None):
+        """启用配置"""
+        try:
+            config = self.get_object()
+            config.is_active = True
+            config.save()
+            return Response({
+                'message': 'AI模型配置已启用',
+                'id': config.id,
+                'is_active': True
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"启用AI模型配置失败: {e}")
+            return Response({
+                'error': f'启用失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def disable(self, request, pk=None):
+        """禁用配置"""
+        try:
+            config = self.get_object()
+            config.is_active = False
+            config.save()
+            return Response({
+                'message': 'AI模型配置已禁用',
+                'id': config.id,
+                'is_active': False
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"禁用AI模型配置失败: {e}")
+            return Response({
+                'error': f'禁用失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class PromptConfigViewSet(viewsets.ModelViewSet):
@@ -1042,9 +1115,115 @@ class PromptConfigViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"加载默认提示词失败: {e}")
             return Response(
-                {'error': f'加载失败: {str(e)}'}, 
+                {'error': f'加载失败: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=True, methods=['post'])
+    def enable(self, request, pk=None):
+        """启用配置"""
+        try:
+            config = self.get_object()
+            config.is_active = True
+            config.save()
+            return Response({
+                'message': '提示词配置已启用',
+                'id': config.id,
+                'is_active': True
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"启用提示词配置失败: {e}")
+            return Response({
+                'error': f'启用失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def disable(self, request, pk=None):
+        """禁用配置"""
+        try:
+            config = self.get_object()
+            config.is_active = False
+            config.save()
+            return Response({
+                'message': '提示词配置已禁用',
+                'id': config.id,
+                'is_active': False
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"禁用提示词配置失败: {e}")
+            return Response({
+                'error': f'禁用失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GenerationConfigViewSet(viewsets.ModelViewSet):
+    """生成行为配置视图集"""
+    queryset = GenerationConfig.objects.all()
+    serializer_class = GenerationConfigSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.order_by('-created_at')
+
+    @action(detail=False, methods=['get'])
+    def active(self, request):
+        """获取活跃的生成配置"""
+        try:
+            config = GenerationConfig.get_active_config()
+            if not config:
+                return Response({
+                    'error': '未找到活跃的生成配置，请先创建并启用一个配置'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            serializer = self.get_serializer(config)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"获取活跃生成配置失败: {e}")
+            return Response({
+                'error': f'获取失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def enable(self, request, pk=None):
+        """启用配置"""
+        try:
+            # 禁用其他所有配置
+            GenerationConfig.objects.all().update(is_active=False)
+
+            # 启用当前配置
+            config = self.get_object()
+            config.is_active = True
+            config.save()
+
+            return Response({
+                'message': '生成配置已启用',
+                'id': config.id,
+                'is_active': True
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"启用生成配置失败: {e}")
+            return Response({
+                'error': f'启用失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def disable(self, request, pk=None):
+        """禁用配置"""
+        try:
+            config = self.get_object()
+            config.is_active = False
+            config.save()
+
+            return Response({
+                'message': '生成配置已禁用',
+                'id': config.id,
+                'is_active': False
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"禁用生成配置失败: {e}")
+            return Response({
+                'error': f'禁用失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
@@ -1133,11 +1312,25 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                 'writer_prompt_config': writer_prompt.id if writer_prompt else None,
                 'reviewer_prompt_config': reviewer_prompt.id if reviewer_prompt else None,
             }
-            
+
             # 如果请求中包含项目ID，添加到任务数据中
             if 'project' in validated_data and validated_data['project']:
                 task_data['project'] = validated_data['project']
-            
+
+            # 处理输出模式：优先使用用户指定的，否则使用生成行为配置的默认值
+            output_mode = request.data.get('output_mode')
+            if output_mode and output_mode in ['stream', 'complete']:
+                task_data['output_mode'] = output_mode
+            else:
+                # 从生成行为配置中读取默认值
+                from .models import GenerationConfig
+                gen_config = GenerationConfig.get_active_config()
+                if gen_config:
+                    task_data['output_mode'] = gen_config.default_output_mode
+                else:
+                    # 如果没有配置，默认使用流式输出
+                    task_data['output_mode'] = 'stream'
+
             
             task_serializer = TestCaseGenerationTaskSerializer(
                 data=task_data, 
@@ -1158,71 +1351,351 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                                 task.status = 'generating'
                                 task.progress = 10
                                 task.save()
-                                
+
+                                # 读取生成行为配置
+                                from .models import GenerationConfig
+                                gen_config = GenerationConfig.get_active_config()
+
+                                # 获取配置参数，设置默认值
+                                enable_auto_review = gen_config.enable_auto_review if gen_config else True
+                                review_timeout = gen_config.review_timeout if gen_config else 120
+
+                                logger.info(f"任务 {task.task_id} 使用生成配置: auto_review={enable_auto_review}, review_timeout={review_timeout}s")
+
                                 loop = asyncio.new_event_loop()
                                 asyncio.set_event_loop(loop)
-                                
+
                                 try:
-                                    # 生成测试用例
-                                    task.progress = 30
-                                    task.save()
-                                    
-                                    generated_cases = loop.run_until_complete(
-                                        AIModelService.generate_test_cases(task)
-                                    )
-                                    
-                                    task.generated_test_cases = generated_cases
-                                    task.progress = 60
-                                    task.save()
-                                    
-                                    # 评审测试用例（如果配置了评审模型）
-                                    if task.reviewer_model_config and task.reviewer_prompt_config:
-                                        try:
-                                            task.status = 'reviewing'
-                                            task.progress = 70
-                                            task.save()
-                                            
-                                            logger.info(f"开始评审任务 {task.task_id}")
-                                            
-                                            # 设置评审超时时间（2分钟）
+                                    # 根据输出模式选择不同的生成方式
+                                    if task.output_mode == 'stream':
+                                        # 流式模式：实时保存到stream_buffer
+                                        # 生成前先设置初始状态
+                                        task.stream_buffer = ''
+                                        task.stream_position = 0
+                                        task.save()
+
+                                        # 定义同步保存函数
+                                        def save_stream_buffer(content):
+                                            """同步保存流式内容到数据库"""
+                                            task.stream_buffer = content
+                                            task.stream_position = len(content)
+                                            task.last_stream_update = timezone.now()
+                                            task.save(update_fields=['stream_buffer', 'stream_position', 'last_stream_update'])
+
+                                        # 转换为异步函数
+                                        async_save_stream_buffer = sync_to_async(save_stream_buffer)
+
+                                        async def stream_callback(chunk):
+                                            """流式回调：实时保存每个chunk到数据库"""
+                                            # 先追加到内存中的buffer
+                                            task.stream_buffer += chunk
+                                            task.stream_position = len(task.stream_buffer)
+                                            task.last_stream_update = timezone.now()
+
+                                            # 每10个chunk或当chunk较大时保存一次
+                                            if task.stream_position % 500 < 20 or len(chunk) > 100:
+                                                try:
+                                                    await async_save_stream_buffer(task.stream_buffer)
+                                                except Exception as save_error:
+                                                    logger.warning(f"保存流式内容失败: {save_error}")
+
+                                        # 生成测试用例
+                                        task.progress = 30
+                                        task.save()
+
+                                        generated_cases = loop.run_until_complete(
+                                            AIModelService.generate_test_cases_stream(task, callback=stream_callback)
+                                        )
+
+                                        # 生成完成后，确保最终的流式内容被保存
+                                        if task.stream_buffer:
+                                            save_stream_buffer(task.stream_buffer)
+
+                                        task.generated_test_cases = generated_cases
+                                        task.progress = 60
+                                        task.save()
+
+                                        # 流式评审和改进（根据生成配置决定是否执行）
+                                        if enable_auto_review and task.reviewer_model_config and task.reviewer_prompt_config:
                                             try:
-                                                # 创建异步任务并设置超时
-                                                async def review_with_timeout():
-                                                    return await asyncio.wait_for(
-                                                        AIModelService.review_test_cases(task, generated_cases),
-                                                        timeout=120.0  # 2分钟超时
+                                                task.status = 'reviewing'
+                                                task.progress = 70
+                                                task.save()
+
+                                                logger.info(f"开始流式评审任务 {task.task_id}")
+
+                                                # 评审内容缓存
+                                                review_buffer = []
+
+                                                def save_review_buffer(content):
+                                                    """同步保存评审内容"""
+                                                    task.review_feedback = content
+                                                    task.save(update_fields=['review_feedback'])
+
+                                                async_save_review = sync_to_async(save_review_buffer)
+
+                                                async def review_stream_callback(chunk):
+                                                    """流式评审回调"""
+                                                    review_buffer.append(chunk)
+                                                    current_length = sum(len(c) for c in review_buffer)
+
+                                                    # 每100字符保存一次
+                                                    if current_length % 100 < 20 or len(chunk) > 50:
+                                                        try:
+                                                            content = ''.join(review_buffer)
+                                                            await async_save_review(content)
+                                                        except Exception as save_error:
+                                                            logger.warning(f"保存评审内容失败: {save_error}")
+
+                                                try:
+                                                    # 移除超时限制，允许大文档完整评审
+                                                    review_feedback = loop.run_until_complete(
+                                                        AIModelService.review_test_cases_stream(
+                                                            task, generated_cases, callback=review_stream_callback
+                                                        )
                                                     )
-                                                
-                                                review_feedback = loop.run_until_complete(review_with_timeout())
-                                                task.review_feedback = review_feedback
-                                                logger.info(f"任务 {task.task_id} 评审完成")
-                                            except asyncio.TimeoutError:
-                                                logger.warning(f"任务 {task.task_id} 评审超时，跳过评审")
-                                                task.review_feedback = "评审超时，跳过评审环节。建议：测试用例结构完整，可以使用。"
-                                            except Exception as inner_error:
-                                                logger.warning(f"任务 {task.task_id} 评审过程异常: {inner_error}")
-                                                task.review_feedback = f"评审过程出现异常: {str(inner_error)}\n\n建议：测试用例结构完整，可以使用。"
-                                            
-                                            task.final_test_cases = generated_cases  # 简化处理，实际应该根据评审结果调整
-                                            
-                                        except Exception as review_error:
-                                            logger.error(f"评审任务 {task.task_id} 失败: {review_error}")
-                                            # 评审失败时，仍然使用生成的测试用例作为最终结果
-                                            task.final_test_cases = generated_cases
-                                            task.review_feedback = f"评审失败: {str(review_error)}\n\n建议：测试用例结构完整，可以使用。"
+                                                    # 保存最终评审内容
+                                                    if review_buffer:
+                                                        task.review_feedback = ''.join(review_buffer)
+                                                        task.save(update_fields=['review_feedback'])
+                                                    logger.info(f"任务 {task.task_id} 流式评审完成")
+
+                                                    # 根据评审意见改进测试用例（自动执行）
+                                                    logger.info(f"任务 {task.task_id} 开始根据评审意见改进测试用例")
+                                                    task.status = 'revising'
+                                                    task.progress = 85
+                                                    task.final_test_cases = ''  # 清空，准备流式写入
+                                                    task.save()
+
+                                                    try:
+                                                        # 定义同步保存函数
+                                                        def save_final_buffer(content):
+                                                            """同步保存最终用例内容"""
+                                                            task.final_test_cases = content
+                                                            task.save(update_fields=['final_test_cases'])
+
+                                                        # 转换为异步函数
+                                                        async_save_final = sync_to_async(save_final_buffer)
+
+                                                        # 创建流式回调函数，实时更新final_test_cases
+                                                        async def final_callback(chunk):
+                                                            """流式回调：实时保存最终用例到数据库"""
+                                                            # 实时追加到final_test_cases并保存
+                                                            task.final_test_cases = (task.final_test_cases or '') + chunk
+
+                                                            # 每100字符或chunk较大时保存一次
+                                                            current_length = len(task.final_test_cases)
+                                                            if current_length % 100 < 20 or len(chunk) > 50:
+                                                                try:
+                                                                    await async_save_final(task.final_test_cases)
+                                                                except Exception as save_error:
+                                                                    logger.warning(f"保存最终用例失败: {save_error}")
+
+                                                        # 添加超时保护，避免任务一直卡住（使用配置的超时时间）
+                                                        try:
+                                                            revised_cases = loop.run_until_complete(
+                                                                asyncio.wait_for(
+                                                                    AIModelService.revise_test_cases_based_on_review(
+                                                                        task, generated_cases, task.review_feedback,
+                                                                        callback=final_callback
+                                                                    ),
+                                                                    timeout=review_timeout  # 使用配置的超时时间（秒）
+                                                                )
+                                                            )
+                                                        except asyncio.TimeoutError:
+                                                            logger.error(f"任务 {task.task_id} 改进阶段超时（{review_timeout}秒），使用原始用例")
+                                                            # 超时时使用原始生成的用例，不再抛出异常
+                                                            revised_cases = generated_cases
+                                                        # 始终使用返回的完整内容，避免流式输出被截断导致数据丢失
+                                                        # revised_cases 是完整的返回值，task.final_test_cases 只是流式回调的中间状态
+                                                        if revised_cases and len(revised_cases) > 0:
+                                                            # 检测并修复不完整的最后一条用例
+                                                            revised_cases = AIModelService.fix_incomplete_last_case(revised_cases)
+
+                                                            # 按用例编号排序后再保存
+                                                            sorted_cases = AIModelService.sort_test_cases_by_id(revised_cases)
+                                                            # 重新编号使编号连续
+                                                            renumbered_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                                            task.final_test_cases = renumbered_cases
+                                                            logger.info(f"任务 {task.task_id} 测试用例改进完成 (revised_cases长度: {len(revised_cases)}, 最终保存长度: {len(task.final_test_cases)})")
+                                                        else:
+                                                            # 如果返回为空，保留流式回调保存的内容
+                                                            logger.warning(f"任务 {task.task_id} 改进返回为空，使用流式回调保存的内容 (长度: {len(task.final_test_cases) if task.final_test_cases else 0})")
+                                                    except Exception as revise_error:
+                                                        logger.warning(f"任务 {task.task_id} 改进测试用例失败: {revise_error}，使用原始用例")
+                                                        # 按用例编号排序后再保存
+                                                        sorted_cases = AIModelService.sort_test_cases_by_id(generated_cases)
+                                                        # 重新编号使编号连续
+                                                        task.final_test_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                                        task.save()
+
+                                                except Exception as inner_error:
+                                                    logger.warning(f"任务 {task.task_id} 流式评审过程异常: {inner_error}")
+                                                    task.review_feedback = f"评审过程出现异常: {str(inner_error)}\n\n建议：测试用例结构完整，可以使用。"
+                                                    # 按用例编号排序后再保存
+                                                    sorted_cases = AIModelService.sort_test_cases_by_id(generated_cases)
+                                                    # 重新编号使编号连续
+                                                    task.final_test_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                                    task.save()
+
+                                            except Exception as review_error:
+                                                logger.error(f"流式评审任务 {task.task_id} 失败: {review_error}")
+                                                # 按用例编号排序后再保存
+                                                sorted_cases = AIModelService.sort_test_cases_by_id(generated_cases)
+                                                task.final_test_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                                task.review_feedback = f"评审失败: {str(review_error)}\n\n建议：测试用例结构完整，可以使用。"
+                                                task.save()
+                                        else:
+                                            # 按用例编号排序后再保存
+                                            sorted_cases = AIModelService.sort_test_cases_by_id(generated_cases)
+                                            # 重新编号使编号连续
+                                            task.final_test_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                            logger.info(f"任务 {task.task_id} 跳过评审，直接使用生成的测试用例")
+                                            task.save()
+
                                     else:
-                                        task.final_test_cases = generated_cases
-                                        logger.info(f"任务 {task.task_id} 跳过评审，直接使用生成的测试用例")
-                                    
+                                        # 完整模式：原有逻辑
+                                        task.progress = 30
+                                        task.save()
+
+                                        generated_cases = loop.run_until_complete(
+                                            AIModelService.generate_test_cases(task)
+                                        )
+
+                                        task.generated_test_cases = generated_cases
+                                        task.progress = 60
+                                        task.save()
+
+                                        # 评审和改进测试用例（根据生成配置决定是否执行）
+                                        if enable_auto_review and task.reviewer_model_config and task.reviewer_prompt_config:
+                                            try:
+                                                task.status = 'reviewing'
+                                                task.progress = 70
+                                                task.save()
+
+                                                logger.info(f"开始评审任务 {task.task_id}")
+
+                                                # 移除超时限制，允许大文档完整评审
+                                                try:
+                                                    review_feedback = loop.run_until_complete(
+                                                        AIModelService.review_test_cases(task, generated_cases)
+                                                    )
+                                                    task.review_feedback = review_feedback
+                                                    logger.info(f"任务 {task.task_id} 评审完成")
+
+                                                    # 根据评审意见改进测试用例（自动执行）
+                                                    logger.info(f"任务 {task.task_id} 开始根据评审意见改进测试用例")
+                                                    task.status = 'revising'
+                                                    task.progress = 85
+                                                    task.final_test_cases = ''  # 清空，准备流式写入
+                                                    task.save()
+
+                                                    try:
+                                                        # 定义同步保存函数
+                                                        def save_final_buffer_full(content):
+                                                            """同步保存最终用例内容"""
+                                                            task.final_test_cases = content
+                                                            task.save(update_fields=['final_test_cases'])
+
+                                                        # 转换为异步函数
+                                                        async_save_final_full = sync_to_async(save_final_buffer_full)
+
+                                                        # 创建流式回调函数，实时更新final_test_cases
+                                                        async def final_callback_full(chunk):
+                                                            """流式回调：实时保存最终用例到数据库"""
+                                                            # 实时追加到final_test_cases并保存
+                                                            task.final_test_cases = (task.final_test_cases or '') + chunk
+
+                                                            # 每100字符或chunk较大时保存一次
+                                                            current_length = len(task.final_test_cases)
+                                                            if current_length % 100 < 20 or len(chunk) > 50:
+                                                                try:
+                                                                    await async_save_final_full(task.final_test_cases)
+                                                                except Exception as save_error:
+                                                                    logger.warning(f"保存最终用例失败: {save_error}")
+
+                                                        # 添加超时保护，避免任务一直卡住（使用配置的超时时间）
+                                                        try:
+                                                            revised_cases = loop.run_until_complete(
+                                                                asyncio.wait_for(
+                                                                    AIModelService.revise_test_cases_based_on_review(
+                                                                        task, generated_cases, task.review_feedback,
+                                                                        callback=final_callback_full
+                                                                    ),
+                                                                    timeout=review_timeout  # 使用配置的超时时间（秒）
+                                                                )
+                                                            )
+                                                        except asyncio.TimeoutError:
+                                                            logger.error(f"任务 {task.task_id} 改进阶段超时（{review_timeout}秒），使用原始用例")
+                                                            # 超时时使用原始生成的用例，不再抛出异常
+                                                            revised_cases = generated_cases
+                                                        # 始终使用返回的完整内容，避免流式输出被截断导致数据丢失
+                                                        # revised_cases 是完整的返回值，task.final_test_cases 只是流式回调的中间状态
+                                                        if revised_cases and len(revised_cases) > 0:
+                                                            # 检测并修复不完整的最后一条用例
+                                                            revised_cases = AIModelService.fix_incomplete_last_case(revised_cases)
+
+                                                            # 按用例编号排序后再保存
+                                                            sorted_cases = AIModelService.sort_test_cases_by_id(revised_cases)
+                                                            # 重新编号使编号连续
+                                                            renumbered_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                                            task.final_test_cases = renumbered_cases
+                                                            logger.info(f"任务 {task.task_id} 测试用例改进完成 (revised_cases长度: {len(revised_cases)}, 最终保存长度: {len(task.final_test_cases)})")
+                                                        else:
+                                                            # 如果返回为空，保留流式回调保存的内容
+                                                            logger.warning(f"任务 {task.task_id} 改进返回为空，使用流式回调保存的内容 (长度: {len(task.final_test_cases) if task.final_test_cases else 0})")
+                                                    except Exception as revise_error:
+                                                        logger.warning(f"任务 {task.task_id} 改进测试用例失败: {revise_error}，使用原始用例")
+                                                        # 按用例编号排序后再保存
+                                                        sorted_cases = AIModelService.sort_test_cases_by_id(generated_cases)
+                                                        # 重新编号使编号连续
+                                                        task.final_test_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                                        task.save()
+
+                                                except Exception as inner_error:
+                                                    logger.warning(f"任务 {task.task_id} 评审过程异常: {inner_error}")
+                                                    task.review_feedback = f"评审过程出现异常: {str(inner_error)}\n\n建议：测试用例结构完整，可以使用。"
+                                                    # 按用例编号排序后再保存
+                                                    sorted_cases = AIModelService.sort_test_cases_by_id(generated_cases)
+                                                    # 重新编号使编号连续
+                                                    task.final_test_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                                    task.save()
+
+                                            except Exception as review_error:
+                                                logger.error(f"评审任务 {task.task_id} 失败: {review_error}")
+                                                # 评审失败时，仍然使用生成的测试用例作为最终结果
+                                                # 按用例编号排序后再保存
+                                                sorted_cases = AIModelService.sort_test_cases_by_id(generated_cases)
+                                                task.final_test_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                                task.review_feedback = f"评审失败: {str(review_error)}\n\n建议：测试用例结构完整，可以使用。"
+                                                task.save()
+                                        else:
+                                            # 按用例编号排序后再保存
+                                            sorted_cases = AIModelService.sort_test_cases_by_id(generated_cases)
+                                            # 重新编号使编号连续
+                                            task.final_test_cases = AIModelService.renumber_test_cases(sorted_cases)
+                                            logger.info(f"任务 {task.task_id} 跳过评审，直接使用生成的测试用例")
+                                            task.save()
+
                                     # 完成任务
+                                    # 注意：不要直接调用task.save()，因为这会覆盖流式回调保存的final_test_cases
+                                    # 从数据库重新获取最新的任务对象
+                                    task.refresh_from_db()
+
                                     task.status = 'completed'
                                     task.progress = 100
                                     task.completed_at = timezone.now()
-                                    task.save()
+                                    task.save(update_fields=['status', 'progress', 'completed_at', 'final_test_cases'])
                                     logger.info(f"任务 {task.task_id} 已完成")
                                     
                                 finally:
-                                    loop.close()
+                                    try:
+                                        # 清理异步生成器，防止 "Task was destroyed but it is pending" 警告
+                                        loop.run_until_complete(loop.shutdown_asyncgens())
+                                    except Exception as e:
+                                        logger.warning(f"Error shutting down asyncgens: {e}")
+                                    finally:
+                                        loop.close()
                                     
                             except Exception as e:
                                 logger.error(f"生成任务执行失败: {e}")
@@ -1263,14 +1736,9 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
     def progress(self, request, task_id=None):
         """获取任务进度"""
         try:
-            # 直接通过task_id获取对象，避免DRF的复杂过滤机制
-            task = TestCaseGenerationTask.objects.filter(task_id=task_id).first()
-            if not task:
-                return Response(
-                    {'error': '任务未找到'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
+            # DRF会根据lookup_field自动从URL提取task_id并调用get_object()
+            task = self.get_object()
+
             return Response({
                 'task_id': task.task_id,
                 'status': task.status,
@@ -1281,20 +1749,273 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                 'error_message': task.error_message,
                 'completed_at': task.completed_at
             }, status=status.HTTP_200_OK)
-            
+
         except Exception as e:
             logger.error(f"获取任务进度时出错: {e}")
             return Response(
-                {'error': f'获取进度失败: {str(e)}'}, 
+                {'error': f'获取进度失败: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
+    @action(
+        detail=True,
+        methods=['get'],
+        url_path='stream_progress',
+        renderer_classes=[PassThroughRenderer],
+        permission_classes=[]  # 允许访问，task_id本身就是安全标识
+    )
+    def stream_progress_sse(self, request, task_id=None):
+        """
+        SSE流式进度推送接口
+        实时推送任务的流式输出和进度更新
+        不使用DRF的Response，避免content negotiation问题
+        注意：EventSource不支持自定义headers，无法发送JWT token，所以允许通过session cookie访问
+        """
+        try:
+            # 记录请求信息（用于调试）
+            request_origin = request.META.get('HTTP_ORIGIN', 'unknown')
+            logger.info(f"SSE连接请求: task_id={task_id}, user={request.user}, authenticated={request.user.is_authenticated}, path={request.path}, origin={request_origin}")
+
+            # 动态获取CORS origin - 支持localhost、127.0.0.1和任意IP地址
+            def get_allowed_origin(origin):
+                """获取允许的CORS origin，支持localhost和任意IP地址"""
+                if not origin:
+                    return 'http://localhost:3000'
+                # 允许localhost和127.0.0.1
+                if origin in ['http://localhost:3000', 'http://127.0.0.1:3000']:
+                    return origin
+                # 允许任意IP地址的3000端口
+                import re
+                if re.match(r'^http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:3000$', origin):
+                    return origin
+                # 默认返回localhost:3000
+                return 'http://localhost:3000'
+
+            cors_origin = get_allowed_origin(request_origin)
+
+            # 处理 CORS 预检请求
+            if request.method == 'OPTIONS':
+                from django.http import HttpResponse
+                response = HttpResponse()
+                response['Access-Control-Allow-Origin'] = cors_origin
+                response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+                response['Access-Control-Allow-Headers'] = 'Content-Type'
+                response['Access-Control-Allow-Credentials'] = 'true'
+                response['Access-Control-Max-Age'] = '86400'
+                return response
+
+            # 获取任务对象
+            task = TestCaseGenerationTask.objects.filter(task_id=task_id).first()
+            if not task:
+                logger.warning(f"SSE连接失败: 任务未找到, task_id={task_id}")
+                # 返回JSON错误而不是SSE
+                from django.http import HttpResponse
+                response = HttpResponse(
+                    json.dumps({'error': '任务未找到'}),
+                    status=404,
+                    content_type='application/json'
+                )
+                response['Access-Control-Allow-Origin'] = cors_origin
+                response['Access-Control-Allow-Credentials'] = 'true'
+                return response
+
+            # 记录上次发送的stream_position
+            last_sent_position = 0
+            loop_count = 0  # 循环计数器
+            last_review_length = 0  # 记录上次发送的评审内容长度
+            last_final_length = 0  # 记录上次发送的最终用例长度
+            last_status = ''  # 记录上次的任务状态
+
+            def event_stream():
+                nonlocal last_sent_position, loop_count, last_review_length, last_final_length, last_status
+
+                while True:
+                    loop_count += 1
+
+                    # 从数据库重新获取任务状态
+                    task.refresh_from_db()
+
+                    # 检测状态变化，如果进入revising阶段，重置last_final_length
+                    if task.status != last_status:
+                        logger.info(f"SSE检测到状态变化: {last_status} -> {task.status}")
+                        if task.status == 'revising':
+                            logger.info(f"SSE: 进入revising阶段，重置last_final_length")
+                            last_final_length = 0
+                        last_status = task.status
+
+                    # 每10次循环记录一次日志
+                    if loop_count % 10 == 0:
+                        logger.info(f"SSE stream loop #{loop_count}: task_status={task.status}, progress={task.progress}%, buffer_len={len(task.stream_buffer) if task.stream_buffer else 0}")
+
+                    # 检查任务是否已完成或失败
+                    if task.status in ['completed', 'failed', 'cancelled']:
+                        logger.info(f"SSE任务结束: status={task.status}")
+                        # 发送最终状态
+                        final_status = json.dumps({'type': 'status', 'status': task.status, 'progress': task.progress}, ensure_ascii=False)
+                        logger.info(f"SSE发送最终状态: {final_status}")
+                        yield f"data: {final_status}\n\n"
+
+                        # 如果是流式模式且有缓冲区内容，发送剩余内容
+                        if task.output_mode == 'stream' and task.stream_buffer:
+                            if last_sent_position < len(task.stream_buffer):
+                                new_content = task.stream_buffer[last_sent_position:]
+                                content_data = json.dumps({'type': 'content', 'content': new_content}, ensure_ascii=False)
+                                logger.info(f"SSE发送剩余内容: {len(new_content)} 字符")
+                                yield f"data: {content_data}\n\n"
+                                last_sent_position = len(task.stream_buffer)
+
+                        # 发送剩余的评审内容
+                        if task.review_feedback:
+                            if len(task.review_feedback) > last_review_length:
+                                remaining_review = task.review_feedback[last_review_length:]
+                                if remaining_review:
+                                    review_data = json.dumps({'type': 'review_content', 'content': remaining_review}, ensure_ascii=False)
+                                    logger.info(f"SSE发送剩余评审内容: {len(remaining_review)} 字符, 总长度: {len(task.review_feedback)}")
+                                    yield f"data: {review_data}\n\n"
+                                    last_review_length = len(task.review_feedback)
+
+                        # 发送剩余的最终用例内容
+                        if task.final_test_cases:
+                            if len(task.final_test_cases) > last_final_length:
+                                remaining_final = task.final_test_cases[last_final_length:]
+                                if remaining_final:
+                                    final_data = json.dumps({'type': 'final_content', 'content': remaining_final}, ensure_ascii=False)
+                                    logger.info(f"SSE发送剩余最终用例: {len(remaining_final)} 字符, 总长度: {len(task.final_test_cases)}")
+                                    yield f"data: {final_data}\n\n"
+                                    last_final_length = len(task.final_test_cases)
+
+                        # 发送完成信号
+                        yield f"data: {json.dumps({'type': 'done'}, ensure_ascii=False)}\n\n"
+                        logger.info(f"SSE流结束，总循环次数: {loop_count}")
+
+                        # 添加短暂延迟，确保done信号被发送
+                        time.sleep(0.1)
+                        break
+
+                    # 如果是流式模式，发送新增的内容
+                    if task.output_mode == 'stream' and task.stream_buffer:
+                        current_position = task.stream_position
+                        if current_position > last_sent_position:
+                            # 提取新增内容
+                            new_content = task.stream_buffer[last_sent_position:current_position]
+                            if new_content:
+                                content_data = json.dumps({'type': 'content', 'content': new_content}, ensure_ascii=False)
+                                logger.info(f"SSE发送新增内容: {len(new_content)} 字符, 总位置: {current_position}")
+                                yield f"data: {content_data}\n\n"
+                                last_sent_position = current_position
+
+                    # 如果是评审阶段，发送评审内容
+                    if task.status == 'reviewing' and task.review_feedback:
+                        review_feedback = task.review_feedback
+                        if review_feedback:
+                            # 计算评审内容的增量
+                            if len(review_feedback) > last_review_length:
+                                new_review = review_feedback[last_review_length:]
+                                if new_review:
+                                    review_data = json.dumps({'type': 'review_content', 'content': new_review}, ensure_ascii=False)
+                                    logger.info(f"SSE发送评审内容: {len(new_review)} 字符")
+                                    yield f"data: {review_data}\n\n"
+                                    last_review_length = len(review_feedback)
+
+                    # 如果有最终用例，发送最终用例内容（在reviewing、revising或completed阶段）
+                    if task.status in ['reviewing', 'revising', 'completed'] and task.final_test_cases:
+                        final_cases = task.final_test_cases
+                        if final_cases:
+                            # 计算最终用例的增量
+                            if len(final_cases) > last_final_length:
+                                new_final = final_cases[last_final_length:]
+                                if new_final:
+                                    final_data = json.dumps({'type': 'final_content', 'content': new_final}, ensure_ascii=False)
+                                    logger.info(f"SSE发送最终用例: {len(new_final)} 字符, 总长度: {len(final_cases)}, 阶段: {task.status}")
+                                    yield f"data: {final_data}\n\n"
+                                    last_final_length = len(final_cases)
+
+                    # 发送进度更新
+                    progress_data = json.dumps({'type': 'progress', 'status': task.status, 'progress': task.progress}, ensure_ascii=False)
+                    yield f"data: {progress_data}\n\n"
+
+                    # 短暂休眠，避免过度消耗资源
+                    time.sleep(0.3)
+
+            # 返回SSE流式响应
+            response = StreamingHttpResponse(
+                event_stream(),
+                content_type='text/event-stream'
+            )
+
+            # 设置SSE相关的响应头（注意：不能设置Connection等hop-by-hop头部）
+            response['Cache-Control'] = 'no-cache'
+            response['X-Accel-Buffering'] = 'no'
+
+            # 设置CORS头部 - 使用动态计算的cors_origin
+            response['Access-Control-Allow-Origin'] = cors_origin
+            response['Access-Control-Allow-Credentials'] = 'true'
+
+            logger.info(f"SSE连接建立成功: task_id={task_id}, cors_origin={cors_origin}")
+            return response
+
+        except Exception as e:
+            logger.error(f"SSE流式推送出错: {e}")
+            import traceback
+            traceback.print_exc()
+            from django.http import HttpResponse
+            # 获取允许的origin
+            request_origin = request.META.get('HTTP_ORIGIN', 'unknown')
+            def get_allowed_origin(origin):
+                if not origin:
+                    return 'http://localhost:3000'
+                if origin in ['http://localhost:3000', 'http://127.0.0.1:3000']:
+                    return origin
+                import re
+                if re.match(r'^http://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:3000$', origin):
+                    return origin
+                return 'http://localhost:3000'
+            cors_origin = get_allowed_origin(request_origin)
+            response = HttpResponse(
+                json.dumps({'error': f'流式推送失败: {str(e)}'}),
+                status=500,
+                content_type='application/json'
+            )
+            response['Access-Control-Allow-Origin'] = cors_origin
+            response['Access-Control-Allow-Credentials'] = 'true'
+            return response
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, task_id=None):
+        """取消正在运行的任务"""
+        try:
+            # DRF会根据lookup_field自动从URL提取task_id并调用get_object()
+            task = self.get_object()
+
+            if task.status in ['completed', 'failed', 'cancelled']:
+                return Response(
+                    {'error': f'任务已经{task.get_status_display()}，无法取消'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            task.status = 'cancelled'
+            task.save()
+
+            return Response({
+                'message': '任务已取消',
+                'task_id': task.task_id,
+                'status': task.status
+            })
+
+        except Exception as e:
+            logger.error(f"取消任务时出错: {e}")
+            return Response(
+                {'error': f'取消任务失败: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     @action(detail=True, methods=['post'])
     def save_to_records(self, request, task_id=None):
         """保存测试用例到AI生成用例记录并导入到测试用例管理系统"""
         try:
+            # DRF会根据lookup_field自动从URL提取task_id并调用get_object()
             task = self.get_object()
-            
+
             if task.status != 'completed':
                 return Response(
                     {'error': '只能保存已完成的测试用例生成任务'}, 
@@ -1427,7 +2148,7 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='batch-adopt')
     def batch_adopt(self, request, task_id=None):
         """批量采纳任务的所有测试用例"""
         try:
@@ -1534,7 +2255,7 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='batch-adopt-selected')
     def batch_adopt_selected(self, request, task_id=None):
         """批量采纳选中的测试用例"""
         try:
@@ -1627,7 +2348,7 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='batch-discard')
     def batch_discard(self, request, task_id=None):
         """批量弃用任务的所有测试用例 - 删除整个任务"""
         try:
@@ -1649,7 +2370,7 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='discard-selected-cases')
     def discard_selected_cases(self, request, task_id=None):
         """弃用选中的测试用例 - 从final_test_cases中删除"""
         try:
@@ -1714,7 +2435,7 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='discard-single-case')
     def discard_single_case(self, request, task_id=None):
         """弃用单个测试用例"""
         try:
@@ -1779,7 +2500,7 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'], url_path='update-test-cases')
     def update_test_cases(self, request, task_id=None):
         """更新测试用例内容"""
         try:
@@ -1817,16 +2538,20 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
         """解析测试用例内容 - 支持多种格式"""
         if not content:
             return []
-        
-        logger.info(f"开始解析测试用例内容，内容长度: {len(content)}")
-        logger.info(f"内容前200字符: {content[:200]}")
-        
+
+        # 去除markdown加粗标记，保留纯净文本
+        import re
+        clean_content = re.sub(r'\*\*([^*]+)\*\*', r'\1', content)
+
+        logger.info(f"开始解析测试用例内容，内容长度: {len(clean_content)}")
+        logger.info(f"内容前200字符: {clean_content[:200]}")
+
         # 尝试表格格式解析
-        if '|' in content:
-            return self._parse_table_format(content)
-        
+        if '|' in clean_content:
+            return self._parse_table_format(clean_content)
+
         # 尝试结构化文本格式解析
-        return self._parse_text_format(content)
+        return self._parse_text_format(clean_content)
     
     def _parse_table_format(self, content):
         """解析表格格式的测试用例"""
@@ -2055,3 +2780,153 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
             'P3': 'low'
         }
         return priority_map.get(priority_str, 'medium')
+
+
+class ConfigStatusViewSet(viewsets.ViewSet):
+    """配置状态检查视图集"""
+    permission_classes = []  # 允许未认证用户访问
+
+    @action(detail=False, methods=['get'])
+    def check(self, request):
+        """检查AI配置状态"""
+        try:
+            # 检查AI模型配置
+            ai_model_configs = AIModelConfig.objects.filter(
+                role__in=['writer', 'reviewer']
+            ).exclude(role__in=['browser_use_text', 'browser_use_vision'])
+
+            # 检查writer模型配置
+            writer_model_enabled = ai_model_configs.filter(
+                role='writer',
+                is_active=True
+            ).first()
+
+            writer_model_disabled = ai_model_configs.filter(
+                role='writer',
+                is_active=False
+            ).first()
+
+            # 检查reviewer模型配置
+            reviewer_model_enabled = ai_model_configs.filter(
+                role='reviewer',
+                is_active=True
+            ).first()
+
+            reviewer_model_disabled = ai_model_configs.filter(
+                role='reviewer',
+                is_active=False
+            ).first()
+
+            # 检查writer提示词配置
+            writer_prompt_enabled = PromptConfig.objects.filter(
+                prompt_type='writer',
+                is_active=True
+            ).first()
+
+            writer_prompt_disabled = PromptConfig.objects.filter(
+                prompt_type='writer',
+                is_active=False
+            ).first()
+
+            # 检查reviewer提示词配置
+            reviewer_prompt_enabled = PromptConfig.objects.filter(
+                prompt_type='reviewer',
+                is_active=True
+            ).first()
+
+            reviewer_prompt_disabled = PromptConfig.objects.filter(
+                prompt_type='reviewer',
+                is_active=False
+            ).first()
+
+            # 判断必需配置（writer）
+            writer_configured = (
+                writer_model_enabled is not None and
+                writer_prompt_enabled is not None
+            )
+
+            # 判断可选配置（reviewer）
+            reviewer_configured = (
+                reviewer_model_enabled is not None and
+                reviewer_prompt_enabled is not None
+            )
+
+            # 检查生成行为配置
+            generation_config = GenerationConfig.get_active_config()
+
+            # 判断是否有禁用的配置
+            has_disabled = (
+                writer_model_disabled is not None or
+                writer_prompt_disabled is not None or
+                reviewer_model_disabled is not None or
+                reviewer_prompt_disabled is not None
+            )
+
+            # 判断整体状态
+            if writer_configured:
+                if has_disabled:
+                    overall_status = 'disabled'
+                    message = '配置完整，但部分配置处于禁用状态'
+                else:
+                    overall_status = 'enabled'
+                    message = '配置完整且已启用'
+            else:
+                # writer配置不完整
+                if writer_model_enabled or writer_prompt_enabled:
+                    overall_status = 'disabled'
+                    message = '检测到已配置但未启用的配置'
+                else:
+                    overall_status = 'not_configured'
+                    message = '尚未配置AI模型和提示词'
+
+            # 构建返回数据
+            response_data = {
+                'overall_status': overall_status,
+                'message': message,
+                'writer_model': {
+                    'configured': writer_model_enabled is not None or writer_model_disabled is not None,
+                    'enabled': writer_model_enabled is not None,
+                    'name': (writer_model_enabled or writer_model_disabled).name if (writer_model_enabled or writer_model_disabled) else None,
+                    'provider': (writer_model_enabled or writer_model_disabled).get_model_type_display() if (writer_model_enabled or writer_model_disabled) else None,
+                    'id': (writer_model_enabled or writer_model_disabled).id if (writer_model_enabled or writer_model_disabled) else None,
+                    'required': True
+                },
+                'writer_prompt': {
+                    'configured': writer_prompt_enabled is not None or writer_prompt_disabled is not None,
+                    'enabled': writer_prompt_enabled is not None,
+                    'name': (writer_prompt_enabled or writer_prompt_disabled).name if (writer_prompt_enabled or writer_prompt_disabled) else None,
+                    'id': (writer_prompt_enabled or writer_prompt_disabled).id if (writer_prompt_enabled or writer_prompt_disabled) else None,
+                    'required': True
+                },
+                'reviewer_model': {
+                    'configured': reviewer_model_enabled is not None or reviewer_model_disabled is not None,
+                    'enabled': reviewer_model_enabled is not None,
+                    'name': (reviewer_model_enabled or reviewer_model_disabled).name if (reviewer_model_enabled or reviewer_model_disabled) else None,
+                    'id': (reviewer_model_enabled or reviewer_model_disabled).id if (reviewer_model_enabled or reviewer_model_disabled) else None,
+                    'required': False
+                },
+                'reviewer_prompt': {
+                    'configured': reviewer_prompt_enabled is not None or reviewer_prompt_disabled is not None,
+                    'enabled': reviewer_prompt_enabled is not None,
+                    'name': (reviewer_prompt_enabled or reviewer_prompt_disabled).name if (reviewer_prompt_enabled or reviewer_prompt_disabled) else None,
+                    'id': (reviewer_prompt_enabled or reviewer_prompt_disabled).id if (reviewer_prompt_enabled or reviewer_prompt_disabled) else None,
+                    'required': False
+                },
+                'generation_config': {
+                    'configured': generation_config is not None,
+                    'enabled': generation_config is not None,
+                    'name': generation_config.name if generation_config else None,
+                    'id': generation_config.id if generation_config else None,
+                    'required': True,
+                    'default_output_mode': generation_config.default_output_mode if generation_config else None,
+                    'enable_auto_review': generation_config.enable_auto_review if generation_config else None
+                }
+            }
+
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"检查配置状态失败: {e}")
+            return Response({
+                'error': f'检查配置状态失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
