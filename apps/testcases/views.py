@@ -9,6 +9,12 @@ from .serializers import (
     TestCaseSerializer, TestCaseCreateSerializer, TestCaseUpdateSerializer
 )
 from apps.projects.models import Project
+from rest_framework.pagination import PageNumberPagination
+
+class LargeResultsSetPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
 
 class TestCaseListCreateView(generics.ListCreateAPIView):
     queryset = TestCase.objects.all()
@@ -18,6 +24,7 @@ class TestCaseListCreateView(generics.ListCreateAPIView):
     search_fields = ['title', 'description']
     ordering_fields = ['created_at', 'updated_at', 'priority']
     ordering = ['-created_at']
+    pagination_class = LargeResultsSetPagination
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
