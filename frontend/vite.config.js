@@ -9,6 +9,14 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2022'
+    }
+  },
+  build: {
+    target: 'es2022',
+  },
   server: {
     port: 3000,
     host: '0.0.0.0',
@@ -24,16 +32,5 @@ export default defineConfig({
         secure: false,
       },
     },
-    historyApiFallback: {
-      index: '/index.html',
-    },
   },
-  build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: false,
-  },
-  optimizeDeps: {
-    include: ['monaco-editor']
-  }
 })

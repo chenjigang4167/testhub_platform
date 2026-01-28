@@ -2,25 +2,25 @@
   <div class="api-testing-layout">
     <!-- 顶部导航 -->
     <div class="top-nav">
-      <h2>接口测试</h2>
+      <h2>{{ $t('apiTesting.nav.title') }}</h2>
       <el-menu
         :default-active="currentRoute"
         mode="horizontal"
         @select="handleMenuSelect"
         class="nav-menu"
       >
-        <el-menu-item index="projects">项目管理</el-menu-item>
-        <el-menu-item index="interfaces">接口管理</el-menu-item>
-        <el-menu-item index="automation">自动化测试</el-menu-item>
-        <el-menu-item index="history">请求历史</el-menu-item>
-        <el-menu-item index="environments">环境管理</el-menu-item>
-        <el-menu-item index="scheduled-tasks">定时任务</el-menu-item>
-        <el-menu-item index="reports">测试报告</el-menu-item>
-        <el-menu-item index="notification-logs">通知列表</el-menu-item>
-        <el-menu-item index="notification-configs">通知配置</el-menu-item>
+        <el-menu-item index="projects">{{ $t('apiTesting.nav.projects') }}</el-menu-item>
+        <el-menu-item index="interfaces">{{ $t('apiTesting.nav.interfaces') }}</el-menu-item>
+        <el-menu-item index="automation">{{ $t('apiTesting.nav.automation') }}</el-menu-item>
+        <el-menu-item index="history">{{ $t('apiTesting.nav.history') }}</el-menu-item>
+        <el-menu-item index="environments">{{ $t('apiTesting.nav.environments') }}</el-menu-item>
+        <el-menu-item index="scheduled-tasks">{{ $t('apiTesting.nav.scheduledTasks') }}</el-menu-item>
+        <el-menu-item index="reports">{{ $t('apiTesting.nav.reports') }}</el-menu-item>
+        <el-menu-item index="notification-logs">{{ $t('apiTesting.nav.notificationLogs') }}</el-menu-item>
+        <el-menu-item index="notification-configs">{{ $t('apiTesting.nav.notificationConfigs') }}</el-menu-item>
       </el-menu>
     </div>
-    
+
     <!-- 内容区域 -->
     <div class="content">
       <router-view />
@@ -31,7 +31,9 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 

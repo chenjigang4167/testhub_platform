@@ -225,11 +225,7 @@
     <!-- 通知详情对话框 -->
     <el-dialog
       v-model="showDetailDialog"
-      title="$t('apiTesting.notification.notificationDetail')"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
+      :title="$t('apiTesting.notification.notificationDetail')"
       width="600px"
     >
       <div v-if="currentNotification" class="notification-detail">
@@ -269,8 +265,7 @@
     <!-- 新增收件人对话框 -->
     <el-dialog
       v-model="showRecipientDialog"
-      title="$t('apiTesting.notification.addRecipient')"
-      :close-on-click-modal="false"
+      :title="$t('apiTesting.notification.addRecipient')"
       width="400px"
     >
       <el-form :model="newRecipient" label-width="80px">
@@ -290,8 +285,7 @@
     <!-- 新增Webhook对话框 -->
     <el-dialog
       v-model="showWebhookDialog"
-      title="$t('apiTesting.notification.addWebhook')"
-      :close-on-click-modal="false"
+      :title="$t('apiTesting.notification.addWebhook')"
       width="500px"
     >
       <el-form :model="newWebhook" label-width="100px">
@@ -503,7 +497,7 @@ const addWebhook = async () => {
     ElMessage.warning(t('apiTesting.notification.fillCompleteInfo'))
     return
   }
-  
+
   webhooks.value.push({
     ...newWebhook,
     enabled: true

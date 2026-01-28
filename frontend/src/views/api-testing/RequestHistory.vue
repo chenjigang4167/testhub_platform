@@ -61,11 +61,7 @@
     <!-- 详情对话框 -->
     <el-dialog
       v-model="showDetailDialog"
-      title="$t('apiTesting.history.requestDetail')"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
+      :title="$t('apiTesting.history.requestDetail')"
       width="80%"
       :top="'5vh'"
     >
@@ -106,13 +102,13 @@
                 <el-table-column prop="key" label="Key" width="200" />
                 <el-table-column prop="value" label="Value" />
               </el-table>
-              
+
               <h4 v-if="selectedHistory.request_data.params && Object.keys(selectedHistory.request_data.params).length > 0">
                 {{ $t('apiTesting.history.requestParams') }}
               </h4>
-              <el-table 
+              <el-table
                 v-if="selectedHistory.request_data.params && Object.keys(selectedHistory.request_data.params).length > 0"
-                :data="formatHeaders(selectedHistory.request_data.params)" 
+                :data="formatHeaders(selectedHistory.request_data.params)"
                 style="width: 100%"
               >
                 <el-table-column prop="key" label="Key" width="200" />
@@ -141,7 +137,7 @@
               </div>
               <pre class="json-content">{{ responseBodyText }}</pre>
             </div>
-            
+
             <div v-else-if="selectedHistory.error_message" class="error-section">
               <h4>{{ $t('apiTesting.automation.status.failed') }}</h4>
               <el-alert
@@ -151,14 +147,14 @@
                 show-icon
               />
             </div>
-            
+
             <div v-else class="empty-response">
               <el-empty :description="$t('apiTesting.history.noResponseData')" />
             </div>
           </el-tab-pane>
         </el-tabs>
       </div>
-      
+
       <template #footer>
         <el-button @click="showDetailDialog = false">{{ $t('apiTesting.common.close') }}</el-button>
         <el-button type="primary" @click="retryRequest(selectedHistory)">
@@ -249,20 +245,20 @@ const loadHistory = async () => {
       page_size: pageSize.value,
       request__request_type: activeTab.value
     }
-    
+
     if (searchText.value) {
       params.search = searchText.value
     }
-    
+
     const response = await api.get('/api-testing/histories/', { params })
     const data = response.data.results || response.data
-    
+
     if (activeTab.value === 'HTTP') {
       httpHistory.value = data
     } else {
       websocketHistory.value = data
     }
-    
+
     total.value = response.data.count || data.length
   } catch (error) {
     ElMessage.error(t('apiTesting.messages.error.loadHistory'))
@@ -319,7 +315,7 @@ const clearHistory = async () => {
         type: 'warning'
       }
     )
-    
+
     // 这里需要后端提供批量删除接口
     // 目前先用批量删除当前页的方式模拟，或者需要后端增加清空接口
     // 暂时提示未实现

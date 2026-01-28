@@ -16,7 +16,7 @@ from .models import (
     ApiProject, ApiCollection, ApiRequest, Environment,
     RequestHistory, TestSuite, TestExecution, TestSuiteRequest,
     ScheduledTask, TaskExecutionLog, NotificationLog,
-    TaskNotificationSetting, OperationLog,
+    TaskNotificationSetting, OperationLog, AIServiceConfig,
 )
 
 User = get_user_model()
@@ -798,3 +798,24 @@ class OperationLogSerializer(serializers.ModelSerializer):
             'resource_name', 'description', 'user', 'user_name', 'created_at'
         ]
         read_only_fields = ['created_at']
+
+
+class AIServiceConfigSerializer(serializers.ModelSerializer):
+    """AI服务配置序列化器"""
+    service_type_display = serializers.CharField(source='get_service_type_display', read_only=True)
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+
+    class Meta:
+        model = AIServiceConfig
+        fields = [
+            'id', 'name', 'service_type', 'service_type_display',
+            'role', 'role_display', 'api_key', 'base_url', 'model_name',
+            'max_tokens', 'temperature', 'is_active', 'created_by',
+            'created_by_name', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'created_by']
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        return super().create(validated_data)

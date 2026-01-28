@@ -60,7 +60,6 @@
     <el-dialog
       v-model="showViewDialog"
       :title="$t('apiTesting.component.environmentTable.environmentVariables')"
-      :close-on-click-modal="false"
       width="600px"
     >
       <div v-if="viewingEnvironment" class="variables-view">

@@ -1,5 +1,8 @@
 from django.contrib import admin
-from .models import ApiProject, ApiCollection, ApiRequest, Environment, RequestHistory, TestSuite, TestExecution, ScheduledTask, TaskExecutionLog
+from .models import (
+    ApiProject, ApiCollection, ApiRequest, Environment, RequestHistory,
+    TestSuite, TestExecution, ScheduledTask, TaskExecutionLog, AIServiceConfig
+)
 
 
 @admin.register(ApiProject)
@@ -80,3 +83,18 @@ class TaskExecutionLogAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         return qs.filter(task__created_by=request.user)
+
+
+@admin.register(AIServiceConfig)
+class AIServiceConfigAdmin(admin.ModelAdmin):
+    list_display = ['name', 'service_type', 'role', 'model_name', 'is_active', 'created_by', 'created_at']
+    list_filter = ['service_type', 'role', 'is_active', 'created_at']
+    search_fields = ['name', 'model_name']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    def get_queryset(self, request):
+        """根据用户权限过滤配置"""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(created_by=request.user)

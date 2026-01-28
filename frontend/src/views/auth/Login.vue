@@ -75,13 +75,13 @@
           <el-dropdown @command="handleLanguageChange" class="language-dropdown">
             <span class="el-dropdown-link">
               <span class="language-icon">{{ currentLanguage === 'zh-cn' ? '🇨🇳' : '🇺🇸' }}</span>
-              <span class="language-text">{{ currentLanguage === 'zh-cn' ? '中文' : 'English' }}</span>
+              <span class="language-text">{{ currentLanguage === 'zh-cn' ? $t('auth.languageZhCN') : $t('auth.languageEn') }}</span>
               <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="zh-cn" :disabled="currentLanguage === 'zh-cn'">
-                  <span class="dropdown-flag">🇨🇳</span> 简体中文
+                  <span class="dropdown-flag">🇨🇳</span> {{ $t('auth.languageZhCN') }}
                 </el-dropdown-item>
                 <el-dropdown-item command="en" :disabled="currentLanguage === 'en'">
                   <span class="dropdown-flag">🇺🇸</span> English
@@ -236,24 +236,24 @@ const handleLogin = async () => {
     if (valid) {
       loading.value = true
       try {
-        console.log('开始登录...')
+        console.log('Starting login...')
         const result = await userStore.login(form)
-        console.log('登录结果:', result)
-        console.log('用户store状态:', {
+        console.log('Login result:', result)
+        console.log('User store state:', {
           token: userStore.token,
           user: userStore.user,
           isAuthenticated: userStore.isAuthenticated
         })
 
         ElMessage.success(t('auth.loginSuccess'))
-        console.log('准备跳转到 /home')
+        console.log('Preparing to redirect to /home')
 
-        // 使用replace而不是push，避免返回登录页
+        // Use replace instead of push to prevent returning to login page
         await router.replace('/home')
-        console.log('跳转完成')
+        console.log('Redirect completed')
 
       } catch (error) {
-        console.error('登录失败:', error)
+        console.error('Login failed:', error)
         ElMessage.error(error.response?.data?.error || t('auth.loginFailed'))
       } finally {
         loading.value = false

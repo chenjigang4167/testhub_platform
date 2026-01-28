@@ -233,7 +233,7 @@
     </div>
 
     <!-- 新增页面对象对话框 -->
-    <el-dialog v-model="showCreateDialog" title="$t('uiAutomation.pageObject.createPageObject')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="showCreateDialog" :title="$t('uiAutomation.pageObject.createPageObject')" width="600px">
       <el-form ref="createFormRef" :model="createForm" :rules="formRules" label-width="120px">
         <el-form-item :label="$t('uiAutomation.pageObject.pageObjectName')" prop="name">
           <el-input v-model="createForm.name" :placeholder="$t('uiAutomation.pageObject.rules.nameRequired')" />
@@ -262,7 +262,7 @@
     </el-dialog>
 
     <!-- 添加元素对话框 -->
-    <el-dialog v-model="showAddElementDialog" :title="$t('uiAutomation.pageObject.addElementToPageObject')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="showAddElementDialog" :title="$t('uiAutomation.pageObject.addElementToPageObject')" width="600px">
       <el-form ref="addElementFormRef" :model="addElementForm" :rules="addElementRules" label-width="120px">
         <el-form-item :label="$t('uiAutomation.pageObject.selectElement')" prop="element_id">
           <el-select v-model="addElementForm.element_id" :placeholder="$t('uiAutomation.pageObject.selectElement')" filterable>
@@ -491,7 +491,7 @@ const handleDrop = (event) => {
     .replace(/^./, elementData.name.charAt(0).toLowerCase())
 
   // 添加元素到页面对象
-  addElementToPageObject({
+  addElementToPageObjectFn({
     element_id: elementData.id,
     method_name: methodName,
     is_property: true,
@@ -499,7 +499,7 @@ const handleDrop = (event) => {
   })
 }
 
-const addElementToPageObject = async (elementData) => {
+const addElementToPageObjectFn = async (elementData) => {
   try {
     const response = await createPageObjectElement({
       page_object_id: selectedPageObject.value.id,

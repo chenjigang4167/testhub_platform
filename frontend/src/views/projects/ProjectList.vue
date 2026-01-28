@@ -7,7 +7,7 @@
         {{ $t('project.newProject') }}
       </el-button>
     </div>
-    
+
     <div class="card-container">
       <div class="filter-bar">
         <el-row :gutter="20">
@@ -210,7 +210,7 @@ const resetForm = () => {
 
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   await formRef.value.validate(async (valid) => {
     if (valid) {
       submitting.value = true

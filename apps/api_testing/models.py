@@ -590,3 +590,49 @@ class OperationLog(models.Model):
 
     def __str__(self):
         return f"{self.get_operation_type_display()} - {self.resource_name}"
+
+
+class AIServiceConfig(models.Model):
+    """AI服务配置模型"""
+    SERVICE_TYPE_CHOICES = [
+        ('openai', 'OpenAI'),
+        ('azure', 'Azure OpenAI'),
+        ('anthropic', 'Anthropic'),
+        ('deepseek', 'DeepSeek'),
+        ('qwen', '通义千问'),
+        ('siliconflow', '硅基流动'),
+        ('other', '其他'),
+    ]
+
+    ROLE_CHOICES = [
+        ('doc_extractor', 'API文档提取'),
+        ('naming', '参数命名规范化'),
+        ('mock_data', '模拟数据生成'),
+        ('description', '参数描述补全'),
+    ]
+
+    name = models.CharField(max_length=200, verbose_name='配置名称')
+    service_type = models.CharField(max_length=20, choices=SERVICE_TYPE_CHOICES, verbose_name='服务类型')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, verbose_name='角色类型')
+    api_key = models.CharField(max_length=500, verbose_name='API Key')
+    base_url = models.CharField(max_length=500, verbose_name='API Base URL')
+    model_name = models.CharField(max_length=200, verbose_name='模型名称')
+    max_tokens = models.IntegerField(default=4096, verbose_name='最大Token数')
+    temperature = models.FloatField(default=0.7, verbose_name='温度参数')
+    is_active = models.BooleanField(default=True, verbose_name='是否启用')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='创建者')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+
+    class Meta:
+        db_table = 'api_ai_service_configs'
+        verbose_name = 'AI服务配置'
+        verbose_name_plural = 'AI服务配置'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['service_type', 'role']),
+            models.Index(fields=['is_active']),
+        ]
+
+    def __str__(self):
+        return self.name

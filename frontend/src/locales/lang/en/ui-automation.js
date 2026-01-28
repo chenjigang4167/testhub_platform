@@ -238,7 +238,7 @@ export default {
       title: 'Tip: Enter locator value based on strategy',
       id: 'ID: Enter element id attribute value',
       css: 'CSS Selector: Enter CSS selector, e.g. .class or #id',
-      xpath: 'XPath: Enter XPath expression, e.g. //input[@name=\'username\']',
+      xpath: 'XPath: Enter XPath expression, e.g. //input[@name="username"]',
       other: 'For other strategies, enter the corresponding attribute value'
     },
     rules: {
@@ -1086,7 +1086,7 @@ export default {
     actionSwitchTab: 'Switch Tab',
     selectElement: 'Select Element',
     inputValue: 'Input Value:',
-    inputPlaceholder: 'Enter content, supports variables like ${random_phone()}',
+    inputPlaceholder: 'Enter content, supports variables like {{random_phone()}}',
     switchTabPlaceholder: 'Enter index (0,1...) or leave empty for latest',
     insertVariable: 'Insert Dynamic Variable',
     waitTime: 'Wait Time (ms):',

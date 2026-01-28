@@ -56,7 +56,7 @@
     </div>
 
     <!-- 编辑对话框 -->
-    <el-dialog v-model="showEditDialog" title="$t('uiAutomation.ai.caseList.editCase')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="showEditDialog" :title="$t('uiAutomation.ai.caseList.editCase')" width="600px">
       <el-form :model="editForm" :rules="formRules" ref="editFormRef" label-width="100px">
         <el-form-item :label="$t('uiAutomation.ai.caseList.caseName')" prop="name">
           <el-input v-model="editForm.name" :placeholder="$t('uiAutomation.ai.caseNamePlaceholder')" />
@@ -167,7 +167,7 @@ const editCase = (row) => {
 
 const confirmEdit = async () => {
   if (!editFormRef.value) return
-  
+
   await editFormRef.value.validate(async (valid) => {
     if (valid) {
       saving.value = true
@@ -248,7 +248,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  
+
   .page-title {
     font-size: 20px;
     font-weight: 600;

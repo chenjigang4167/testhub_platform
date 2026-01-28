@@ -1,10 +1,10 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <h1 class="page-title">{{ isEdit ? '编辑评审' : '创建评审' }}</h1>
+      <h1 class="page-title">{{ isEdit ? $t('reviewForm.editTitle') : $t('reviewForm.createTitle') }}</h1>
       <div>
-        <el-button @click="$router.back()">返回</el-button>
-        <el-button type="primary" @click="saveReview" :loading="saving">保存</el-button>
+        <el-button @click="$router.back()">{{ $t('reviewForm.back') }}</el-button>
+        <el-button type="primary" @click="saveReview" :loading="saving">{{ $t('reviewForm.save') }}</el-button>
       </div>
     </div>
 
@@ -12,16 +12,16 @@
       <el-form :model="form" :rules="rules" ref="formRef" label-width="120px">
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="评审标题" prop="title">
-              <el-input v-model="form.title" placeholder="请输入评审标题" />
+            <el-form-item :label="$t('reviewForm.reviewTitle')" prop="title">
+              <el-input v-model="form.title" :placeholder="$t('reviewForm.reviewTitlePlaceholder')" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="关联项目" prop="projects">
-              <el-select 
-                v-model="form.projects" 
-                multiple 
-                placeholder="请选择项目" 
+            <el-form-item :label="$t('reviewForm.associatedProject')" prop="projects">
+              <el-select
+                v-model="form.projects"
+                multiple
+                :placeholder="$t('reviewForm.selectProject')"
                 @change="onProjectChange"
               >
                 <el-option
@@ -37,21 +37,21 @@
 
         <el-row :gutter="24">
           <el-col :span="12">
-            <el-form-item label="优先级" prop="priority">
-              <el-select v-model="form.priority" placeholder="请选择优先级">
-                <el-option label="低" value="low" />
-                <el-option label="中" value="medium" />
-                <el-option label="高" value="high" />
-                <el-option label="紧急" value="urgent" />
+            <el-form-item :label="$t('reviewForm.priority')" prop="priority">
+              <el-select v-model="form.priority" :placeholder="$t('reviewForm.selectPriority')">
+                <el-option :label="$t('reviewForm.priorityLow')" value="low" />
+                <el-option :label="$t('reviewForm.priorityMedium')" value="medium" />
+                <el-option :label="$t('reviewForm.priorityHigh')" value="high" />
+                <el-option :label="$t('reviewForm.priorityUrgent')" value="urgent" />
               </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="截止日期">
+            <el-form-item :label="$t('reviewForm.deadline')">
               <el-date-picker
                 v-model="form.deadline"
                 type="datetime"
-                placeholder="请选择截止日期"
+                :placeholder="$t('reviewForm.deadlinePlaceholder')"
                 format="YYYY-MM-DD HH:mm"
                 value-format="YYYY-MM-DD HH:mm:ss"
               />
@@ -59,21 +59,21 @@
           </el-col>
         </el-row>
 
-        <el-form-item label="评审描述">
+        <el-form-item :label="$t('reviewForm.description')">
           <el-input
             v-model="form.description"
             type="textarea"
             :rows="4"
-            placeholder="请输入评审描述"
+            :placeholder="$t('reviewForm.descriptionPlaceholder')"
           />
         </el-form-item>
 
-        <el-form-item label="选择用例" prop="testcases">
+        <el-form-item :label="$t('reviewForm.selectTestcases')" prop="testcases">
           <div class="testcase-selector">
             <div class="search-bar">
               <el-input
                 v-model="testcaseSearch"
-                placeholder="搜索用例"
+                :placeholder="$t('reviewForm.searchTestcases')"
                 @input="searchTestcases"
                 clearable
               >
@@ -81,9 +81,9 @@
                   <el-icon><Search /></el-icon>
                 </template>
               </el-input>
-              <el-button type="primary" @click="showTestcaseSelector">选择用例</el-button>
+              <el-button type="primary" @click="showTestcaseSelector">{{ $t('reviewForm.selectTestcasesBtn') }}</el-button>
             </div>
-            
+
             <div class="selected-testcases">
               <el-tag
                 v-for="testcase in selectedTestcases"
@@ -95,17 +95,17 @@
                 {{ testcase.title }}
               </el-tag>
               <div v-if="selectedTestcases.length === 0" class="empty-tip">
-                请选择要评审的测试用例
+                {{ $t('reviewForm.emptyTestcasesTip') }}
               </div>
             </div>
           </div>
         </el-form-item>
 
-        <el-form-item label="评审人员" prop="reviewers">
+        <el-form-item :label="$t('reviewForm.reviewers')" prop="reviewers">
           <el-select
             v-model="form.reviewers"
             multiple
-            placeholder="请选择评审人员"
+            :placeholder="$t('reviewForm.selectReviewers')"
             @change="onReviewersChange"
           >
             <el-option
@@ -117,8 +117,8 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="评审模板">
-          <el-select v-model="form.template" placeholder="可选择评审模板" @change="applyTemplate">
+        <el-form-item :label="$t('reviewForm.reviewTemplate')">
+          <el-select v-model="form.template" :placeholder="$t('reviewForm.selectTemplate')" @change="applyTemplate">
             <el-option
               v-for="template in templates"
               :key="template.id"
@@ -131,11 +131,11 @@
     </div>
 
     <!-- 用例选择对话框 -->
-    <el-dialog v-model="testcaseSelectorVisible" title="选择测试用例" :close-on-click-modal="false" width="800px">
+    <el-dialog v-model="testcaseSelectorVisible" :title="$t('reviewForm.testcaseSelectorTitle')" :close-on-click-modal="false" width="800px">
       <div class="testcase-selector-content">
         <el-input
           v-model="testcaseSearchInDialog"
-          placeholder="搜索用例"
+          :placeholder="$t('reviewForm.searchTestcases')"
           @input="searchTestcasesInDialog"
           clearable
         >
@@ -143,7 +143,7 @@
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
-        
+
         <el-table
           :data="filteredTestcases"
           @selection-change="handleTestcaseSelection"
@@ -151,19 +151,19 @@
           class="testcase-table"
         >
           <el-table-column type="selection" width="55" />
-          <el-table-column prop="title" label="用例标题" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="test_type" label="测试类型" width="120" />
-          <el-table-column prop="priority" label="优先级" width="100">
+          <el-table-column prop="title" :label="$t('reviewForm.testcaseTitle')" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="test_type" :label="$t('reviewForm.testType')" width="120" />
+          <el-table-column prop="priority" :label="$t('reviewDetail.priority')" width="100">
             <template #default="{ row }">
               <el-tag :class="`priority-tag ${row.priority}`">{{ getPriorityText(row.priority) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="author.username" label="作者" width="120" />
+          <el-table-column prop="author.username" :label="$t('reviewForm.author')" width="120" />
         </el-table>
       </div>
       <template #footer>
-        <el-button @click="testcaseSelectorVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmTestcaseSelection">确定</el-button>
+        <el-button @click="testcaseSelectorVisible = false">{{ $t('reviewForm.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmTestcaseSelection">{{ $t('reviewForm.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -172,12 +172,14 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import api from '@/utils/api'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const isEdit = computed(() => !!route.params.id)
 
 const formRef = ref()
@@ -204,16 +206,16 @@ const form = reactive({
   template: ''
 })
 
-const rules = {
-  title: [{ required: true, message: '请输入评审标题', trigger: 'blur' }],
-  projects: [{ required: true, message: '请选择项目', trigger: 'change' }],
-  testcases: [{ required: true, message: '请选择要评审的用例', trigger: 'change' }],
-  reviewers: [{ required: true, message: '请选择评审人员', trigger: 'change' }]
-}
+const rules = computed(() => ({
+  title: [{ required: true, message: t('reviewForm.titleRequired'), trigger: 'blur' }],
+  projects: [{ required: true, message: t('reviewForm.projectRequired'), trigger: 'change' }],
+  testcases: [{ required: true, message: t('reviewForm.testcasesRequired'), trigger: 'change' }],
+  reviewers: [{ required: true, message: t('reviewForm.reviewersRequired'), trigger: 'change' }]
+}))
 
 const filteredTestcases = computed(() => {
   if (!testcaseSearchInDialog.value) return testcases.value
-  return testcases.value.filter(tc => 
+  return testcases.value.filter(tc =>
     tc.title.toLowerCase().includes(testcaseSearchInDialog.value.toLowerCase())
   )
 })
@@ -223,7 +225,7 @@ const fetchProjects = async () => {
     const response = await api.get('/projects/')
     projects.value = response.data.results || response.data
   } catch (error) {
-    ElMessage.error('获取项目列表失败')
+    ElMessage.error(t('reviewForm.fetchProjectsFailed'))
   }
 }
 
@@ -231,10 +233,10 @@ const fetchProjectUsers = async () => {
   try {
     const response = await api.get('/auth/users/')
     projectUsers.value = response.data.results || response.data || []
-    console.log('All users:', projectUsers.value) // 调试用
+    console.log('All users:', projectUsers.value)
   } catch (error) {
-    console.error('获取用户列表失败:', error)
-    ElMessage.error('获取用户列表失败')
+    console.error('Fetch users failed:', error)
+    ElMessage.error(t('reviewForm.fetchUsersFailed'))
     projectUsers.value = []
   }
 }
@@ -246,28 +248,28 @@ const fetchTestcases = async (projectIds) => {
       testcases.value = []
       return
     }
-    
+
     // 获取所有选中项目的用例
-    const promises = projectIds.map(projectId => 
+    const promises = projectIds.map(projectId =>
       api.get('/testcases/', { params: { project: projectId } })
     )
-    
+
     const responses = await Promise.all(promises)
     const allTestcases = []
-    
+
     responses.forEach(response => {
       const cases = response.data.results || response.data || []
       allTestcases.push(...cases)
     })
-    
+
     // 去重（基于用例ID）
-    const uniqueTestcases = allTestcases.filter((testcase, index, self) => 
+    const uniqueTestcases = allTestcases.filter((testcase, index, self) =>
       index === self.findIndex(t => t.id === testcase.id)
     )
-    
+
     testcases.value = uniqueTestcases
   } catch (error) {
-    console.error('获取用例列表失败:', error)
+    console.error('Fetch testcases failed:', error)
   }
 }
 
@@ -278,28 +280,28 @@ const fetchTemplates = async (projectIds) => {
       templates.value = []
       return
     }
-    
+
     // 获取所有选中项目的模板
-    const promises = projectIds.map(projectId => 
+    const promises = projectIds.map(projectId =>
       api.get('/reviews/review-templates/', { params: { project: projectId } })
     )
-    
+
     const responses = await Promise.all(promises)
     const allTemplates = []
-    
+
     responses.forEach(response => {
       const temps = response.data.results || response.data || []
       allTemplates.push(...temps)
     })
-    
+
     // 去重（基于模板ID）
-    const uniqueTemplates = allTemplates.filter((template, index, self) => 
+    const uniqueTemplates = allTemplates.filter((template, index, self) =>
       index === self.findIndex(t => t.id === template.id)
     )
-    
+
     templates.value = uniqueTemplates
   } catch (error) {
-    console.error('获取模板列表失败:', error)
+    console.error('Fetch templates failed:', error)
   }
 }
 
@@ -312,7 +314,7 @@ const onProjectChange = (projectIds) => {
     testcases.value = []
     templates.value = []
   }
-  
+
   // 清空相关选择
   form.reviewers = []
   form.testcases = []
@@ -321,7 +323,7 @@ const onProjectChange = (projectIds) => {
 
 const showTestcaseSelector = () => {
   if (!form.projects || form.projects.length === 0) {
-    ElMessage.warning('请先选择项目')
+    ElMessage.warning(t('reviewForm.selectProjectFirst'))
     return
   }
   testcaseSelectorVisible.value = true
@@ -348,7 +350,7 @@ const onReviewersChange = () => {
 
 const applyTemplate = async (templateId) => {
   if (!templateId) return
-  
+
   try {
     const template = templates.value.find(t => t.id === templateId)
     if (template) {
@@ -356,17 +358,17 @@ const applyTemplate = async (templateId) => {
       form.reviewers = template.default_reviewers.map(u => u.id)
     }
   } catch (error) {
-    console.error('应用模板失败:', error)
+    console.error('Apply template failed:', error)
   }
 }
 
 const saveReview = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
     saving.value = true
-    
+
     const data = {
       ...form,
       testcases: form.testcases,
@@ -374,23 +376,23 @@ const saveReview = async () => {
       // 确保包含 template 字段
       template: form.template || null
     }
-    
+
     if (isEdit.value) {
       await api.put(`/reviews/reviews/${route.params.id}/`, data)
-      ElMessage.success('评审更新成功')
+      ElMessage.success(t('reviewForm.updateSuccess'))
     } else {
       await api.post('/reviews/reviews/', data)
-      ElMessage.success('评审创建成功')
+      ElMessage.success(t('reviewForm.createSuccess'))
     }
-    
+
     router.push('/ai-generation/reviews')
-    
+
   } catch (error) {
     if (error.response?.data) {
       const errors = Object.values(error.response.data).flat()
-      ElMessage.error(errors[0] || '保存失败')
+      ElMessage.error(errors[0] || t('reviewForm.saveFailed'))
     } else {
-      ElMessage.error('保存失败')
+      ElMessage.error(t('reviewForm.saveFailed'))
     }
   } finally {
     saving.value = false
@@ -399,48 +401,48 @@ const saveReview = async () => {
 
 const getPriorityText = (priority) => {
   const textMap = {
-    low: '低',
-    medium: '中',
-    high: '高',
-    critical: '紧急'
+    low: t('reviewForm.priorityLow'),
+    medium: t('reviewForm.priorityMedium'),
+    high: t('reviewForm.priorityHigh'),
+    critical: t('reviewForm.priorityUrgent')
   }
   return textMap[priority] || priority
 }
 
 const findMatchingTemplate = (review, templateList) => {
   if (!templateList || templateList.length === 0) return null
-  
+
   // 获取评审的项目ID列表和评审人ID列表
   const reviewProjectIds = review.projects.map(p => p.id).sort()
   const reviewReviewerIds = review.assignments.map(a => a.reviewer.id).sort()
-  
+
   let bestMatch = null
   let bestScore = 0
-  
+
   for (const template of templateList) {
     let score = 0
-    
+
     // 检查项目匹配度
     const templateProjectIds = (template.project || []).map(p => p.id).sort()
     const projectIntersection = reviewProjectIds.filter(id => templateProjectIds.includes(id))
     if (projectIntersection.length > 0) {
       score += projectIntersection.length * 2 // 项目匹配权重更高
     }
-    
+
     // 检查默认评审人匹配度
     const templateReviewerIds = (template.default_reviewers || []).map(r => r.id).sort()
     const reviewerIntersection = reviewReviewerIds.filter(id => templateReviewerIds.includes(id))
     if (reviewerIntersection.length > 0) {
       score += reviewerIntersection.length // 评审人匹配
     }
-    
+
     // 如果有更高的匹配分数，更新最佳匹配
     if (score > bestScore) {
       bestScore = score
       bestMatch = template
     }
   }
-  
+
   // 只有当匹配分数大于0时才返回匹配的模板
   return bestScore > 0 ? bestMatch : null
 }
@@ -449,7 +451,7 @@ const fetchReviewData = async (reviewId) => {
   try {
     const response = await api.get(`/reviews/reviews/${reviewId}/`)
     const review = response.data
-    
+
     // 填充表单数据
     form.title = review.title
     form.description = review.description
@@ -457,34 +459,42 @@ const fetchReviewData = async (reviewId) => {
     form.priority = review.priority
     form.deadline = review.deadline
     form.reviewers = review.assignments.map(a => a.reviewer.id)
-    
+
     // 处理测试用例
     selectedTestcases.value = review.testcases
     form.testcases = review.testcases.map(tc => tc.id)
-    
+
     // 加载项目相关数据
     if (form.projects.length > 0) {
       await fetchTestcases(form.projects)
       await fetchTemplates(form.projects)
-      
+
       // 在模板加载完成后，尝试找到匹配的模板
       const matchingTemplate = findMatchingTemplate(review, templates.value)
       if (matchingTemplate) {
         form.template = matchingTemplate.id
       }
     }
-    
+
   } catch (error) {
-    console.error('获取评审数据失败:', error)
-    ElMessage.error('获取评审数据失败')
+    console.error('Fetch review data failed:', error)
+    ElMessage.error(t('reviewForm.fetchReviewFailed'))
     router.push('/ai-generation/reviews')
   }
+}
+
+const searchTestcases = () => {
+  // 搜索用例的逻辑
+}
+
+const searchTestcasesInDialog = () => {
+  // 在对话框中搜索用例的逻辑
 }
 
 onMounted(() => {
   fetchProjects()
   fetchProjectUsers() // 页面加载时就获取所有用户
-  
+
   if (isEdit.value) {
     // 如果是编辑模式，加载现有数据
     fetchReviewData(route.params.id)
@@ -499,17 +509,17 @@ onMounted(() => {
     gap: 12px;
     margin-bottom: 16px;
   }
-  
+
   .selected-testcases {
     border: 1px solid #dcdfe6;
     border-radius: 4px;
     min-height: 80px;
     padding: 8px;
-    
+
     .testcase-tag {
       margin: 4px;
     }
-    
+
     .empty-tip {
       color: #909399;
       text-align: center;

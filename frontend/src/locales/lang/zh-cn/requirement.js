@@ -93,12 +93,22 @@ export default {
     generationCancelled: '生成已取消',
     statusGenerating: '正在编写测试用例...',
     statusReviewing: '正在评审测试用例...',
+    statusRevising: '正在生成最终版用例...',
     statusCompleted: '生成完成！',
     statusFailed: '生成失败',
     generateCompleteSuccess: '测试用例生成完成！',
     checkProgressFailed: '检查进度失败',
     createTaskFailed: '创建任务失败',
     unknownError: '未知错误',
+    tokenRefreshFailed: 'Token刷新失败，请重新登录',
+    streamConnectionInterrupted: '流式连接中断，切换到轮询模式',
+    fetchResultFailed: '获取结果失败',
+
+    // Stream Display
+    realtimeGeneratedContent: '✍️ 实时生成内容',
+    aiReviewComments: '📝 AI评审意见',
+    finalVersionTestCases: '✅ 最终版测试用例',
+    characters: '{count} 字符',
 
     // Results
     viewResultsBtn: '查看生成结果',
@@ -446,6 +456,7 @@ export default {
     basicInfo: '📋 基本信息',
     configName: '配置名称',
     configNamePlaceholder: '例如：默认生成配置',
+    defaultConfigName: '默认生成配置',
     enableThisConfig: '启用此配置',
     enableHint: '注意：只能有一个启用的配置，启用此配置将自动禁用其他配置',
 

@@ -6,7 +6,7 @@
         <el-col :span="6">
           <el-input
               v-model="searchForm.taskName"
-              placeholder="搜索任务名称"
+              :placeholder="$t('notification.logs.searchTaskName')"
               clearable
               @clear="handleSearch"
               @keyup.enter="handleSearch"
@@ -22,9 +22,9 @@
           <el-date-picker
               v-model="searchForm.dateRange"
               type="daterange"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
+              :range-separator="$t('notification.logs.rangeSeparator')"
+              :start-placeholder="$t('notification.logs.startDate')"
+              :end-placeholder="$t('notification.logs.endDate')"
               value-format="YYYY-MM-DD"
               @change="handleSearch"
           />
@@ -32,14 +32,14 @@
         <el-col :span="6">
           <el-select
               v-model="searchForm.status"
-              placeholder="通知状态"
+              :placeholder="$t('notification.logs.notificationStatus')"
               clearable
               @change="handleSearch"
           >
-            <el-option label="全部状态" value=""/>
-            <el-option label="成功" value="SUCCESS"/>
-            <el-option label="失败" value="FAILED"/>
-            <el-option label="重试中" value="RETRYING"/>
+            <el-option :label="$t('notification.logs.statusOptions.all')" value=""/>
+            <el-option :label="$t('notification.logs.statusOptions.success')" value="SUCCESS"/>
+            <el-option :label="$t('notification.logs.statusOptions.failed')" value="FAILED"/>
+            <el-option :label="$t('notification.logs.statusOptions.retrying')" value="RETRYING"/>
           </el-select>
         </el-col>
         <el-col :span="6">
@@ -47,10 +47,10 @@
             <el-icon>
               <Search/>
             </el-icon>
-            搜索
+            {{ $t('notification.logs.search') }}
           </el-button>
           <el-button @click="handleReset">
-            重置
+            {{ $t('notification.logs.reset') }}
           </el-button>
         </el-col>
       </el-row>
@@ -61,20 +61,20 @@
       <el-table
           :data="logsData"
           v-loading="loading"
-          element-loading-text="加载中..."
+          :element-loading-text="$t('notification.logs.loading')"
           stripe
           style="width: 100%"
           @sort-change="handleSortChange"
       >
         <el-table-column
             prop="task_name"
-            label="任务名称"
+            :label="$t('notification.logs.columns.taskName')"
             min-width="150"
             sortable="custom"
         />
         <el-table-column
             prop="task_type_display"
-            label="任务类型"
+            :label="$t('notification.logs.columns.taskType')"
             min-width="100"
         >
           <template #default="{ row }">
@@ -88,7 +88,7 @@
         </el-table-column>
         <el-table-column
             prop="notification_type_display"
-            label="通知类型"
+            :label="$t('notification.logs.columns.notificationType')"
             min-width="120"
         >
           <template #default="{ row }">
@@ -102,7 +102,7 @@
         </el-table-column>
         <el-table-column
             prop="notification_target_display"
-            label="通知对象"
+            :label="$t('notification.logs.columns.notificationTarget')"
             min-width="150"
         >
           <template #default="{ row }">
@@ -111,7 +111,7 @@
         </el-table-column>
         <el-table-column
             prop="created_at"
-            label="通知时间"
+            :label="$t('notification.logs.columns.notificationTime')"
             min-width="180"
             sortable="custom"
         >
@@ -121,7 +121,7 @@
         </el-table-column>
         <el-table-column
             prop="status_display"
-            label="状态"
+            :label="$t('notification.logs.columns.status')"
             min-width="100"
             sortable="custom"
         >
@@ -135,7 +135,7 @@
           </template>
         </el-table-column>
         <el-table-column
-            label="操作"
+            :label="$t('notification.logs.columns.operation')"
             fixed="right"
             width="120"
         >
@@ -146,7 +146,7 @@
                 size="small"
                 @click="viewDetail(row)"
             >
-              查看详情
+              {{ $t('notification.logs.viewDetail') }}
             </el-button>
           </template>
         </el-table-column>
@@ -169,7 +169,7 @@
     <!-- 详情弹窗 -->
     <el-dialog
         v-model="detailDialogVisible"
-        title="通知详情"
+        :title="$t('notification.logs.detailDialog.title')"
         width="600px"
         :before-close="handleDetailDialogClose"
         :close-on-click-modal="false"
@@ -184,41 +184,41 @@
       >
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="任务名称">
+            <el-form-item :label="$t('notification.logs.detailDialog.taskName')">
               <span>{{ selectedLog.task_name }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="任务类型">
+            <el-form-item :label="$t('notification.logs.detailDialog.taskType')">
               <span>{{ selectedLog.task_type_display }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="通知类型">
+            <el-form-item :label="$t('notification.logs.detailDialog.notificationType')">
               <el-tag :type="getNotificationTypeTagType(selectedLog.notification_type_display)">
                 {{ selectedLog.notification_type_display }}
               </el-tag>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="状态">
+            <el-form-item :label="$t('notification.logs.detailDialog.status')">
               <el-tag :type="getStatusTagType(selectedLog.status_display)">
                 {{ selectedLog.status_display }}
               </el-tag>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="通知时间">
+            <el-form-item :label="$t('notification.logs.detailDialog.notificationTime')">
               <span>{{ formatDate(selectedLog.created_at) }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="发送时间">
+            <el-form-item :label="$t('notification.logs.detailDialog.sentTime')">
               <span>{{ selectedLog.sent_at ? formatDate(selectedLog.sent_at) : '-' }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="24" v-if="selectedLog.notification_target_display && selectedLog.notification_target_display.length > 0">
-            <el-form-item label="通知对象">
+            <el-form-item :label="$t('notification.logs.detailDialog.notificationTarget')">
               <div class="notification-targets">
                 <el-tag
                     v-for="(target, index) in selectedLog.notification_target_display"
@@ -234,7 +234,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="通知内容">
+            <el-form-item :label="$t('notification.logs.detailDialog.notificationContent')">
               <div class="notification-content">
                 <div v-if="parsedNotificationContent" class="notification-content-parsed">
                   <div class="content-item" v-for="(item, index) in parsedNotificationContent" :key="index">
@@ -249,7 +249,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="24" v-if="selectedLog.error_message">
-            <el-form-item label="错误信息">
+            <el-form-item :label="$t('notification.logs.detailDialog.errorMessage')">
               <div class="error-message">
                 <el-alert
                     :title="selectedLog.error_message"
@@ -264,7 +264,7 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button @click="detailDialogVisible = false">{{ $t('notification.logs.detailDialog.close') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -274,6 +274,7 @@
 <script>
 import {Search} from '@element-plus/icons-vue'
 import {ref, reactive, onMounted, computed} from 'vue'
+import {useI18n} from 'vue-i18n'
 import {ElMessage} from 'element-plus'
 import axios from 'axios'
 
@@ -283,6 +284,8 @@ export default {
     Search
   },
   setup() {
+    const {t, locale} = useI18n()
+
     // 数据状态
     const loading = ref(false)
     const logsData = ref([])
@@ -335,8 +338,8 @@ export default {
         logsData.value = response.data.results || []
         pagination.total = response.data.count || 0
       } catch (error) {
-        console.error('获取通知日志失败:', error)
-        ElMessage.error('获取通知日志失败')
+        console.error('Fetch notification logs failed:', error)
+        ElMessage.error(t('notification.logs.messages.fetchFailed'))
       } finally {
         loading.value = false
       }
@@ -383,8 +386,8 @@ export default {
         selectedLog.value = response.data
         detailDialogVisible.value = true
       } catch (error) {
-        console.error('获取通知详情失败:', error)
-        ElMessage.error('获取通知详情失败')
+        console.error('Fetch notification detail failed:', error)
+        ElMessage.error(t('notification.logs.messages.fetchDetailFailed'))
       }
     }
 
@@ -398,7 +401,7 @@ export default {
     const formatDate = (dateString) => {
       if (!dateString) return '-'
       const date = new Date(dateString)
-      return date.toLocaleString('zh-CN')
+      return date.toLocaleString(locale.value === 'zh-cn' ? 'zh-CN' : 'en-US')
     }
 
     // 获取状态标签类型
@@ -443,16 +446,14 @@ export default {
     const formatRecipients = (recipients) => {
       if (!recipients) return '-'
 
-      // 如果是字符串，直接返回
       if (typeof recipients === 'string') {
         return recipients.length > 20 ? recipients.substring(0, 20) + '...' : recipients
       }
 
-      // 如果是数组，按原逻辑处理
       if (Array.isArray(recipients)) {
         if (recipients.length === 0) return '-'
         if (recipients.length === 1) return recipients[0]
-        return `${recipients[0]} 等${recipients.length}人`
+        return `${recipients[0]} +${recipients.length - 1}`
       }
 
       return '-'
@@ -487,23 +488,18 @@ export default {
       const content = selectedLog.value.notification_content
 
       try {
-        // 尝试解析JSON格式的通知内容(Webhook)
         const jsonContent = JSON.parse(content)
         const result = []
 
-        // 提取内容文本
         let contentText = ''
 
-        // 处理企业微信格式
         if (jsonContent.msgtype === 'markdown' && jsonContent.markdown) {
-          // 优先使用text字段(钉钉格式)
           if (jsonContent.markdown.text) {
             contentText = jsonContent.markdown.text
           } else if (jsonContent.markdown.content) {
             contentText = jsonContent.markdown.content
           }
         }
-        // 处理飞书格式
         else if (jsonContent.msg_type === 'interactive' && jsonContent.card) {
           if (jsonContent.card.elements && jsonContent.card.elements[0] && jsonContent.card.elements[0].text) {
             contentText = jsonContent.card.elements[0].text.content
@@ -511,16 +507,13 @@ export default {
         }
 
         if (contentText) {
-          // 解析文本内容,提取关键信息
           const lines = contentText.split('\n').filter(line => line.trim())
 
           lines.forEach(line => {
-            // 跳过标题行(包含**的行)和空行
             if (line.includes('**') || line.trim() === '') {
               return
             }
 
-            // 解析键值对
             const colonIndex = line.indexOf(':')
             if (colonIndex > 0) {
               const label = line.substring(0, colonIndex).trim()
@@ -538,29 +531,23 @@ export default {
           return result.length > 0 ? result : null
         }
       } catch (e) {
-        // JSON解析失败,尝试作为纯文本解析(邮件通知)
-        console.log('尝试解析为纯文本格式')
+        console.log('Trying to parse as plain text format')
       }
 
-      // 解析纯文本格式的邮件内容
       try {
         const result = []
         const lines = content.split('\n').filter(line => line.trim())
 
         lines.forEach(line => {
-          // 跳过空行
           if (!line.trim()) {
             return
           }
 
-          // 解析键值对 (格式: "标签: 值")
           const colonIndex = line.indexOf(':')
           if (colonIndex > 0) {
             const label = line.substring(0, colonIndex).trim()
             const value = line.substring(colonIndex + 1).trim()
 
-            // 过滤掉包含详细测试结果的行(通常会是大字典或JSON字符串)
-            // 跳过包含'results'关键字的超长值
             if (label && value && !value.includes("'results':") && !value.includes('"results":')) {
               result.push({
                 label: label,
@@ -572,8 +559,7 @@ export default {
 
         return result.length > 0 ? result : null
       } catch (e) {
-        // 如果所有解析都失败,返回null以显示原始内容
-        console.error('解析通知内容失败:', e)
+        console.error('Parse notification content failed:', e)
         return null
       }
     })

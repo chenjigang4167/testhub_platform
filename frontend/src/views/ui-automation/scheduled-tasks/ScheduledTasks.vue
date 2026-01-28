@@ -136,10 +136,6 @@
     <el-dialog
       v-model="showCreateDialog"
       :title="editingTask ? $t('uiAutomation.scheduledTask.editTask') : $t('uiAutomation.scheduledTask.createTask')"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
       width="800px"
       @close="resetTaskForm"
     >

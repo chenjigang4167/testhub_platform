@@ -7,7 +7,7 @@
         {{ $t('common.back') }}
       </el-button>
     </div>
-    
+
     <div class="card-container">
       <el-tabs v-model="activeTab">
         <el-tab-pane :label="$t('project.projectInfo')" name="info">

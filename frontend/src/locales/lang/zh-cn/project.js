@@ -72,6 +72,13 @@ export default {
     logoutConfirm: '确定要退出登录吗？',
     logoutSuccess: '已退出登录',
 
+    // Language
+    language: {
+      current: '中文',
+      zhCN: '简体中文',
+      en: 'English'
+    },
+
     // Title
     title: 'TestHub 测试平台',
     subtitle: '一站式智能化测试解决方案',

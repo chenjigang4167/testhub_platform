@@ -20,5 +20,6 @@ export default {
   success: '操作成功',
   error: '操作失败',
   tips: '提示',
-  warning: '警告'
+  warning: '警告',
+  selectProject: '选择项目'
 }

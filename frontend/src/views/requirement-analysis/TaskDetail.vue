@@ -347,7 +347,7 @@ export default {
           this.testCases = this.parseTestCases(this.task.final_test_cases)
         }
       } catch (error) {
-        console.error('加载任务详情失败:', error)
+        console.error('Failed to load task details:', error)
         ElMessage.error(this.$t('taskDetail.loadFailed'))
       } finally {
         this.isLoading = false
@@ -418,9 +418,9 @@ export default {
           })
 
           if (testCase.scenario || testCase.caseId) {
-            // 如果没有steps字段，使用scenario作为steps的默认值
+            // If steps field is empty, use scenario as default
             if (!testCase.steps && testCase.scenario) {
-              testCase.steps = '参考测试目标执行相应操作'
+              testCase.steps = testCase.scenario
             }
             // 如果没有priority，设置默认值
             if (!testCase.priority) {
@@ -445,11 +445,11 @@ export default {
             
             currentTestCase = {
               caseId: `TC${String(caseNumber).padStart(3, '0')}`,
-              scenario: line.replace(/^(\d+\.|\*|\-|\d+、)\s*/, '').replace(/测试用例\d*[:：]?\s*/, ''),
+              scenario: line.replace(/^(\d+\.|\*|\-|\d+、)\s*/, '').replace(/测试用例\d*[:：]?\s*/, '').replace(/Test Case\s*\d*[:：]?\s*/i, ''),
               precondition: '',
               steps: '',
               expected: '',
-              priority: '中'
+              priority: 'P2'
             }
           } else if (line.includes('前置条件') || line.includes('前提')) {
             currentTestCase.precondition = line.replace(/.*?[:：]\s*/, '')
@@ -536,7 +536,7 @@ export default {
 
       try {
         const casesData = this.selectedCases.map((testCase, index) => ({
-          title: testCase.scenario || `测试用例${index + 1}`,
+          title: testCase.scenario || `Test Case ${index + 1}`,
           description: testCase.scenario || '',
           preconditions: testCase.precondition || '',
           steps: testCase.steps || '',
@@ -553,11 +553,11 @@ export default {
         ElMessage.success(this.$t('taskDetail.adoptSuccess', { count: this.selectedCases.length }))
         this.selectedCases = []
 
-        // 不再移除已采纳的用例，保留在列表中供多次采纳
+        // Keep adopted cases in the list for multiple adoptions
         // this.testCases = this.testCases.filter(tc => !this.selectedCases.includes(tc))
 
       } catch (error) {
-        console.error('批量采纳失败:', error)
+        console.error('Batch adopt failed:', error)
         ElMessage.error(this.$t('taskDetail.batchAdoptFailed') + ': ' + (error.response?.data?.message || error.message))
       }
     },
@@ -615,7 +615,7 @@ export default {
         }
 
       } catch (error) {
-        console.error('批量弃用失败:', error)
+        console.error('Batch discard failed:', error)
         ElMessage.error(this.$t('taskDetail.batchDiscardFailed') + ': ' + (error.response?.data?.error || error.message))
       }
     },
@@ -711,7 +711,7 @@ export default {
         ElMessage.success(this.$t('taskDetail.updateSuccess'))
         this.isEditing = false
       } catch (error) {
-        console.error('更新失败:', error)
+        console.error('Update failed:', error)
         ElMessage.error(this.$t('taskDetail.updateFailed') + ': ' + (error.response?.data?.error || error.message))
       } finally {
         this.isSaving = false
@@ -723,7 +723,14 @@ export default {
       if (this.testCases.length === 0) return ''
 
       // 表头
-      const headers = ['测试用例编号', '测试场景', '前置条件', '操作步骤', '预期结果', '优先级']
+      const headers = [
+        this.$t('taskDetail.tableCaseId'),
+        this.$t('taskDetail.tableScenario'),
+        this.$t('taskDetail.tablePrecondition'),
+        this.$t('taskDetail.tableSteps'),
+        this.$t('taskDetail.tableExpected'),
+        this.$t('taskDetail.tablePriority')
+      ]
       let result = headers.join(' | ') + '\n'
       result += '|'.repeat(headers.length) + '\n'
 
@@ -789,7 +796,7 @@ export default {
         // this.testCases.splice(this.testCases.indexOf(testCase), 1)
 
       } catch (error) {
-        console.error('采纳用例失败:', error)
+        console.error('Adopt case failed:', error)
         ElMessage.error(this.$t('taskDetail.adoptFailed') + ': ' + (error.response?.data?.message || error.message))
       }
     },
@@ -838,7 +845,7 @@ export default {
         }
 
       } catch (error) {
-        console.error('弃用用例失败:', error)
+        console.error('Discard case failed:', error)
         ElMessage.error(this.$t('taskDetail.discardFailed') + ': ' + (error.response?.data?.error || error.message))
       }
     },
@@ -857,15 +864,15 @@ export default {
       return priorityMap[priority] || 'medium'
     },
 
-    // 将英文优先级转换为中文显示
+    // 将英文优先级转换为本地化显示
     priorityToChinese(priority) {
       const priorityMap = {
-        'critical': '紧急',
-        'high': '高',
-        'medium': '中',
-        'low': '低'
+        'critical': this.$t('generatedTestCases.priorityCritical'),
+        'high': this.$t('generatedTestCases.priorityHigh'),
+        'medium': this.$t('generatedTestCases.priorityMedium'),
+        'low': this.$t('generatedTestCases.priorityLow')
       }
-      return priorityMap[priority] || '中'
+      return priorityMap[priority] || this.$t('generatedTestCases.priorityMedium')
     },
 
     // 导出到Excel
@@ -947,7 +954,7 @@ export default {
 
         ElMessage.success(this.$t('taskDetail.exportSuccess'))
       } catch (error) {
-        console.error('导出Excel失败:', error)
+        console.error('Export Excel failed:', error)
         ElMessage.error(this.$t('taskDetail.exportFailed') + ': ' + (error.message || ''))
       } finally {
         this.isExporting = false

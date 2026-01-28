@@ -223,7 +223,7 @@ const loadChartsData = async () => {
     days: filters.days
   }
 
-  // 1. 状态分布
+  // 1. Status distribution
   try {
     const res = await api.get('/reports/reports/status_distribution/', { params })
     const data = [
@@ -233,7 +233,7 @@ const loadChartsData = async () => {
       { value: res.data.retest, name: t('report.retest'), itemStyle: { color: '#409EFF' } },
       { value: res.data.untested, name: t('report.untested'), itemStyle: { color: '#909399' } }
     ]
-    
+
     statusChart.setOption({
       tooltip: { trigger: 'item' },
       legend: { bottom: '0%', left: 'center' },
@@ -252,12 +252,12 @@ const loadChartsData = async () => {
     })
   } catch (e) { console.error(e) }
 
-  // 2. 执行趋势
+  // 2. Execution trend
   try {
     const res = await api.get('/reports/reports/execution_trend/', { params })
     const dates = res.data.map(item => item.date)
     const counts = res.data.map(item => item.count)
-    
+
     trendChart.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
@@ -275,7 +275,7 @@ const loadChartsData = async () => {
     })
   } catch (e) { console.error(e) }
 
-  // 3. 缺陷分布
+  // 3. Defect distribution
   try {
     const res = await api.get('/reports/reports/defect_distribution/', { params })
     defectChart.setOption({
@@ -304,12 +304,12 @@ const loadChartsData = async () => {
     failedCasesTop.value = res.data
   } catch (e) { console.error(e) }
 
-  // 5. AI效能
+  // 5. AI efficiency
   try {
     const res = await api.get('/reports/reports/ai_efficiency/', { params })
     aiData.value = res.data
     const aiCounts = res.data.ai_vs_manual
-    
+
     aiEfficiencyChart.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: '3%', right: '4%', bottom: '3%', top: '10%', containLabel: true },
@@ -322,13 +322,13 @@ const loadChartsData = async () => {
     })
   } catch (e) { console.error(e) }
 
-  // 6. 团队工作量
+  // 6. Team workload
   try {
     const res = await api.get('/reports/reports/team_workload/', { params })
     const users = res.data.map(item => item.username)
     const execCounts = res.data.map(item => item.execution_count)
     const defectCounts = res.data.map(item => item.defect_count)
-    
+
     workloadChart.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       legend: { data: [t('report.executedCases'), t('report.defectsFound')], bottom: '0%' },

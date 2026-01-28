@@ -72,6 +72,13 @@ export default {
     logoutConfirm: 'Are you sure to logout?',
     logoutSuccess: 'Logged out successfully',
 
+    // Language
+    language: {
+      current: 'English',
+      zhCN: '简体中文',
+      en: 'English'
+    },
+
     // Title
     title: 'TestHub Testing Platform',
     subtitle: 'All-in-One Intelligent Testing Solution',

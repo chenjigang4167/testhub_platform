@@ -62,6 +62,11 @@ vine==5.1.0
 wcwidth==0.2.13
 langchain-openai==1.1.6
 django-simpleui>=2025.6.24
+python-barcode>=0.16.1
+qrcode>=8.2
+qrcode[pil]
+pyzbar>=0.1.9
+pycryptodome>=3.23.0
 
 # UI自动化测试依赖包
 playwright>=1.40.0
@@ -71,3 +76,7 @@ browser-use==0.10.1
 
 # JWT 安全机制
 djangorestframework-simplejwt==5.5.1
+PyJWT>=2.8.0
+
+# 测试数据生成
+fakerx>=0.1.0

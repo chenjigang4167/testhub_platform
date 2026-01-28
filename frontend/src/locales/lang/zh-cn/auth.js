@@ -50,5 +50,9 @@ export default {
   passwordMismatch: '两次输入的密码不一致',
 
   // Copyright
-  copyright: '© 2024 TestHub. All rights reserved.'
+  copyright: '© 2024 TestHub. All rights reserved.',
+
+  // Language switcher
+  languageZhCN: '简体中文',
+  languageEn: 'English'
 }

@@ -107,7 +107,7 @@
                   </el-select>
                 </template>
               </el-input>
-              
+
               <!-- WebSocket连接按钮 -->
               <el-button
                 v-if="selectedRequest && selectedRequest.request_type === 'WEBSOCKET'"
@@ -119,7 +119,7 @@
                 <span v-else-if="websocketConnectionStatus === 'connecting'">{{ $t('apiTesting.interface.connecting') }}</span>
                 <span v-else>{{ $t('apiTesting.interface.disconnect') }}</span>
               </el-button>
-              
+
               <!-- HTTP发送按钮 -->
               <el-button
                 v-else
@@ -130,7 +130,7 @@
                 {{ $t('apiTesting.interface.send') }}
               </el-button>
             </div>
-            
+
             <div class="request-name">
               <el-input
                 v-model="selectedRequest.name"
@@ -153,7 +153,7 @@
                 :placeholder-value="$t('apiTesting.interface.paramValue')"
               />
             </el-tab-pane>
-            
+
             <el-tab-pane label="Headers" name="headers">
               <KeyValueEditor
                 ref="headersEditorRef"
@@ -182,7 +182,7 @@
                     :show-file="true"
                   />
                 </div>
-                
+
                 <div v-else-if="bodyType === 'x-www-form-urlencoded'" class="body-content">
                   <KeyValueEditor
                     v-model="formUrlEncoded"
@@ -190,7 +190,7 @@
                     :placeholder-value="$t('apiTesting.interface.value')"
                   />
                 </div>
-                
+
                 <div v-else-if="bodyType === 'raw'" class="body-content">
                   <div class="raw-options">
                     <el-select v-model="rawType" style="width: 150px;">
@@ -262,7 +262,7 @@
                           <el-icon><Delete /></el-icon>
                         </el-button>
                       </div>
-                      
+
                       <div class="assertion-config">
                         <el-select
                           v-model="assertion.type"
@@ -277,7 +277,7 @@
                           <el-option :label="$t('apiTesting.interface.assertionTypes.header')" value="header" />
                           <el-option :label="$t('apiTesting.interface.assertionTypes.equals')" value="equals" />
                         </el-select>
-                        
+
                         <div class="assertion-params" v-if="assertion.type">
                           <!-- 状态码断言 -->
                           <div v-if="assertion.type === 'status_code'">
@@ -289,7 +289,7 @@
                               :placeholder="$t('apiTesting.interface.expectedStatusCode')"
                             />
                           </div>
-                          
+
                           <!-- 响应时间断言 -->
                           <div v-else-if="assertion.type === 'response_time'">
                             <el-input-number
@@ -308,7 +308,7 @@
                               size="small"
                             />
                           </div>
-                          
+
                           <!-- JSON路径断言 -->
                           <div v-else-if="assertion.type === 'json_path'">
                             <el-input
@@ -324,7 +324,7 @@
                               class="assertion-input"
                             />
                           </div>
-                          
+
                           <!-- 响应头断言 -->
                           <div v-else-if="assertion.type === 'header'">
                             <el-input
@@ -340,7 +340,7 @@
                               class="assertion-input"
                             />
                           </div>
-                          
+
                           <!-- 完全匹配断言 -->
                           <div v-else-if="assertion.type === 'equals'">
                             <el-input
@@ -388,7 +388,7 @@
                         :placeholder="$t('apiTesting.interface.inputWebSocketMessage')"
                       />
                     </div>
-                    
+
                     <div v-else-if="websocketMessageType === 'binary'">
                       <el-upload
                         drag
@@ -407,7 +407,7 @@
                         <el-button size="small" type="danger" @click="clearWebSocketBinaryFile">{{ $t('apiTesting.interface.clear') }}</el-button>
                       </div>
                     </div>
-                    
+
                     <div class="message-actions" style="margin-top: 15px;">
                       <el-button type="primary" @click="sendWebSocketMessage">
                         {{ $t('apiTesting.interface.sendMessage') }}
@@ -417,7 +417,7 @@
                       </el-button>
                     </div>
                   </div>
-                  
+
                   <!-- WebSocket消息历史记录 -->
                   <div class="websocket-response-section" v-if="websocketMessages.length > 0">
                     <h3>{{ $t('apiTesting.interface.messageHistory') }}</h3>
@@ -463,7 +463,7 @@
                 <span class="response-time">{{ response.response_time?.toFixed(0) }}ms</span>
               </div>
             </div>
-            
+
             <el-tabs v-model="responseActiveTab">
               <el-tab-pane :label="$t('apiTesting.interface.responseBody')" name="body">
                 <div class="response-body">
@@ -542,7 +542,7 @@
           </el-select>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <el-button @click="showCreateCollectionDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
         <el-button type="primary" @click="createCollection">{{ $t('apiTesting.common.create') }}</el-button>
@@ -569,7 +569,7 @@
           </el-select>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <el-button @click="showEditCollectionDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
         <el-button type="primary" @click="updateCollection">{{ $t('apiTesting.common.save') }}</el-button>
@@ -759,25 +759,25 @@ const loadProjects = async () => {
 
 const loadCollections = async (preserveExpandState = true) => {
   if (!selectedProject.value) return
-  
+
   try {
     const res = await api.get('/api-testing/collections/', {
       params: { project: selectedProject.value }
     })
     const collectionsData = res.data.results || res.data
-    
+
     // 构建树形结构
     collections.value = buildTree(collectionsData)
     flatCollections.value = collectionsData
-    
+
     // 加载每个集合的请求
     await loadRequests()
-    
+
     // 如果不保留展开状态，清空展开键
     if (!preserveExpandState) {
       expandedKeys.value = []
     }
-    
+
   } catch (error) {
     ElMessage.error(t('apiTesting.messages.error.loadCollections'))
   }
@@ -785,16 +785,16 @@ const loadCollections = async (preserveExpandState = true) => {
 
 const loadRequests = async () => {
   if (!selectedProject.value) return
-  
+
   try {
     const res = await api.get('/api-testing/requests/')
     const requests = res.data.results || res.data
-    
+
     // 清空所有集合的子节点（请求）
     collections.value.forEach(collection => {
       clearCollectionChildren(collection)
     })
-    
+
     // 将请求添加到对应集合中
     requests.forEach(request => {
       const collection = findCollectionById(collections.value, request.collection)
@@ -824,7 +824,7 @@ const loadEnvironments = async () => {
     // 获取全局环境 + 当前项目环境，不传递project参数
     const res = await api.get('/api-testing/environments/')
     const allEnvironments = res.data.results || res.data
-    
+
     // 过滤全局环境和当前项目环境
     environments.value = allEnvironments.filter(env =>
       env.scope === 'GLOBAL' ||
@@ -1095,8 +1095,13 @@ const editNode = () => {
     
     response.value = null
   } else if (rightClickedNode.value.type === 'collection') {
-    // 启动集合内联编辑
-    startEditCollection(rightClickedNode.value)
+    // 打开集合编辑对话框
+    const collection = rightClickedNode.value
+    editCollectionForm.id = collection.id
+    editCollectionForm.name = collection.name
+    editCollectionForm.description = collection.description
+    editCollectionForm.parent = collection.parent
+    showEditCollectionDialog.value = true
   }
   hideContextMenu()
 }
@@ -1109,7 +1114,7 @@ const deleteNode = async () => {
 
   const nodeType = rightClickedNode.value.type
   const nodeName = rightClickedNode.value.name
-  
+
   // 显示确认对话框
   try {
     const typeText = nodeType === 'collection' ? t('apiTesting.interface.collection') : t('apiTesting.interface.request')
@@ -1281,12 +1286,59 @@ const createCollection = async () => {
   }
 }
 
+const updateCollection = async () => {
+  try {
+    const data = {
+      name: editCollectionForm.name,
+      description: editCollectionForm.description,
+      parent: editCollectionForm.parent,
+      project: selectedProject.value
+    }
+    await api.put(`/api-testing/collections/${editCollectionForm.id}/`, data)
+    
+    ElMessage.success(t('apiTesting.messages.success.collectionUpdated'))
+    showEditCollectionDialog.value = false
+    
+    // 更新本地树数据
+    const updateCollectionInTree = (collections, id, newData) => {
+      for (const collection of collections) {
+        if (collection.id === id) {
+          collection.name = newData.name
+          collection.description = newData.description
+          collection.parent = newData.parent
+          return true
+        }
+        if (collection.children && updateCollectionInTree(collection.children, id, newData)) {
+          return true
+        }
+      }
+      return false
+    }
+    
+    updateCollectionInTree(collections.value, editCollectionForm.id, data)
+    
+    // 更新平集合列表
+    const flatCollection = flatCollections.value.find(c => c.id === editCollectionForm.id)
+    if (flatCollection) {
+      flatCollection.name = editCollectionForm.name
+      flatCollection.description = editCollectionForm.description
+      flatCollection.parent = editCollectionForm.parent
+    }
+    
+    // 重置表单
+    Object.assign(editCollectionForm, { id: null, name: '', description: '', parent: null })
+    
+  } catch (error) {
+    ElMessage.error(t('apiTesting.messages.error.updateFailed'))
+  }
+}
+
 // 断言相关方法
 const addAssertion = () => {
   if (!selectedRequest.value.assertions) {
     selectedRequest.value.assertions = []
   }
-  
+
   selectedRequest.value.assertions.push({
     name: `${t('apiTesting.interface.assertion')}${selectedRequest.value.assertions.length + 1}`,
     type: '',
@@ -1324,15 +1376,15 @@ const sendWebSocketMessage = () => {
     ElMessage.warning(t('apiTesting.messages.warning.pleaseConnect'))
     return
   }
-  
+
   if (!websocketConnection.value) {
     ElMessage.error(t('apiTesting.messages.error.connectFailed'))
     return
   }
-  
+
   try {
     let messageToSend = ''
-    
+
     if (websocketMessageType.value === 'text' || websocketMessageType.value === 'json') {
       messageToSend = websocketMessageContent.value
     } else if (websocketMessageType.value === 'binary' && websocketBinaryFile.value) {
@@ -1352,7 +1404,7 @@ const sendWebSocketMessage = () => {
       ElMessage.warning(t('apiTesting.messages.warning.pleaseInputContent'))
       return
     }
-    
+
     websocketConnection.value.send(messageToSend)
     addWebSocketMessage('sent', messageToSend)
     ElMessage.success(t('apiTesting.messages.success.messageSent'))
@@ -1415,9 +1467,9 @@ const connectWebSocket = () => {
     ElMessage.warning(t('apiTesting.messages.warning.pleaseInputUrl'))
     return
   }
-  
+
   websocketConnectionStatus.value = 'connecting'
-  
+
   try {
     // 替换环境变量
     let url = selectedRequest.value.url
@@ -1429,37 +1481,37 @@ const connectWebSocket = () => {
         })
       }
     }
-    
+
     // 创建WebSocket连接
     websocketConnection.value = new WebSocket(url)
-    
+
     websocketConnection.value.onopen = () => {
       websocketConnectionStatus.value = 'connected'
       // 添加连接成功的特殊消息
       addWebSocketMessage('connected', t('apiTesting.messages.info.websocketConnectedTo', { url }))
       ElMessage.success(t('apiTesting.messages.success.connect'))
     }
-    
+
     websocketConnection.value.onmessage = (event) => {
       // 处理接收到的消息
       console.log('WebSocket message received:', event.data)
       addWebSocketMessage('received', event.data)
       ElMessage.info(t('apiTesting.messages.info.websocketMessageReceived'))
     }
-    
+
     websocketConnection.value.onclose = () => {
       websocketConnectionStatus.value = 'disconnected'
       addWebSocketMessage('info', t('apiTesting.messages.info.websocketClosed'))
       ElMessage.info(t('apiTesting.messages.info.websocketClosed'))
     }
-    
+
     websocketConnection.value.onerror = (error) => {
       websocketConnectionStatus.value = 'disconnected'
       const errorMsg = t('apiTesting.messages.error.websocketError') + ': ' + (error.message || '')
       addWebSocketMessage('error', errorMsg)
       ElMessage.error(errorMsg)
     }
-    
+
   } catch (error) {
     websocketConnectionStatus.value = 'disconnected'
     const errorMsg = t('apiTesting.messages.error.connectFailed') + ': ' + error.message
@@ -1484,7 +1536,7 @@ const createEmptyRequest = async () => {
     ElMessage.warning(t('apiTesting.messages.warning.pleaseSelectProject'))
     return
   }
-  
+
   // 检查是否有可用的集合
   if (!flatCollections.value || flatCollections.value.length === 0) {
     ElMessage.warning(t('apiTesting.messages.warning.pleaseCreateCollection'))
@@ -1563,13 +1615,13 @@ const createEmptyRequest = async () => {
 
 const sendRequest = async () => {
   if (!selectedRequest.value) return
-  
+
   // 检查是否为WebSocket接口
   if (selectedRequest.value.request_type === 'WEBSOCKET') {
     ElMessage.warning(t('apiTesting.messages.warning.websocketNotSupported'))
     return
   }
-  
+
   // 检查是否选择了环境
   if (!selectedEnvironment.value) {
     ElMessage.warning(t('apiTesting.messages.warning.pleaseSelectEnvironment'))
@@ -1780,7 +1832,7 @@ const saveRequest = async () => {
 
     ElMessage.success(t('apiTesting.messages.success.save'))
   } catch (error) {
-    ElMessage.error('保存失败')
+    ElMessage.error(t('apiTesting.messages.error.saveFailed'))
   } finally {
     saving.value = false
   }

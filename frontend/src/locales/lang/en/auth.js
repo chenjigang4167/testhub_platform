@@ -50,5 +50,9 @@ export default {
   passwordMismatch: 'Passwords do not match',
 
   // Copyright
-  copyright: '© 2024 TestHub. All rights reserved.'
+  copyright: '© 2024 TestHub. All rights reserved.',
+
+  // Language switcher
+  languageZhCN: '简体中文',
+  languageEn: 'English'
 }

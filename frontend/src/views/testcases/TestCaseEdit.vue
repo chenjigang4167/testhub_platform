@@ -3,7 +3,7 @@
     <div class="page-header">
       <h1 class="page-title">{{ $t('testcase.edit') }}</h1>
     </div>
-    
+
     <div class="card-container" v-if="!loading">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item :label="$t('testcase.caseTitle')" prop="title">
@@ -18,7 +18,7 @@
             :placeholder="$t('testcase.caseDescriptionPlaceholder')"
           />
         </el-form-item>
-        
+
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item :label="$t('testcase.project')" prop="project_id">
@@ -61,7 +61,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        
+
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item :label="$t('testcase.status')" prop="status">
@@ -120,7 +120,7 @@
             :placeholder="$t('testcase.expectedResultPlaceholder')"
           />
         </el-form-item>
-        
+
         <el-form-item>
           <el-button type="primary" @click="handleSubmit" :loading="submitting">
             {{ $t('testcase.saveChanges') }}
@@ -204,7 +204,7 @@ const fetchProjectVersions = async (projectId) => {
     projectVersions.value = []
     return
   }
-  
+
   try {
     const response = await api.get(`/versions/projects/${projectId}/versions/`)
     projectVersions.value = response.data || []
@@ -216,21 +216,20 @@ const fetchProjectVersions = async (projectId) => {
 }
 
 const onProjectChange = (projectId) => {
-  // 当项目改变时，清空版本选择并重新获取版本列表
   form.version_ids = []
   fetchProjectVersions(projectId)
 }
 
 const onVersionChange = () => {
-  // 版本选择变化的处理逻辑（如果需要的话）
+  // Version change handling logic if needed
 }
 
 const fetchTestCase = async () => {
   try {
     const response = await api.get(`/testcases/${route.params.id}/`)
     const testcase = response.data
-    
-    // 填充表单数据
+
+    // Fill form data
     form.title = testcase.title
     form.description = testcase.description
     form.project_id = testcase.project?.id || null
@@ -240,17 +239,17 @@ const fetchTestCase = async () => {
     form.preconditions = convertBrToNewline(testcase.preconditions || '')
     form.expected_result = convertBrToNewline(testcase.expected_result || '')
 
-    // 填充操作步骤数据（将<br>转换为换行符）
+    // Fill steps data (convert <br> to newlines)
     form.steps = convertBrToNewline(testcase.steps || '')
-    
-    // 填充版本关联数据
+
+    // Fill version associations
     form.version_ids = testcase.versions ? testcase.versions.map(v => v.id) : []
-    
-    // 如果有项目，获取该项目的版本列表
+
+    // If project exists, fetch versions for that project
     if (form.project_id) {
       await fetchProjectVersions(form.project_id)
     }
-    
+
     loading.value = false
   } catch (error) {
     ElMessage.error(t('testcase.fetchDetailFailed'))
@@ -265,7 +264,7 @@ const handleSubmit = async () => {
     if (valid) {
       submitting.value = true
       try {
-        // 在提交前将换行符转换回<br>标签
+        // Convert newlines back to <br> tags before submitting
         const submitData = {
           ...form,
           preconditions: convertNewlineToBr(form.preconditions || ''),

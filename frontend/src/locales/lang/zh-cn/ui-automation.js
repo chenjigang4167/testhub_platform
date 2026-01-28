@@ -238,7 +238,7 @@ export default {
       title: '提示：根据定位策略输入对应的定位值',
       id: 'ID: 输入元素的id属性值',
       css: 'CSS Selector: 输入CSS选择器，如 .class 或 #id',
-      xpath: 'XPath: 输入XPath表达式，如 //input[@name=\'username\']',
+      xpath: 'XPath: 输入XPath表达式，如 //input[@name="username"]',
       other: '其他策略请输入对应属性的值'
     },
     rules: {
@@ -1086,7 +1086,7 @@ export default {
     actionSwitchTab: '切换标签页',
     selectElement: '选择元素',
     inputValue: '输入值：',
-    inputPlaceholder: '请输入内容，支持变量如 ${random_phone()}',
+    inputPlaceholder: '请输入内容，支持变量如 {{random_phone()}}',
     switchTabPlaceholder: '输入索引(0,1...)或留空切换到最新',
     insertVariable: '插入动态变量',
     waitTime: '等待时间（毫秒）：',

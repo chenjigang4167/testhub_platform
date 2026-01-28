@@ -6,10 +6,10 @@
         <el-icon class="title-icon">
           <Setting/>
         </el-icon>
-        通知配置
+        {{ $t('notification.configs.title') }}
       </h1>
       <p class="page-description">
-        配置飞书、企微、钉钉Webhook机器人地址
+        {{ $t('notification.configs.description') }}
       </p>
     </div>
 
@@ -19,7 +19,7 @@
 
 
         <!-- 飞书机器人Tab -->
-        <el-tab-pane label="飞书机器人" name="feishu">
+        <el-tab-pane :label="$t('notification.botTypes.feishu')" name="feishu">
           <div class="tab-content">
             <div class="config-section">
               <el-form
@@ -30,40 +30,40 @@
               >
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="机器人名称">
+                    <el-form-item :label="$t('notification.form.botName')">
                       <el-input
                           v-model="webhookBots.feishu.name"
-                          placeholder="请输入飞书机器人名称"
+                          :placeholder="$t('notification.placeholders.feishuBotName')"
                       />
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="启用">
+                    <el-form-item :label="$t('notification.form.enabled')">
                       <el-switch v-model="webhookBots.feishu.enabled"/>
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
-                    <el-form-item label="Webhook URL">
+                    <el-form-item :label="$t('notification.form.webhookUrl')">
                       <el-input
                           v-model="webhookBots.feishu.webhook_url"
-                          placeholder="请输入飞书机器人Webhook URL"
+                          :placeholder="$t('notification.placeholders.feishuWebhook')"
                       />
                       <div class="form-item-hint">
-                        飞书机器人Webhook URL格式：https://open.feishu.cn/open-apis/bot/v2/hook/...
+                        {{ $t('notification.hints.feishuWebhook') }}
                       </div>
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
-                    <el-form-item label="业务类型">
-                      <el-checkbox v-model="webhookBots.feishu.enable_ui_automation">UI自动化测试</el-checkbox>
-                      <el-checkbox v-model="webhookBots.feishu.enable_api_testing">接口测试</el-checkbox>
+                    <el-form-item :label="$t('notification.form.businessType')">
+                      <el-checkbox v-model="webhookBots.feishu.enable_ui_automation">{{ $t('notification.form.uiAutomation') }}</el-checkbox>
+                      <el-checkbox v-model="webhookBots.feishu.enable_api_testing">{{ $t('notification.form.apiTesting') }}</el-checkbox>
                     </el-form-item>
                   </el-col>
                 </el-row>
 
                 <div class="form-actions">
                   <el-button type="primary" @click="saveWebhookBot('feishu')">
-                    保存飞书机器人配置
+                    {{ $t('notification.buttons.saveFeishu') }}
                   </el-button>
                 </div>
               </el-form>
@@ -72,7 +72,7 @@
         </el-tab-pane>
 
         <!-- 企业微信机器人Tab -->
-        <el-tab-pane label="企微机器人" name="wechat">
+        <el-tab-pane :label="$t('notification.botTypes.wechat')" name="wechat">
           <div class="tab-content">
             <div class="config-section">
               <el-form
@@ -83,40 +83,40 @@
               >
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="机器人名称">
+                    <el-form-item :label="$t('notification.form.botName')">
                       <el-input
                           v-model="webhookBots.wechat.name"
-                          placeholder="请输入企业微信机器人名称"
+                          :placeholder="$t('notification.placeholders.wechatBotName')"
                       />
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="启用">
+                    <el-form-item :label="$t('notification.form.enabled')">
                       <el-switch v-model="webhookBots.wechat.enabled"/>
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
-                    <el-form-item label="Webhook URL">
+                    <el-form-item :label="$t('notification.form.webhookUrl')">
                       <el-input
                           v-model="webhookBots.wechat.webhook_url"
-                          placeholder="请输入企业微信机器人Webhook URL"
+                          :placeholder="$t('notification.placeholders.wechatWebhook')"
                       />
                       <div class="form-item-hint">
-                        企业微信机器人Webhook URL格式：https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...
+                        {{ $t('notification.hints.wechatWebhook') }}
                       </div>
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
-                    <el-form-item label="业务类型">
-                      <el-checkbox v-model="webhookBots.wechat.enable_ui_automation">UI自动化测试</el-checkbox>
-                      <el-checkbox v-model="webhookBots.wechat.enable_api_testing">接口测试</el-checkbox>
+                    <el-form-item :label="$t('notification.form.businessType')">
+                      <el-checkbox v-model="webhookBots.wechat.enable_ui_automation">{{ $t('notification.form.uiAutomation') }}</el-checkbox>
+                      <el-checkbox v-model="webhookBots.wechat.enable_api_testing">{{ $t('notification.form.apiTesting') }}</el-checkbox>
                     </el-form-item>
                   </el-col>
                 </el-row>
 
                 <div class="form-actions">
                   <el-button type="primary" @click="saveWebhookBot('wechat')">
-                    保存企微机器人配置
+                    {{ $t('notification.buttons.saveWechat') }}
                   </el-button>
                 </div>
               </el-form>
@@ -125,7 +125,7 @@
         </el-tab-pane>
 
         <!-- 钉钉机器人Tab -->
-        <el-tab-pane label="钉钉机器人" name="dingtalk">
+        <el-tab-pane :label="$t('notification.botTypes.dingtalk')" name="dingtalk">
           <div class="tab-content">
             <div class="config-section">
               <el-form
@@ -136,53 +136,53 @@
               >
                 <el-row :gutter="20">
                   <el-col :span="12">
-                    <el-form-item label="机器人名称">
+                    <el-form-item :label="$t('notification.form.botName')">
                       <el-input
                           v-model="webhookBots.dingtalk.name"
-                          placeholder="请输入钉钉机器人名称"
+                          :placeholder="$t('notification.placeholders.dingtalkBotName')"
                       />
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
-                    <el-form-item label="启用">
+                    <el-form-item :label="$t('notification.form.enabled')">
                       <el-switch v-model="webhookBots.dingtalk.enabled"/>
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
-                    <el-form-item label="Webhook URL">
+                    <el-form-item :label="$t('notification.form.webhookUrl')">
                       <el-input
                           v-model="webhookBots.dingtalk.webhook_url"
-                          placeholder="请输入钉钉机器人Webhook URL"
+                          :placeholder="$t('notification.placeholders.dingtalkWebhook')"
                       />
                       <div class="form-item-hint">
-                        钉钉机器人Webhook URL格式：https://oapi.dingtalk.com/robot/send?access_token=...
+                        {{ $t('notification.hints.dingtalkWebhook') }}
                       </div>
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
-                    <el-form-item label="签名密钥">
+                    <el-form-item :label="$t('notification.form.signatureKey')">
                       <el-input
                           v-model="webhookBots.dingtalk.secret"
-                          placeholder="请输入钉钉机器人签名密钥（可选）"
+                          :placeholder="$t('notification.placeholders.dingtalkSecret')"
                           type="password"
                           show-password
                       />
                       <div class="form-item-hint">
-                        钉钉机器人的签名密钥，用于安全验证。如果机器人开启了"加签"安全设置，请填写此字段。
+                        {{ $t('notification.hints.dingtalkSecret') }}
                       </div>
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
-                    <el-form-item label="业务类型">
-                      <el-checkbox v-model="webhookBots.dingtalk.enable_ui_automation">UI自动化测试</el-checkbox>
-                      <el-checkbox v-model="webhookBots.dingtalk.enable_api_testing">接口测试</el-checkbox>
+                    <el-form-item :label="$t('notification.form.businessType')">
+                      <el-checkbox v-model="webhookBots.dingtalk.enable_ui_automation">{{ $t('notification.form.uiAutomation') }}</el-checkbox>
+                      <el-checkbox v-model="webhookBots.dingtalk.enable_api_testing">{{ $t('notification.form.apiTesting') }}</el-checkbox>
                     </el-form-item>
                   </el-col>
                 </el-row>
 
                 <div class="form-actions">
                   <el-button type="primary" @click="saveWebhookBot('dingtalk')">
-                    保存钉钉机器人配置
+                    {{ $t('notification.buttons.saveDingtalk') }}
                   </el-button>
                 </div>
               </el-form>
@@ -197,6 +197,7 @@
 <script>
 import {Setting} from '@element-plus/icons-vue'
 import {ref, reactive, onMounted} from 'vue'
+import {useI18n} from 'vue-i18n'
 import {ElMessage} from 'element-plus'
 import {
   getUnifiedNotificationConfigs,
@@ -210,8 +211,9 @@ export default {
     Setting
   },
   setup() {
+    const {t} = useI18n()
+
     // 数据状态
-    // const emailFormRef = ref(null)
     const feishuFormRef = ref(null)
     const wechatFormRef = ref(null)
     const dingtalkFormRef = ref(null)
@@ -244,6 +246,16 @@ export default {
       }
     })
 
+    // 获取机器人类型显示名称
+    const getBotTypeName = (botType) => {
+      const typeMap = {
+        'feishu': t('notification.botTypes.feishu'),
+        'wechat': t('notification.botTypes.wechat'),
+        'dingtalk': t('notification.botTypes.dingtalk')
+      }
+      return typeMap[botType] || botType
+    }
+
     // 获取config_type映射
     const getConfigType = (botType) => {
       const configTypeMap = {
@@ -271,6 +283,7 @@ export default {
 
       try {
         const configType = getConfigType(botType)
+        const botTypeName = getBotTypeName(botType)
 
         // 检查是否已存在对应类型的机器人配置
         let webhookConfigId = null
@@ -280,28 +293,26 @@ export default {
             webhookConfigId = response.data.results[0].id
           }
         } catch (error) {
-          console.log('未找到现有Webhook配置，将创建新配置')
+          console.log(t('notification.messages.notFoundCreating'))
         }
 
         const botConfig = webhookBots[botType]
         let requestData
 
         if (webhookConfigId) {
-          // 更新现有配置 - 需要先获取现有配置，然后更新webhook_bots
+          // 更新现有配置
           const configResponse = await getUnifiedNotificationConfigs({ config_type: configType })
           const existingConfig = configResponse.data.results[0]
 
-          // 合并现有的webhook_bots和其他字段
           const updatedWebhookBots = existingConfig.webhook_bots || {}
           const botData = {
-            name: botConfig.name || `${botType}机器人`,
+            name: botConfig.name || `${botType} bot`,
             webhook_url: botConfig.webhook_url,
             enabled: botConfig.enabled,
             enable_ui_automation: botConfig.enable_ui_automation,
             enable_api_testing: botConfig.enable_api_testing
           }
 
-          // 钉钉机器人需要额外保存secret字段
           if (botType === 'dingtalk' && botConfig.secret) {
             botData.secret = botConfig.secret
           }
@@ -309,32 +320,30 @@ export default {
           updatedWebhookBots[botType] = botData
 
           requestData = {
-            name: existingConfig.name || `${botType === 'feishu' ? '飞书' : botType === 'wechat' ? '企微' : '钉钉'}机器人配置`,
+            name: existingConfig.name || `${botTypeName} Configuration`,
             config_type: configType,
             webhook_bots: updatedWebhookBots,
             is_active: true
           }
 
-          // 更新现有配置
           await updateUnifiedNotificationConfig(webhookConfigId, requestData)
-          ElMessage.success(`${botType === 'feishu' ? '飞书' : botType === 'wechat' ? '企微' : '钉钉'}机器人配置更新成功`)
+          ElMessage.success(t('notification.messages.saveSuccess', { type: botTypeName, action: t('notification.messages.updated') }))
         } else {
           // 创建新配置
           const botData = {
-            name: botConfig.name || `${botType}机器人`,
+            name: botConfig.name || `${botType} bot`,
             webhook_url: botConfig.webhook_url,
             enabled: botConfig.enabled,
             enable_ui_automation: botConfig.enable_ui_automation,
             enable_api_testing: botConfig.enable_api_testing
           }
 
-          // 钉钉机器人需要额外保存secret字段
           if (botType === 'dingtalk' && botConfig.secret) {
             botData.secret = botConfig.secret
           }
 
           requestData = {
-            name: `${botType === 'feishu' ? '飞书' : botType === 'wechat' ? '企微' : '钉钉'}机器人配置`,
+            name: `${botTypeName} Configuration`,
             config_type: configType,
             webhook_bots: {
               [botType]: botData
@@ -343,14 +352,15 @@ export default {
           }
 
           await createUnifiedNotificationConfig(requestData)
-          ElMessage.success(`${botType === 'feishu' ? '飞书' : botType === 'wechat' ? '企微' : '钉钉'}机器人配置创建成功`)
+          ElMessage.success(t('notification.messages.saveSuccess', { type: botTypeName, action: t('notification.messages.created') }))
         }
 
         // 重新加载数据以确保状态同步
         fetchWebhookConfig(botType)
       } catch (error) {
-        console.error('保存Webhook机器人配置失败:', error)
-        ElMessage.error(`${botType === 'feishu' ? '飞书' : botType === 'wechat' ? '企微' : '钉钉'}机器人配置保存失败: ` + (error.response?.data?.detail || error.message))
+        console.error('Save Webhook bot configuration failed:', error)
+        const botTypeName = getBotTypeName(botType)
+        ElMessage.error(t('notification.messages.saveFailed', { type: botTypeName }) + ': ' + (error.response?.data?.detail || error.message))
       }
     }
 
@@ -368,42 +378,39 @@ export default {
             webhookBots[botType].enabled = bot.enabled !== false
             webhookBots[botType].enable_ui_automation = bot.enable_ui_automation !== false
             webhookBots[botType].enable_api_testing = bot.enable_api_testing !== false
-            // 钉钉机器人需要额外读取secret字段
             if (botType === 'dingtalk' && bot.secret) {
               webhookBots[botType].secret = bot.secret
             }
           }
         }
       } catch (error) {
-        console.error('获取Webhook机器人配置失败:', error)
+        console.error('Fetch Webhook bot configuration failed:', error)
       }
     }
 
     // 获取所有Webhook机器人配置
     const fetchAllWebhookConfigs = async () => {
       try {
-        // 遍历所有机器人类型，分别获取配置
         for (const botType of Object.keys(webhookBots)) {
           await fetchWebhookConfig(botType)
         }
       } catch (error) {
-        console.error('获取所有Webhook机器人配置失败:', error)
+        console.error('Fetch all Webhook bot configurations failed:', error)
       }
     }
 
     // 组件挂载时获取数据
     onMounted(async () => {
       try {
-        console.log('NotificationConfigs 组件开始初始化')
+        console.log('NotificationConfigs component initializing')
         await fetchAllWebhookConfigs()
-        console.log('NotificationConfigs 组件初始化完成')
+        console.log('NotificationConfigs component initialized')
       } catch (error) {
-        console.error('NotificationConfigs 组件初始化失败:', error)
+        console.error('NotificationConfigs component initialization failed:', error)
       }
     })
 
     return {
-      // emailFormRef,
       feishuFormRef,
       wechatFormRef,
       dingtalkFormRef,

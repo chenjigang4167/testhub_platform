@@ -112,13 +112,9 @@
     </div>
 
     <!-- 模板表单对话框 -->
-    <el-dialog 
-      v-model="templateDialogVisible" 
+    <el-dialog
+      v-model="templateDialogVisible"
       :title="isEdit ? $t('reviewTemplate.editTitle') : $t('reviewTemplate.createTitle')"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
       width="800px"
     >
       <el-form :model="templateForm" :rules="templateRules" ref="templateFormRef" label-width="120px">
@@ -162,9 +158,9 @@
                 v-model="templateForm.checklist[index]"
                 :placeholder="$t('reviewTemplate.checklistItemPlaceholder')"
               />
-              <el-button 
-                type="danger" 
-                size="small" 
+              <el-button
+                type="danger"
+                size="small"
                 @click="removeChecklistItem(index)"
                 :icon="Delete"
               />
@@ -246,7 +242,7 @@ const fetchTemplates = async () => {
     if (filters.project) {
       params.project = filters.project
     }
-    
+
     const response = await api.get('/reviews/review-templates/', { params })
     templates.value = response.data.results || response.data || []
   } catch (error) {
@@ -313,18 +309,18 @@ const useTemplate = (template) => {
 
 const saveTemplate = async () => {
   if (!templateFormRef.value) return
-  
+
   try {
     await templateFormRef.value.validate()
     saving.value = true
-    
+
     const data = {
       ...templateForm,
       checklist: templateForm.checklist.filter(item => item.trim()),
       // 将project转换为数组格式，因为后端期望的是列表
       project: templateForm.project ? [templateForm.project] : []
     }
-    
+
     if (isEdit.value) {
       await api.put(`/reviews/review-templates/${editingTemplateId.value}/`, data)
       ElMessage.success(t('reviewTemplate.updateSuccess'))
@@ -332,10 +328,10 @@ const saveTemplate = async () => {
       await api.post('/reviews/review-templates/', data)
       ElMessage.success(t('reviewTemplate.createSuccess'))
     }
-    
+
     templateDialogVisible.value = false
     fetchTemplates()
-    
+
   } catch (error) {
     console.error('保存模板失败:', error)
     ElMessage.error(isEdit.value ? t('reviewTemplate.updateFailed') : t('reviewTemplate.createFailed'))

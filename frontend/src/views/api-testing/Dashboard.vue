@@ -265,7 +265,7 @@ const formatTime = (timeStr) => {
   const date = new Date(timeStr)
   const now = new Date()
   const diff = now - date
-  
+
   // 小于1分钟
   if (diff < 60000) {
     return t('apiTesting.dashboard.timeFormat.justNow')
@@ -326,6 +326,19 @@ onMounted(() => {
   margin-right: 20px;
   color: white;
   font-size: 24px;
+}
+
+.stat-icon :deep(.el-icon) {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-icon :deep(.el-icon svg) {
+  width: 100%;
+  height: 60%;
 }
 
 .stat-icon.bg-blue {
@@ -410,6 +423,19 @@ onMounted(() => {
   font-size: 24px;
 }
 
+.action-icon :deep(.el-icon) {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-icon :deep(.el-icon svg) {
+  width: 60%;
+  height: 60%;
+}
+
 .action-icon.bg-blue {
   background-color: #1890ff;
 }
@@ -470,6 +496,19 @@ onMounted(() => {
   color: #1890ff;
 }
 
+.feature-icon :deep(.el-icon) {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-icon :deep(.el-icon svg) {
+  width: 60%;
+  height: 60%;
+}
+
 .feature-title {
   font-size: 18px;
   font-weight: bold;
@@ -508,6 +547,19 @@ onMounted(() => {
   justify-content: center;
   margin-right: 12px;
   flex-shrink: 0;
+}
+
+.activity-icon :deep(.el-icon) {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-icon :deep(.el-icon svg) {
+  width: 60%;
+  height: 60%;
 }
 
 .activity-content {

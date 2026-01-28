@@ -5,7 +5,7 @@
       <h1 class="page-title">{{ $t('uiAutomation.nav.title') }}</h1>
       <p class="page-subtitle">{{ $t('uiAutomation.nav.subtitle') }}</p>
     </div>
-    
+
     <!-- 子路由内容显示区域 -->
     <router-view></router-view>
   </div>

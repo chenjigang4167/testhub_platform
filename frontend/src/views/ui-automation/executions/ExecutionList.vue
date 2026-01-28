@@ -121,9 +121,9 @@
               <el-icon><Refresh /></el-icon>
               {{ $t('uiAutomation.common.rerun') }}
             </el-button>
-            <el-button 
-              link 
-              type="danger" 
+            <el-button
+              link
+              type="danger"
               @click="handleDelete(row)"
             >
               {{ $t('uiAutomation.common.delete') }}
@@ -146,7 +146,7 @@
     </div>
 
     <!-- 执行详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="$t('uiAutomation.execution.executionDetail')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="900px">
+    <el-dialog v-model="showDetailDialog" :title="$t('uiAutomation.execution.executionDetail')" width="900px">
       <div v-if="currentExecution" class="execution-detail">
         <!-- 基本信息 -->
         <el-descriptions :column="2" border>
@@ -230,7 +230,7 @@
     </el-dialog>
 
     <!-- 重跑测试用例对话框 -->
-    <el-dialog v-model="showRerunDialogVisible" :title="$t('uiAutomation.execution.rerunTitle')" :close-on-click-modal="false" width="500px">
+    <el-dialog v-model="showRerunDialogVisible" :title="$t('uiAutomation.execution.rerunTitle')" width="500px">
       <el-form :model="rerunFormData" label-width="100px">
         <el-form-item :label="$t('uiAutomation.execution.testEngine')">
           <el-radio-group v-model="rerunFormData.engine">
@@ -328,17 +328,17 @@ const formatDateTime = (dateString) => {
 
 // 处理图片加载错误
 const handleImageError = (event, screenshot) => {
-  console.error('截图加载失败:', screenshot)
+  console.error('Screenshot load failed:', screenshot)
   const img = event.target
   img.style.display = 'none'
-  // 在图片后显示错误提示
+  // Show error message after image
   const errorDiv = img.parentElement.querySelector('.img-load-error')
   if (!errorDiv) {
     const div = document.createElement('div')
     div.className = 'img-load-error'
     div.innerHTML = `
       <i class="el-icon-warning"></i>
-      <span>图片加载失败（可能是 base64 编码问题）</span>
+      <span>${t('uiAutomation.execution.imageLoadFailed')}</span>
     `
     img.parentElement.appendChild(div)
   }

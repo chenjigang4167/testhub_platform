@@ -53,21 +53,21 @@
         <el-table-column prop="trigger_type" :label="$t('apiTesting.scheduledTask.triggerType')" width="120">
           <template #default="scope">
             <el-tag>
-              {{ scope.row.trigger_type === 'CRON' ? 'Cron' : scope.row.trigger_type === 'INTERVAL' ? '间隔' : '单次' }}
+              {{ getTriggerTypeText(scope.row.trigger_type) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="status" :label="$t('apiTesting.common.status')" width="100">
           <template #default="scope">
             <el-tag :type="scope.row.status === 'ACTIVE' ? 'success' : scope.row.status === 'PAUSED' ? 'warning' : 'info'">
-              {{ scope.row.status === 'ACTIVE' ? '激活' : scope.row.status === 'PAUSED' ? '暂停' : '完成' }}
+              {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="notification_type_display" :label="$t('apiTesting.scheduledTask.notificationType')" width="120">
           <template #default="scope">
-            <el-tag 
-              :type="getNotificationTypeTag(scope.row.notification_type_display)" 
+            <el-tag
+              :type="getNotificationTypeTag(scope.row.notification_type_display)"
               size="small"
             >
               {{ scope.row.notification_type_display || '-' }}
@@ -125,10 +125,6 @@
     <el-dialog
       v-model="showCreateDialog"
       :title="editingTask ? $t('apiTesting.scheduledTask.editTask') : $t('apiTesting.scheduledTask.createTask')"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
       width="800px"
       @close="resetTaskForm"
     >
@@ -155,7 +151,7 @@
             <el-radio label="ONCE">{{ $t('apiTesting.scheduledTask.triggerTypes.once') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        
+
         <!-- 根据触发器类型显示不同配置 -->
         <el-form-item v-if="taskForm.trigger_type === 'CRON'" :label="$t('apiTesting.scheduledTask.cronExpression')" required>
           <el-input v-model="taskForm.cron_expression" placeholder="0 0 * * *" />
@@ -196,7 +192,7 @@
             :placeholder="$t('apiTesting.scheduledTask.selectExecuteTime')"
           />
         </el-form-item>
-        
+
         <!-- 根据任务类型显示不同配置 -->
         <el-form-item v-if="taskForm.task_type === 'TEST_SUITE'" :label="$t('apiTesting.automation.testSuite')" required>
           <el-select v-model="taskForm.test_suite" :placeholder="$t('apiTesting.scheduledTask.selectTestSuite')">
@@ -260,7 +256,7 @@
           </el-select>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <el-button @click="showCreateDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
         <el-button type="primary" @click="submitTaskForm" :loading="submitting">

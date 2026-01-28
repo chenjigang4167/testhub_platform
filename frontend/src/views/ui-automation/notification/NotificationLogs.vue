@@ -161,10 +161,6 @@
     <el-dialog
         v-model="detailDialogVisible"
         :title="$t('uiAutomation.notification.logs.detailTitle')"
-        :close-on-click-modal="false"
-        :close-on-press-escape="false"
-        :modal="true"
-        :destroy-on-close="false"
         width="600px"
         :before-close="handleDetailDialogClose"
     >
@@ -272,7 +268,7 @@ export default {
     Search
   },
   setup() {
-    const { t } = useI18n()
+    const { t, locale } = useI18n()
 
     // 数据状态
     const loading = ref(false)
@@ -326,7 +322,7 @@ export default {
         logsData.value = response.data.results || []
         pagination.total = response.data.count || 0
       } catch (error) {
-        console.error('获取通知日志失败:', error)
+        console.error('Failed to fetch notification logs:', error)
         ElMessage.error(t('uiAutomation.notification.logs.messages.loadFailed'))
       } finally {
         loading.value = false
@@ -383,21 +379,29 @@ export default {
     const formatDate = (dateString) => {
       if (!dateString) return '-'
       const date = new Date(dateString)
-      return date.toLocaleString('zh-CN')
+      return date.toLocaleString(locale.value === 'zh-cn' ? 'zh-CN' : 'en-US')
     }
 
     // 获取状态标签类型
     const getStatusTagType = (status) => {
       const typeMap = {
+        // Chinese
         '发送成功': 'success',
-        'success': 'success',
         '发送失败': 'danger',
-        'failed': 'danger',
         '待发送': 'info',
-        'pending': 'info',
         '发送中': 'warning',
-        'sending': 'warning',
         '已取消': 'info',
+        // English
+        'Success': 'success',
+        'Failed': 'danger',
+        'Pending': 'info',
+        'Sending': 'warning',
+        'Cancelled': 'info',
+        // Lowercase
+        'success': 'success',
+        'failed': 'danger',
+        'pending': 'info',
+        'sending': 'warning',
         'cancelled': 'info'
       }
       return typeMap[status] || 'info'
@@ -406,9 +410,14 @@ export default {
     // 获取通知类型标签类型
     const getNotificationTypeTagType = (typeDisplay) => {
       const typeMap = {
+        // Chinese
         '邮箱通知': '',
         'Webhook机器人': 'primary',
-        '两种都发送': 'warning'
+        '两种都发送': 'warning',
+        // English
+        'Email': '',
+        'Webhook Bot': 'primary',
+        'Both': 'warning'
       }
       return typeMap[typeDisplay] || 'info'
     }
@@ -474,7 +483,7 @@ export default {
         }
       } catch (e) {
         // JSON解析失败,尝试作为纯文本解析(邮件通知)
-        console.log('尝试解析为纯文本格式')
+        console.log('Attempting to parse as plain text format')
       }
 
       // 解析纯文本格式的邮件内容
@@ -508,7 +517,7 @@ export default {
         return result.length > 0 ? result : null
       } catch (e) {
         // 如果所有解析都失败,返回null以显示原始内容
-        console.error('解析通知内容失败:', e)
+        console.error('Failed to parse notification content:', e)
         return null
       }
     })

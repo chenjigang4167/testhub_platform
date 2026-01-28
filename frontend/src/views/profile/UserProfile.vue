@@ -3,7 +3,7 @@
     <div class="page-header">
       <h1 class="page-title">{{ $t('profile.title') }}</h1>
     </div>
-    
+
     <div class="card-container">
       <el-tabs v-model="activeTab">
         <el-tab-pane :label="$t('profile.basicInfo')" name="basic">
@@ -30,7 +30,7 @@
         </el-tab-pane>
 
         <el-tab-pane :label="$t('profile.changePassword')" name="password">
-          <el-form label-width="100px">
+          <el-form label-width="120px">
             <el-form-item :label="$t('profile.currentPassword')">
               <el-input type="password" />
             </el-form-item>

@@ -16,9 +16,9 @@
     </div>
 
     <div class="card-container">
-      <el-table 
-        :data="records" 
-        v-loading="loading" 
+      <el-table
+        :data="records"
+        v-loading="loading"
         style="width: 100%"
         @selection-change="handleSelectionChange"
         ref="tableRef"
@@ -71,7 +71,7 @@
     </div>
 
     <!-- 详情对话框 -->
-    <el-dialog v-model="showDetailDialog" title="$t('uiAutomation.ai.executionRecords.executionDetail')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="800px">
+    <el-dialog v-model="showDetailDialog" :title="$t('uiAutomation.ai.executionRecords.executionDetail')" width="800px">
       <div v-if="currentRecord" class="record-detail">
         <div class="detail-item">
           <span class="label">{{ $t('uiAutomation.ai.executionRecords.caseName') }}:</span>
@@ -328,13 +328,13 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  
+
   .page-title {
     font-size: 20px;
     font-weight: 600;
     margin: 0;
   }
-  
+
   .header-actions {
     display: flex;
     align-items: center;

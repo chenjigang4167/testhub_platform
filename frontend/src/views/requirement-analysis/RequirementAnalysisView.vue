@@ -236,9 +236,9 @@
       <div v-if="isGenerating || showResults" class="generation-progress">
         <div class="progress-card">
           <h3>
-            🤖 AI正在为您生成测试用例
+            {{ $t('requirementAnalysis.aiGeneratingTitle') }}
             <span class="current-mode-badge">
-              (当前模式: {{ globalOutputMode === 'stream' ? '⚡实时流式输出' : '📄完整输出' }})
+              ({{ globalOutputMode === 'stream' ? $t('requirementAnalysis.realtimeStream') : $t('requirementAnalysis.completeOutput') }})
             </span>
           </h3>
           <div class="progress-info">
@@ -248,15 +248,15 @@
             </div>
             <div class="progress-item">
               <span class="label">{{ $t('requirementAnalysis.currentStatus') }}</span>
-              <span class="value">{{ showResults ? '生成完成' : progressText }}</span>
+              <span class="value">{{ showResults ? $t('requirementAnalysis.generationComplete') : progressText }}</span>
             </div>
           </div>
 
           <!-- 流式内容实时显示区域 -->
           <div v-if="streamedContent" class="stream-content-display">
             <div class="stream-header">
-              <span class="stream-title">✍️ 实时生成内容</span>
-              <span class="stream-status">{{ streamedContent.length }} 字符</span>
+              <span class="stream-title">{{ $t('requirementAnalysis.realtimeGeneratedContent') }}</span>
+              <span class="stream-status">{{ $t('requirementAnalysis.characters', { count: streamedContent.length }) }}</span>
             </div>
             <div class="stream-content" v-html="formatMarkdown(streamedContent)"></div>
           </div>
@@ -264,8 +264,8 @@
           <!-- 评审内容显示区域 -->
           <div v-if="streamedReviewContent" class="stream-content-display" style="margin-top: 15px;">
             <div class="stream-header">
-              <span class="stream-title">📝 AI评审意见</span>
-              <span class="stream-status">{{ streamedReviewContent.length }} 字符</span>
+              <span class="stream-title">{{ $t('requirementAnalysis.aiReviewComments') }}</span>
+              <span class="stream-status">{{ $t('requirementAnalysis.characters', { count: streamedReviewContent.length }) }}</span>
             </div>
             <div class="stream-content" v-html="formatMarkdown(streamedReviewContent)"></div>
           </div>
@@ -274,10 +274,10 @@
           <div v-if="finalTestCases" class="stream-content-display" style="margin-top: 15px;">
             <div class="stream-header">
               <span class="stream-title">
-                🎯 最终版用例
-                <span v-if="isGenerating" class="streaming-indicator">🔄 正在生成...</span>
+                {{ $t('requirementAnalysis.finalVersionTestCases') }}
+                <span v-if="isGenerating" class="streaming-indicator">{{ $t('requirementAnalysis.generating') }}</span>
               </span>
-              <span class="stream-status">{{ finalTestCases.length }} 字符</span>
+              <span class="stream-status">{{ $t('requirementAnalysis.characters', { count: finalTestCases.length }) }}</span>
             </div>
             <div class="stream-content final-testcases" v-html="formatMarkdown(finalTestCases)"></div>
           </div>
@@ -304,17 +304,17 @@
           <!-- 任务完成后的操作按钮 -->
           <div v-if="showResults" class="completion-actions">
             <button class="download-btn" @click="downloadTestCases">
-              <span>📥 下载测试用例</span>
+              <span>📥 {{ $t('requirementAnalysis.downloadExcel') }}</span>
             </button>
             <button class="save-btn" @click="saveToTestCaseRecords">
-              <span>💾 保存到用例库</span>
+              <span>💾 {{ $t('requirementAnalysis.saveToRecords') }}</span>
             </button>
             <button class="new-generation-btn" @click="resetGeneration">
-              <span>📝 生成新用例</span>
+              <span>📝 {{ $t('requirementAnalysis.newGeneration') }}</span>
             </button>
           </div>
           <button v-else class="cancel-generation-btn" @click="cancelGeneration">
-            取消生成
+            {{ $t('requirementAnalysis.cancelGeneration') }}
           </button>
         </div>
       </div>
@@ -368,7 +368,7 @@ export default {
       // 生成状态
       isGenerating: false,
       currentTaskId: null,
-      progressText: '准备开始生成...',
+      progressText: '',
       currentStep: 0,
       pollInterval: null,
       eventSource: null,  // SSE连接
@@ -439,6 +439,7 @@ export default {
   },
   
   mounted() {
+    this.progressText = this.$t('requirementAnalysis.preparing')
     this.loadProjects()
     this.checkConfigStatus()
   },
@@ -521,7 +522,7 @@ export default {
           this.showConfigGuide = true
         }
       } catch (error) {
-        console.error('检查配置状态失败:', error)
+        console.error('Failed to check config status:', error)
         // 如果检查失败，默认不显示引导，避免影响正常使用
         this.showConfigGuide = false
         this.checkingConfig = false
@@ -723,15 +724,15 @@ export default {
       try {
         const userStore = useUserStore()
         if (userStore.isTokenExpiringSoon && userStore.refreshToken) {
-          console.log('生成前主动刷新token...')
+          console.log('Refreshing token before generation...')
           await userStore.refreshAccessToken()
-          console.log('Token刷新成功，可以安全开始生成')
+          console.log('Token refreshed successfully, safe to start generation')
         } else if (userStore.accessToken) {
-          console.log('Token状态良好，无需刷新')
+          console.log('Token status is good, no refresh needed')
         }
       } catch (error) {
-        console.error('Token刷新失败:', error)
-        ElMessage.error('Token刷新失败，请重新登录')
+        console.error('Token refresh failed:', error)
+        ElMessage.error(this.$t('requirementAnalysis.tokenRefreshFailed'))
         return
       }
 
@@ -811,44 +812,44 @@ export default {
           console.log('📦 解析后的数据:', data)
 
           if (data.type === 'progress') {
-            // 更新进度状态
+            // Update progress status
             if (data.status === 'generating') {
               this.currentStep = 2
-              this.progressText = `正在编写测试用例... ${data.progress}%`
+              this.progressText = `${this.$t('requirementAnalysis.statusGenerating')} ${data.progress}%`
             } else if (data.status === 'reviewing') {
               this.currentStep = 3
-              this.progressText = `正在评审测试用例... ${data.progress}%`
+              this.progressText = `${this.$t('requirementAnalysis.statusReviewing')} ${data.progress}%`
             } else if (data.status === 'revising') {
               this.currentStep = 3
-              this.progressText = `正在生成最终版用例... ${data.progress}%`
+              this.progressText = `${this.$t('requirementAnalysis.statusRevising')} ${data.progress}%`
             }
           } else if (data.type === 'content') {
-            // 实时接收流式内容（用例生成）
-            console.log('✍️ 收到流式内容:', data.content.length, '个字符')
+            // Real-time streaming content (case generation)
+            console.log('✍️ Received streaming content:', data.content.length, 'characters')
             this.streamedContent += data.content
             this.currentStep = 2
-            this.progressText = '正在生成测试用例...'
+            this.progressText = this.$t('requirementAnalysis.statusGenerating')
           } else if (data.type === 'review_content') {
-            // 实时接收评审内容
-            console.log('📝 收到评审内容:', data.content.length, '个字符', '当前总长度:', this.streamedReviewContent.length + data.content.length)
+            // Real-time review content
+            console.log('📝 Received review content:', data.content.length, 'characters', 'Total length:', this.streamedReviewContent.length + data.content.length)
             this.streamedReviewContent += data.content
             this.currentStep = 3
-            this.progressText = '正在评审测试用例...'
+            this.progressText = this.$t('requirementAnalysis.statusReviewing')
           } else if (data.type === 'final_content') {
-            // 实时接收最终版用例内容
-            console.log('🎯 收到最终用例内容:', data.content.length, '个字符', '当前总长度:', this.finalTestCases.length + data.content.length)
+            // Real-time final test cases content
+            console.log('🎯 Received final cases content:', data.content.length, 'characters', 'Total length:', this.finalTestCases.length + data.content.length)
             this.finalTestCases += data.content
             this.currentStep = 3
-            this.progressText = '🎯 正在流式生成最终版用例...'
+            this.progressText = '🎯 ' + this.$t('requirementAnalysis.statusRevising')
           } else if (data.type === 'status') {
-            // 最终状态
-            console.log('📊 收到状态更新:', data.status)
+            // Final status
+            console.log('📊 Received status update:', data.status)
             if (data.status === 'completed') {
-              this.progressText = '生成完成！'
-              // 获取最终结果
+              this.progressText = this.$t('requirementAnalysis.statusCompleted')
+              // Fetch final result
               this.fetchFinalResult()
             } else if (data.status === 'failed') {
-              this.progressText = '生成失败'
+              this.progressText = this.$t('requirementAnalysis.statusFailed')
               this.handleGenerationError()
             }
           } else if (data.type === 'done') {
@@ -897,7 +898,7 @@ export default {
           console.error('❌ SSE连接中断，降级到轮询模式')
           this.eventSource.close()
           this.eventSource = null
-          ElMessage.warning('流式连接中断，切换到轮询模式')
+          ElMessage.warning(this.$t('requirementAnalysis.streamConnectionInterrupted'))
           this.startPolling()
         }
       }
@@ -918,7 +919,7 @@ export default {
 
         // 设置最终版用例（如果还没有通过流式接收完整）
         if (task.final_test_cases) {
-          console.log('📝 从task对象获取最终用例')
+          console.log('📝 Getting final cases from task object')
           // 无论this.finalTestCases是否已有值，都用最新的final_test_cases覆盖
           // 这样确保完整输出模式下也能正确显示最终版用例
           this.finalTestCases = task.final_test_cases
@@ -926,13 +927,13 @@ export default {
 
         // 如果评审内容为空，从task对象中获取
         if (!this.streamedReviewContent && task.review_feedback) {
-          console.log('📝 从task对象获取评审内容')
+          console.log('📝 Getting review content from task object')
           this.streamedReviewContent = task.review_feedback
         }
 
         // 如果生成内容为空，从task对象中获取
         if (!this.streamedContent && task.generated_test_cases) {
-          console.log('✍️ 从task对象获取生成内容')
+          console.log('✍️ Getting generated content from task object')
           this.streamedContent = task.generated_test_cases
         }
 
@@ -941,14 +942,14 @@ export default {
           this.eventSource = null
         }
 
-        // 只显示一次完成消息
+        // Only show completion message once
         if (!this.hasShownCompletionMessage) {
-          ElMessage.success('测试用例生成完成！')
+          ElMessage.success(this.$t('requirementAnalysis.generateCompleteSuccess'))
           this.hasShownCompletionMessage = true
         }
       } catch (error) {
-        console.error('获取最终结果失败:', error)
-        ElMessage.error('获取结果失败')
+        console.error('Failed to fetch final result:', error)
+        ElMessage.error(this.$t('requirementAnalysis.fetchResultFailed'))
         this.isGenerating = false
       }
     },
@@ -992,15 +993,15 @@ export default {
 
             // 设置显示内容（完整输出模式下需要）
             if (task.generated_test_cases) {
-              console.log('✍️ 轮询模式 - 设置生成内容')
+              console.log('✍️ Polling mode - Setting generated content')
               this.streamedContent = task.generated_test_cases
             }
             if (task.review_feedback) {
-              console.log('📝 轮询模式 - 设置评审内容')
+              console.log('📝 Polling mode - Setting review content')
               this.streamedReviewContent = task.review_feedback
             }
             if (task.final_test_cases) {
-              console.log('🎯 轮询模式 - 设置最终版用例')
+              console.log('🎯 Polling mode - Setting final test cases')
               this.finalTestCases = task.final_test_cases
             }
 

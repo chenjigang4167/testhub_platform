@@ -83,7 +83,7 @@
     </div>
     
     <!-- 创建项目对话框 -->
-    <el-dialog v-model="showCreateDialog" :title="$t('uiAutomation.project.createProject')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="500px">
+    <el-dialog v-model="showCreateDialog" :title="$t('uiAutomation.project.createProject')" width="500px">
       <el-form ref="createFormRef" :model="createForm" :rules="formRules" label-width="80px">
         <el-form-item :label="$t('uiAutomation.project.projectName')" prop="name">
           <el-input v-model="createForm.name" :placeholder="$t('uiAutomation.project.rules.nameRequired')" />
@@ -117,7 +117,7 @@
     </el-dialog>
     
     <!-- 编辑项目对话框 -->
-    <el-dialog v-model="showEditDialog" :title="$t('uiAutomation.project.editProject')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="500px">
+    <el-dialog v-model="showEditDialog" :title="$t('uiAutomation.project.editProject')" width="500px">
       <el-form ref="editFormRef" :model="editForm" :rules="formRules" label-width="80px">
         <el-form-item :label="$t('uiAutomation.project.projectName')" prop="name">
           <el-input v-model="editForm.name" :placeholder="$t('uiAutomation.project.rules.nameRequired')" />
@@ -151,7 +151,7 @@
     </el-dialog>
     
     <!-- 项目详情弹框 -->
-    <el-dialog v-model="showDetailDialog" :title="$t('uiAutomation.project.projectDetail')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="showDetailDialog" :title="$t('uiAutomation.project.projectDetail')" width="600px">
       <div v-if="currentProjectDetail" class="project-detail">
         <el-descriptions bordered column="1">
           <el-descriptions-item :label="$t('uiAutomation.project.projectName')">{{ currentProjectDetail.name }}</el-descriptions-item>
@@ -366,7 +366,7 @@ const deleteProject = async (id) => {
       cancelButtonText: t('uiAutomation.common.cancel'),
       type: 'warning'
     })
-    
+
     await deleteUiProject(id)
     ElMessage.success(t('uiAutomation.project.messages.deleteSuccess'))
     loadProjects()

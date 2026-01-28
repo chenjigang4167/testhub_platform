@@ -229,7 +229,7 @@
     </ul>
 
     <!-- 编辑页面对话框 -->
-    <el-dialog v-model="showEditPageDialog" title="$t('uiAutomation.element.editPageTitle')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="500px">
+    <el-dialog v-model="showEditPageDialog" :title="$t('uiAutomation.element.editPageTitle')" width="500px">
       <el-form ref="editPageFormRef" :model="editPageForm" :rules="pageRules" label-width="100px">
         <el-form-item :label="$t('uiAutomation.element.pageName')" prop="name">
           <el-input v-model="editPageForm.name" :placeholder="$t('uiAutomation.element.pageNamePlaceholder')" />
@@ -339,24 +339,23 @@ const pageRules = computed(() => ({
   ]
 }))
 
-// 元素类型标签映射
-const elementTypeMap = {
-  'BUTTON': '按钮',
-  'INPUT': '输入框',
-  'LINK': '链接',
-  'DROPDOWN': '下拉框',
-  'CHECKBOX': '复选框',
-  'RADIO': '单选框',
-  'TEXT': '文本',
-  'IMAGE': '图片',
-  'TABLE': '表格',
-  'FORM': '表单',
-  'MODAL': '弹窗'
-}
-
 // 获取元素类型标签
 const getElementTypeLabel = (type) => {
-  return elementTypeMap[type] || type
+  const typeKey = type?.toLowerCase()
+  const typeMap = {
+    'button': t('uiAutomation.element.elementTypes.button'),
+    'input': t('uiAutomation.element.elementTypes.input'),
+    'link': t('uiAutomation.element.elementTypes.link'),
+    'dropdown': t('uiAutomation.element.elementTypes.dropdown'),
+    'checkbox': t('uiAutomation.element.elementTypes.checkbox'),
+    'radio': t('uiAutomation.element.elementTypes.radio'),
+    'text': t('uiAutomation.element.elementTypes.text'),
+    'image': t('uiAutomation.element.elementTypes.image'),
+    'table': t('uiAutomation.element.elementTypes.table'),
+    'form': t('uiAutomation.element.elementTypes.form'),
+    'modal': t('uiAutomation.element.elementTypes.modal')
+  }
+  return typeMap[typeKey] || type
 }
 
 // 获取所有页面

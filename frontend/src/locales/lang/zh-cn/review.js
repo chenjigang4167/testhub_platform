@@ -66,6 +66,179 @@ export default {
     noData: '暂无数据',
     noDeadline: '无截止时间'
   },
+
+  // Review Detail Page
+  reviewDetail: {
+    title: '评审详情',
+    back: '返回',
+    edit: '编辑',
+    submitReview: '提交评审',
+
+    // Basic Info Card
+    basicInfo: '基本信息',
+    reviewTitle: '评审标题',
+    associatedProject: '关联项目',
+    notSet: '未设置',
+    creator: '创建人',
+    useTemplate: '使用模板',
+    noTemplate: '未使用模板',
+    reviewStatus: '评审状态',
+    priority: '优先级',
+    deadline: '截止时间',
+    none: '无',
+    createdAt: '创建时间',
+    reviewDescription: '评审描述',
+
+    // Progress Card
+    reviewProgress: '评审进度',
+    reviewers: '评审人员',
+    completed: '已完成',
+    pendingReview: '待评审',
+
+    // Reviewers Card
+    reviewersCard: '评审人员',
+    reviewer: '评审人',
+    reviewerStatus: '评审状态',
+    reviewerComment: '评审意见',
+    checklist: '检查清单',
+    notFilled: '未填写',
+    assignedAt: '分配时间',
+    reviewedAt: '评审时间',
+    pendingReviewTime: '待评审',
+
+    // Assignment Status
+    assignmentPending: '待评审',
+    assignmentApproved: '已通过',
+    assignmentRejected: '已拒绝',
+    assignmentAbstained: '弃权',
+
+    // Testcases Card
+    reviewTestcases: '评审用例',
+    testcaseTitle: '用例标题',
+    testType: '测试类型',
+    author: '作者',
+    view: '查看',
+    comment: '评论',
+
+    // Test Types
+    testTypeFunctional: '功能测试',
+    testTypeIntegration: '集成测试',
+    testTypeApi: 'API测试',
+    testTypeUi: 'UI测试',
+    testTypePerformance: '性能测试',
+    testTypeSecurity: '安全测试',
+
+    // Comments Card
+    reviewComments: '评审意见',
+    addComment: '添加意见',
+    relatedTestcase: '相关用例',
+    noComments: '暂无评审意见',
+
+    // Comment Types
+    commentTypeGeneral: '整体意见',
+    commentTypeTestcase: '用例意见',
+    commentTypeStep: '步骤意见',
+
+    // Submit Review Dialog
+    submitReviewDialog: '提交评审',
+    reviewResult: '评审结果',
+    approved: '通过',
+    rejected: '拒绝',
+    abstained: '弃权',
+    checklistTitle: '检查清单',
+    allPass: '全部通过',
+    allFail: '全部不通过',
+    reviewCommentLabel: '评审意见',
+    reviewCommentPlaceholder: '请输入评审意见',
+    cancel: '取消',
+    submit: '提交',
+
+    // Add Comment Dialog
+    addCommentDialog: '添加评审意见',
+    commentType: '意见类型',
+    generalComment: '整体意见',
+    testcaseComment: '用例意见',
+    relatedTestcaseLabel: '相关用例',
+    selectTestcase: '请选择用例',
+    commentContent: '意见内容',
+    commentContentPlaceholder: '请输入意见内容',
+
+    // Checklist Stats
+    checklistPass: '通过',
+    checklistFail: '不通过',
+    checklistTotal: '总计',
+
+    // Messages
+    fetchDetailFailed: '获取评审详情失败',
+    submitSuccess: '评审提交成功',
+    submitFailed: '评审提交失败',
+    addCommentSuccess: '意见添加成功',
+    addCommentFailed: '意见添加失败',
+    commentRequired: '请输入意见内容'
+  },
+
+  // Review Form Page
+  reviewForm: {
+    createTitle: '创建评审',
+    editTitle: '编辑评审',
+    back: '返回',
+    save: '保存',
+
+    // Form Fields
+    reviewTitle: '评审标题',
+    reviewTitlePlaceholder: '请输入评审标题',
+    associatedProject: '关联项目',
+    selectProject: '请选择项目',
+    priority: '优先级',
+    selectPriority: '请选择优先级',
+    priorityLow: '低',
+    priorityMedium: '中',
+    priorityHigh: '高',
+    priorityUrgent: '紧急',
+    deadline: '截止日期',
+    deadlinePlaceholder: '请选择截止日期',
+    description: '评审描述',
+    descriptionPlaceholder: '请输入评审描述',
+
+    // Testcase Selection
+    selectTestcases: '选择用例',
+    searchTestcases: '搜索用例',
+    selectTestcasesBtn: '选择用例',
+    emptyTestcasesTip: '请选择要评审的测试用例',
+
+    // Reviewers
+    reviewers: '评审人员',
+    selectReviewers: '请选择评审人员',
+
+    // Template
+    reviewTemplate: '评审模板',
+    selectTemplate: '可选择评审模板',
+
+    // Testcase Selector Dialog
+    testcaseSelectorTitle: '选择测试用例',
+    testcaseTitle: '用例标题',
+    testType: '测试类型',
+    author: '作者',
+    confirm: '确定',
+    cancel: '取消',
+
+    // Validation
+    titleRequired: '请输入评审标题',
+    projectRequired: '请选择项目',
+    testcasesRequired: '请选择要评审的用例',
+    reviewersRequired: '请选择评审人员',
+    selectProjectFirst: '请先选择项目',
+
+    // Messages
+    createSuccess: '评审创建成功',
+    updateSuccess: '评审更新成功',
+    saveFailed: '保存失败',
+    fetchProjectsFailed: '获取项目列表失败',
+    fetchUsersFailed: '获取用户列表失败',
+    fetchTestcasesFailed: '获取用例列表失败',
+    fetchTemplatesFailed: '获取模板列表失败',
+    fetchReviewFailed: '获取评审数据失败'
+  },
   reviewTemplate: {
     title: '评审模板',
     createTemplate: '创建模板',

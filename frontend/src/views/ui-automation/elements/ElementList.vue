@@ -122,7 +122,7 @@
           <el-switch v-model="createForm.is_unique" />
         </el-form-item>
         <el-form-item :label="$t('uiAutomation.element.waitTimeout')" prop="wait_timeout">
-          <el-input-number v-model="createForm.wait_timeout" :min="0" :max="30" :step="1" placeholder="等待超时(秒)" />
+          <el-input-number v-model="createForm.wait_timeout" :min="0" :max="30" :step="1" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -134,7 +134,7 @@
     </el-dialog>
     
     <!-- 编辑元素对话框 -->
-    <el-dialog v-model="showEditDialog" :title="$t('uiAutomation.element.editElement')" :close-on-click-modal="false" width="600px">
+    <el-dialog v-model="showEditDialog" :title="$t('uiAutomation.element.editElement')" width="600px">
       <el-form ref="editFormRef" :model="editForm" :rules="formRules" label-width="100px">
         <el-form-item :label="$t('uiAutomation.element.elementName')" prop="name">
           <el-input v-model="editForm.name" :placeholder="$t('uiAutomation.element.rules.nameRequired')" />
@@ -165,8 +165,8 @@
         <el-form-item :label="$t('uiAutomation.element.isUnique')" prop="is_unique">
           <el-switch v-model="editForm.is_unique" />
         </el-form-item>
-        <el-form-item label="$t('uiAutomation.element.waitTimeout')" prop="wait_timeout">
-          <el-input-number v-model="editForm.wait_timeout" :min="0" :max="30" :step="1" placeholder="$t('uiAutomation.element.waitTimeout')(s)" />
+        <el-form-item :label="$t('uiAutomation.element.waitTimeout')" prop="wait_timeout">
+          <el-input-number v-model="editForm.wait_timeout" :min="0" :max="30" :step="1" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -471,7 +471,7 @@ const handleDeleteElement = async (id) => {
       cancelButtonText: t('uiAutomation.common.cancel'),
       type: 'warning'
     })
-    
+
     await deleteElement(id)
     ElMessage.success(t('uiAutomation.element.messages.deleteSuccess'))
     loadElements()

@@ -73,8 +73,8 @@
         </el-table-column>
         <el-table-column :label="$t('reviewList.progress')" width="120">
           <template #default="{ row }">
-            <el-progress 
-              :percentage="getReviewProgress(row)" 
+            <el-progress
+              :percentage="getReviewProgress(row)"
               :color="getProgressColor(row)"
               :stroke-width="6"
             />
@@ -122,13 +122,12 @@
     </div>
 
     <!-- 评审对话框 -->
-    <el-dialog v-model="reviewDialogVisible" title="$t('reviewList.submitReview')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="reviewDialogVisible" :title="$t('reviewList.submitReview')" width="600px">
       <el-form :model="reviewForm" label-width="80px">
         <el-form-item :label="$t('reviewList.reviewResult')" required>
           <el-radio-group v-model="reviewForm.status">
             <el-radio-button label="approved">{{ $t('reviewList.approved') }}</el-radio-button>
             <el-radio-button label="rejected">{{ $t('reviewList.rejected') }}</el-radio-button>
-            <el-radio-button label="abstained">弃权</el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="$t('reviewList.reviewComment')">
@@ -195,7 +194,7 @@ const fetchReviews = async () => {
       ...filters
     }
     Object.keys(params).forEach(key => params[key] === '' && delete params[key])
-    
+
     const response = await api.get('/reviews/reviews/', { params })
     reviews.value = response.data.results
     pagination.total = response.data.count

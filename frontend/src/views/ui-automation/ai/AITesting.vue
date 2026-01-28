@@ -60,7 +60,7 @@
               </el-button>
             </el-form-item>
           </el-form>
-          
+
           <el-alert
             :title="$t('uiAutomation.ai.tip')"
             type="info"
@@ -81,7 +81,7 @@
             <pre v-else class="log-content">{{ logs }}</pre>
           </div>
         </el-col>
-        
+
         <el-col :span="12">
           <div class="section-title">{{ $t('uiAutomation.ai.taskDetails') }}</div>
           <div class="task-list-container">
@@ -90,9 +90,9 @@
               <span>{{ $t('uiAutomation.ai.analyzing') }}</span>
             </div>
             <div v-else-if="plannedTasks.length > 0">
-              <div 
-                v-for="task in plannedTasks" 
-                :key="task.id" 
+              <div
+                v-for="task in plannedTasks"
+                :key="task.id"
                 class="task-item"
                 :class="task.status"
               >
@@ -116,7 +116,7 @@
     </div>
 
     <!-- 保存为用例对话框 -->
-    <el-dialog v-model="showSaveDialog" title="$t('uiAutomation.ai.saveAsCaseTitle')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="500px">
+    <el-dialog v-model="showSaveDialog" :title="$t('uiAutomation.ai.saveAsCaseTitle')" width="500px">
       <el-form :model="saveForm" :rules="saveRules" ref="saveFormRef" label-width="80px">
         <el-form-item :label="$t('uiAutomation.ai.caseName')" prop="name">
           <el-input v-model="saveForm.name" :placeholder="$t('uiAutomation.ai.caseNamePlaceholder')" />
@@ -188,13 +188,13 @@ const handleRun = async () => {
     })
 
     // analyzing.value = false // 移除过早设置，改为在轮询获取到任务列表后再取消
-    
+
     currentExecutionId.value = response.data.execution_id
     ElMessage.success(t('uiAutomation.ai.messages.startSuccess'))
 
     // 开始轮询日志
     pollLogs()
-    
+
   } catch (error) {
     console.error('执行失败:', error)
     ElMessage.error(t('uiAutomation.ai.messages.startFailed') + ': ' + (error.response?.data?.error || error.message))
@@ -206,14 +206,14 @@ const handleRun = async () => {
 // 停止任务
 const handleStop = async () => {
   if (!currentExecutionId.value) return
-  
+
   try {
     await stopAITask(currentExecutionId.value)
     ElMessage.warning(t('uiAutomation.ai.messages.stopping'))
     // 不立即设置 running = false，等待轮询检测到状态变化
   } catch (error) {
     console.error('停止失败:', error)
-    ElMessage.error('停止失败')
+    ElMessage.error(t('uiAutomation.ai.messages.stopFailed'))
   }
 }
 

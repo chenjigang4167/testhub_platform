@@ -218,7 +218,7 @@
     </el-dialog>
 
     <!-- 运行配置对话框 -->
-    <el-dialog v-model="showRunDialog" :title="$t('uiAutomation.suite.runConfig')" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog v-model="showRunDialog" :title="$t('uiAutomation.suite.runConfig')" width="600px">
       <el-form :model="runConfig" label-width="120px">
         <el-form-item :label="$t('uiAutomation.suite.testEngine')">
           <el-select v-model="runConfig.engine" :placeholder="$t('uiAutomation.suite.testEngine')">
@@ -708,12 +708,12 @@ const getPriorityTag = (priority) => {
 }
 
 const getPriorityText = (priority) => {
-  const priorityMap = {
-    'high': '高',
-    'medium': '中',
-    'low': '低'
-  }
-  return priorityMap[priority] || '未知'
+  const priorityKey = {
+    'high': 'high',
+    'medium': 'medium',
+    'low': 'low'
+  }[priority]
+  return priorityKey ? t(`uiAutomation.priority.${priorityKey}`) : t('uiAutomation.status.unknown')
 }
 
 const getCaseStatusTag = (status) => {
@@ -728,14 +728,14 @@ const getCaseStatusTag = (status) => {
 }
 
 const getCaseStatusText = (status) => {
-  const statusMap = {
-    'draft': '草稿',
-    'ready': '就绪',
-    'running': '执行中',
-    'passed': '通过',
-    'failed': '失败'
-  }
-  return statusMap[status] || '未知'
+  const statusKey = {
+    'draft': 'draft',
+    'ready': 'ready',
+    'running': 'running',
+    'passed': 'passed',
+    'failed': 'failed'
+  }[status]
+  return statusKey ? t(`uiAutomation.status.${statusKey}`) : t('uiAutomation.status.unknown')
 }
 
 // 监听新增套件按钮
@@ -849,7 +849,7 @@ const handleNewSuite = async () => {
 
 .mode-description {
   margin-top: 8px;
-  
+
   .description-text {
     font-size: 12px;
     color: #909399;

@@ -29,6 +29,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from asgiref.sync import sync_to_async
+from django.db import models
 
 from .models import (
     RequirementDocument, RequirementAnalysis, BusinessRequirement,
@@ -2828,6 +2829,62 @@ class TestCaseGenerationTaskViewSet(viewsets.ModelViewSet):
             'P3': 'low'
         }
         return priority_map.get(priority_str, 'medium')
+
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """获取测试用例生成任务的统计信息"""
+        try:
+            # 获取查询参数
+            status_param = request.query_params.get('status')
+            created_by = request.query_params.get('created_by')
+            
+            # 构建查询
+            queryset = TestCaseGenerationTask.objects.all()
+            
+            if status_param:
+                queryset = queryset.filter(status=status_param)
+            
+            if created_by:
+                queryset = queryset.filter(created_by_id=created_by)
+            
+            # 使用聚合查询获取统计信息
+            from django.db.models import Count
+            
+            stats = queryset.aggregate(
+                total=Count('id'),
+                completed=Count('id', filter=models.Q(status='completed')),
+                pending=Count('id', filter=models.Q(status='pending')),
+                generating=Count('id', filter=models.Q(status='generating')),
+                reviewing=Count('id', filter=models.Q(status='reviewing')),
+                revising=Count('id', filter=models.Q(status='revising')),
+                failed=Count('id', filter=models.Q(status='failed')),
+                cancelled=Count('id', filter=models.Q(status='cancelled'))
+            )
+            
+            # 计算运行中的任务（pending + generating + reviewing + revising）
+            stats['running'] = (
+                stats['pending'] + stats['generating'] + 
+                stats['reviewing'] + stats['revising']
+            )
+            
+            return Response({
+                'total': stats['total'],
+                'completed': stats['completed'],
+                'running': stats['running'],
+                'failed': stats['failed'],
+                'pending': stats['pending'],
+                'generating': stats['generating'],
+                'reviewing': stats['reviewing'],
+                'revising': stats['revising'],
+                'cancelled': stats['cancelled']
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"获取统计信息时出错: {e}")
+            return Response(
+                {'error': f'获取统计信息失败: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class ConfigStatusViewSet(viewsets.ViewSet):

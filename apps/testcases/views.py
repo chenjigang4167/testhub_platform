@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status, pagination
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -6,13 +6,19 @@ from rest_framework import filters
 from django.db import models
 from .models import TestCase, TestCaseStep, TestCaseAttachment, TestCaseComment
 from .serializers import (
-    TestCaseSerializer, TestCaseCreateSerializer, TestCaseUpdateSerializer
+    TestCaseSerializer, TestCaseListSerializer, TestCaseCreateSerializer, TestCaseUpdateSerializer
 )
 from apps.projects.models import Project
+
+class TestCasePagination(pagination.PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 class TestCaseListCreateView(generics.ListCreateAPIView):
     queryset = TestCase.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = TestCasePagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['priority', 'status', 'test_type', 'project']
     search_fields = ['title', 'description']
@@ -22,15 +28,20 @@ class TestCaseListCreateView(generics.ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return TestCaseCreateSerializer
-        return TestCaseSerializer
+        return TestCaseListSerializer
     
     def get_queryset(self):
-        # 只显示用户有权限访问的项目的测试用例
         user = self.request.user
         accessible_projects = Project.objects.filter(
             models.Q(owner=user) | models.Q(members=user)
         ).distinct()
-        return TestCase.objects.filter(project__in=accessible_projects)
+        return TestCase.objects.filter(
+            project__in=accessible_projects
+        ).select_related(
+            'author', 'assignee', 'project'
+        ).prefetch_related(
+            'versions'
+        ).distinct()
     
     def get_user_accessible_projects(self, user):
         """获取用户有权限访问的项目"""
@@ -86,7 +97,13 @@ class TestCaseDetailView(generics.RetrieveUpdateDestroyAPIView):
         accessible_projects = Project.objects.filter(
             models.Q(owner=user) | models.Q(members=user)
         ).distinct()
-        return TestCase.objects.filter(project__in=accessible_projects)
+        return TestCase.objects.filter(
+            project__in=accessible_projects
+        ).select_related(
+            'author', 'assignee', 'project'
+        ).prefetch_related(
+            'versions', 'step_details', 'attachments', 'comments'
+        )
     
     def get_user_accessible_projects(self, user):
         """获取用户有权限访问的项目"""

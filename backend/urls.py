@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/ui-automation/', include('apps.ui_automation.urls')),
     path('api/', include('apps.api_testing.urls')),
     path('api/core/', include('apps.core.urls')),
+    path('api/data-factory/', include('apps.data_factory.urls')),
 ]
 
 if settings.DEBUG:

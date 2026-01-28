@@ -41,15 +41,13 @@
                     class="test-btn"
                     @click="testConnection(config)"
                     :disabled="isTestingConnection">
-                    <span v-if="isTestingConnection && testingConfigId === config.id">🔄</span>
-                    <span v-else>🔗</span>
                     {{ $t('configuration.aiModel.testConnection') }}
                   </button>
                   <button class="edit-btn" @click="editConfig(config)">{{ $t('configuration.common.edit') }}</button>
                   <button class="delete-btn" @click="deleteConfig(config.id)">{{ $t('configuration.common.delete') }}</button>
                 </div>
               </div>
-              
+
               <div class="config-details">
               <div class="detail-item">
                 <label>{{ $t('configuration.aiModel.baseUrl') }}:</label>
@@ -95,10 +93,10 @@
     </div>
 
     <!-- 添加/编辑配置弹窗 -->
-    <div 
+    <div
       v-show="shouldShowModal"
       :class="['config-modal', { hidden: !shouldShowModal }]"
-      @click="closeModals" 
+      @click="closeModals"
       @keydown.esc="closeModals">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
@@ -114,8 +112,7 @@
                 type="text"
                 class="form-input"
                 :placeholder="$t('configuration.aiModel.configNamePlaceholder')"
-                required
-                @input="console.log('Name input:', $event.target.value, 'Form value:', configForm.name)">
+                required>
             </div>
 
             <div class="form-group">
@@ -153,8 +150,7 @@
                 type="password"
                 class="form-input"
                 :placeholder="isEditing ? $t('configuration.aiModel.apiKeyPlaceholderEdit') : $t('configuration.aiModel.apiKeyPlaceholder')"
-                :required="!isEditing"
-                @input="console.log('API Key input:', $event.target.value, 'Form value:', configForm.api_key)">
+                :required="!isEditing">
               <small v-if="isEditing && configForm.api_key && configForm.api_key.includes('*')" class="form-hint">
                 {{ $t('configuration.aiModel.apiKeyMaskHint') }}
               </small>
@@ -420,7 +416,7 @@ export default {
       } catch (error) {
         console.error('Failed to load configs:', error)
         this.configs = [] // 确保configs始终是数组
-        
+
         if (error.response?.status === 401) {
           ElMessage.error(this.t('configuration.aiModel.messages.pleaseLogin'))
         } else {
@@ -522,7 +518,7 @@ export default {
         )
         
         if (existingConfig) {
-          ElMessage.error(`已存在相同的活跃配置：${existingConfig.name}。请选择不同的模型类型或角色，或先禁用现有配置。`)
+          ElMessage.error(this.t('configuration.aiModel.messages.duplicateConfig', { name: existingConfig.name }))
           return
         }
       }
@@ -559,14 +555,14 @@ export default {
       } catch (error) {
         console.error('Failed to save config:', error)
         console.error('Error response:', error.response?.data)
-        
+
         if (error.response?.data) {
           const errors = error.response.data
           let errorMessage = this.t('configuration.aiModel.messages.saveFailed') + ': '
 
           // 处理唯一约束错误
           if (errors.non_field_errors) {
-            const uniqueConstraintError = errors.non_field_errors.find(err => 
+            const uniqueConstraintError = errors.non_field_errors.find(err =>
               err.includes('唯一集合') || err.includes('unique')
             )
             if (uniqueConstraintError) {
@@ -584,7 +580,7 @@ export default {
               }
             })
           }
-          
+
           ElMessage.error(errorMessage)
         } else {
           ElMessage.error(this.t('configuration.aiModel.messages.saveFailedDetail', { error: error.message }))
@@ -624,12 +620,7 @@ export default {
       this.testingConfigId = config.id
 
       try {
-        // 测试连接需要更长的超时时间（90秒），因为大模型响应较慢
-        const response = await api.post(
-          `/requirement-analysis/ai-models/${config.id}/test_connection/`,
-          {},
-          { timeout: 90000 }  // 90秒超时
-        )
+        const response = await api.post(`/requirement-analysis/ai-models/${config.id}/test_connection/`)
         this.testResult = response.data
         this.showTestResult = true
       } catch (error) {
@@ -1031,17 +1022,6 @@ export default {
   color: #666;
   font-size: 0.85rem;
   font-style: italic;
-}
-
-.form-section-title {
-  margin: 25px 0 15px 0;
-  padding: 10px 15px;
-  background: #f8f9fa;
-  border-left: 4px solid #3498db;
-  font-weight: 600;
-  color: #2c3e50;
-  font-size: 1rem;
-  border-radius: 4px;
 }
 
 .modal-actions {

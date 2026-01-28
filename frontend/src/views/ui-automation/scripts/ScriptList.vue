@@ -114,7 +114,7 @@
     </el-dialog>
 
     <!-- 编辑对话框 -->
-    <el-dialog v-model="showEditDialog" :title="$t('uiAutomation.script.editScript')" width="80%" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false">
+    <el-dialog v-model="showEditDialog" :title="$t('uiAutomation.script.editScript')" width="80%" :close-on-click-modal="false">
       <div v-if="editingScript" class="script-editor">
         <div class="editor-header">
           <span class="script-name">{{ editingScript.name }}</span>

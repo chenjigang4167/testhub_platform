@@ -95,12 +95,22 @@ export default {
     generationCancelled: 'Generation cancelled',
     statusGenerating: 'Writing test cases...',
     statusReviewing: 'Reviewing test cases...',
+    statusRevising: 'Generating final test cases...',
     statusCompleted: 'Generation complete!',
     statusFailed: 'Generation failed',
     generateCompleteSuccess: 'Test case generation complete!',
     checkProgressFailed: 'Failed to check progress',
     createTaskFailed: 'Failed to create task',
     unknownError: 'Unknown error',
+    tokenRefreshFailed: 'Token refresh failed, please login again',
+    streamConnectionInterrupted: 'Stream connection interrupted, switching to polling mode',
+    fetchResultFailed: 'Failed to fetch result',
+
+    // Stream Display
+    realtimeGeneratedContent: '✍️ Real-time Generated Content',
+    aiReviewComments: '📝 AI Review Comments',
+    finalVersionTestCases: '✅ Final Test Cases',
+    characters: '{count} characters',
 
     // Results
     viewResultsBtn: 'View Results',
@@ -448,6 +458,7 @@ export default {
     basicInfo: '📋 Basic Information',
     configName: 'Config Name',
     configNamePlaceholder: 'e.g.: Default Generation Config',
+    defaultConfigName: 'Default Generation Config',
     enableThisConfig: 'Enable this config',
     enableHint: 'Note: Only one config can be enabled. Enabling this will automatically disable other configs',
 

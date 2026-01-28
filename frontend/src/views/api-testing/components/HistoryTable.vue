@@ -1,8 +1,8 @@
 <template>
   <div class="history-table">
-    <el-table 
-      :data="data" 
-      v-loading="loading" 
+    <el-table
+      :data="data"
+      v-loading="loading"
       style="width: 100%"
       @selection-change="$emit('selection-change', $event)"
     >
@@ -18,9 +18,9 @@
       <el-table-column prop="request_data.url" :label="$t('apiTesting.component.historyTable.url')" min-width="300" show-overflow-tooltip />
       <el-table-column prop="status_code" :label="$t('apiTesting.component.historyTable.statusCode')" width="100">
         <template #default="scope">
-          <el-tag 
+          <el-tag
             v-if="scope.row.status_code"
-            :type="getStatusType(scope.row.status_code)" 
+            :type="getStatusType(scope.row.status_code)"
             size="small"
           >
             {{ scope.row.status_code }}

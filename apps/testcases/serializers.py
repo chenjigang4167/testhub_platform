@@ -40,6 +40,32 @@ class TestCaseSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at']
 
+class TestCaseListSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
+    assignee = serializers.SerializerMethodField()
+    project = serializers.SerializerMethodField()
+    versions = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = TestCase
+        fields = [
+            'id', 'title', 'description', 'priority', 'status', 'test_type',
+            'author', 'assignee', 'project', 'versions', 'tags', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_author(self, obj):
+        return {'id': obj.author.id, 'username': obj.author.username} if obj.author else None
+    
+    def get_assignee(self, obj):
+        return {'id': obj.assignee.id, 'username': obj.assignee.username} if obj.assignee else None
+    
+    def get_project(self, obj):
+        return {'id': obj.project.id, 'name': obj.project.name} if obj.project else None
+    
+    def get_versions(self, obj):
+        return [{'id': v.id, 'name': v.name, 'is_baseline': v.is_baseline} for v in obj.versions.all()]
+
 class TestCaseCreateSerializer(serializers.ModelSerializer):
     project_id = serializers.IntegerField(required=False, allow_null=True, help_text="项目ID，可选")
     version_ids = serializers.ListField(

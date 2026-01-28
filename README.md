@@ -79,6 +79,19 @@ TestHub 是一个功能强大的智能测试管理平台，集成了 **AI 需求
 - **测试报告**: 多维度数据统计和可视化图表
 - **Allure 集成**: 支持生成专业的 Allure 测试报告
 
+### 🏭 数据工厂
+- **字符工具**（9个功能）: 字符串处理、文本对比、正则表达式测试、字数统计、大小写转换
+- **编码工具**（12个功能）: Base64编解码、时间戳转换、Unicode转换、进制转换、颜色值转换、URL编解码、JWT解码、条形码/二维码生成、图片Base64转换
+- **随机工具**（6个功能）: 随机数、随机字符串、UUID、随机布尔值、随机列表元素
+- **加密工具**（8个功能）: MD5/SHA1/SHA256/SHA512哈希、AES加密解密、HMAC签名
+- **测试数据**（4个功能）: 中文姓名、手机号、邮箱、地址生成
+- **JSON工具**（8个功能）: JSON格式化（树形展示）、JSON压缩、JSON校验、JSONPath查询、JSON对比、JSON转XML/YAML/CSV
+- **Crontab工具**（4个功能）: 生成/解析Crontab表达式、获取下次执行时间、验证表达式
+- **标签系统**: 支持多标签管理，可在接口测试和UI测试中引用带标签的数据
+- **使用记录**: 工具使用历史记录和统计
+- **场景筛选**: 按使用场景（数据生成、格式转换、数据验证、加密解密）筛选工具
+- **数据引用**: 在接口测试（请求参数、断言、前置条件）和UI测试（测试步骤、输入数据、断言）中引用数据工厂数据
+
 ### 👥 项目与团队管理
 - **项目管理**: 多项目支持，项目成员和角色管理
 - **版本管理**: 版本规划和测试用例关联
@@ -121,6 +134,7 @@ testhub_platform/
 │   ├── testcases/                  # 测试用例管理
 │   ├── testsuites/                 # 测试套件管理
 │   ├── executions/                 # 测试执行管理
+│   ├── data_factory/               # 数据工厂
 │   ├── reports/                    # 测试报告
 │   ├── reviews/                    # 用例评审管理
 │   ├── versions/                   # 版本管理
@@ -147,6 +161,7 @@ testhub_platform/
 │   │   │   ├── auth/               # 登录注册
 │   │   │   ├── projects/           # 项目管理
 │   │   │   ├── testcases/          # 测试用例
+│   │   │   ├── data-factory/       # 数据工厂
 │   │   │   ├── reviews/            # 用例评审
 │   │   │   ├── requirement-analysis/  # 需求分析
 │   │   │   ├── assistant/          # 智能助手
@@ -215,6 +230,12 @@ DB_PORT=3306
 SECRET_KEY=your-secret-key-here
 DEBUG=True
 
+# 本地化配置
+# 语言: 'en-us' (英语), 'zh-hans' (简体中文), 'ja' (日语), 'ko' (韩语) 等
+# 时区: 参考 https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+LANGUAGE_CODE=zh-hans
+TIME_ZONE=Asia/Shanghai
+
 # 邮件配置（可选）
 EMAIL_HOST=smtp.163.com
 EMAIL_PORT=465
@@ -223,6 +244,8 @@ EMAIL_HOST_USER=your_email@gmail.com
 EMAIL_HOST_PASSWORD=your_email_password
 DEFAULT_FROM_EMAIL=your_email@gmail.com
 ```
+
+详细的语言和时区配置说明请参考 [LOCALIZATION_CONFIG.md](LOCALIZATION_CONFIG.md)
 
 5. **初始化数据库**
 ```bash
@@ -248,17 +271,38 @@ python manage.py createsuperuser
 # 根目录执行
 python manage.py init_locator_strategies
 ```
-7**启动定时任务**
+
+7. **启动定时任务**
 ```bash
 # 启动统一任务调度器(同时管理API和UI模块)
 python manage.py run_all_scheduled_tasks
 ```
 
-8**启动服务**
+8. **数据工厂初始化（从低版本升级到当前版本需要执行此步骤，新安装不需要执行此步骤）**
+```bash
+python manage.py makemigrations data_factory
+python manage.py migrate data_factory
+```
+
+9. **启动服务**
 ```bash
 # 启动 Django 开发服务器
 python manage.py runserver
 ```
+
+### 数据工厂模块初始化
+
+数据工厂模块需要创建数据库表：
+
+```bash
+# 创建数据工厂表
+python manage.py makemigrations data_factory
+python manage.py migrate data_factory
+```
+
+**详细使用说明**：请查看 [数据工厂使用说明.md](./docs/数据工厂使用说明.md) 获取完整的功能介绍、使用技巧和最佳实践。
+
+**快速开始指南**：请查看 [数据工厂快速开始.md](./docs/数据工厂快速开始.md) 快速上手数据工厂功能。
 
 ### 前端部署
 
@@ -284,6 +328,18 @@ npm run build
 - **后端 API**: http://localhost:8000
 - **API 文档**: http://localhost:8000/api/docs/
 - **Admin 后台**: http://localhost:8000/admin/
+
+## 📄 文档
+
+- **[更新日志 (CHANGELOG)](./docs/CHANGELOG.md)**: 查看版本更新历史和重要变更
+- **[数据工厂使用说明](./docs/数据工厂使用说明.md)**: 数据工厂功能完整介绍和使用技巧
+- **[数据工厂快速开始](./docs/数据工厂快速开始.md)**: 数据工厂快速上手指南
+- **[数据工厂功能说明](./docs/数据工厂功能说明.md)**: 数据工厂功能详细说明
+- **[数据工厂API接口文档](./docs/数据工厂API接口文档.md)**: 数据工厂 API 接口文档
+- **[UI自动化测试执行说明](./docs/UI自动化测试执行说明.md)**: UI 自动化测试执行指南
+- **[WebDriver驱动管理优化说明](./docs/WebDriver驱动管理优化说明.md)**: WebDriver 驱动管理优化说明
+- **[用例评审管理功能说明](./docs/用例评审管理功能说明.md)**: 用例评审管理功能说明
+- **[问题排查指南](./docs/问题排查指南.md)**: 常见问题排查指南
 
 ## 📚 核心功能模块说明
 
@@ -373,6 +429,48 @@ npm run build
 - `RequestHistory`: 请求历史
 - `ApiScheduledTask`: 定时任务
 - `ApiNotificationConfig`: 通知配置
+
+### 4.5. 数据工厂模块 (`data_factory`)
+
+**功能**:
+- **字符工具**（9个功能）: 去除空格换行、字符串替换、转义反转义、字数统计、文本对比、正则测试、大小写转换、字符串格式化
+- **编码工具**（12个功能）: 生成条形码/二维码、时间戳转换、进制转换、Unicode/ASCII转换、颜色值转换、Base64编解码、URL编解码、JWT解码、图片Base64转换
+- **随机工具**（6个功能）: 随机整数/浮点数、随机字符串、UUID生成、随机布尔值、随机列表元素
+- **加密工具**（8个功能）: MD5/SHA1/SHA256/SHA512哈希、AES加密解密、HMAC签名
+- **测试数据**（4个功能）: 生成中文姓名、中国手机号、中国邮箱、中国地址
+- **JSON工具**（8个功能）: JSON格式化（树形展示）、JSON压缩、JSON校验、JSONPath查询、JSON对比、JSON转XML/YAML/CSV
+- **Crontab工具**（4个功能）: 生成/解析Crontab表达式、获取下次执行时间、验证表达式
+- **标签系统**: 支持多标签管理，可在接口测试和UI测试中引用带标签的数据
+- **使用记录**: 工具使用历史记录和统计
+- **场景筛选**: 按使用场景（数据生成、格式转换、数据验证、加密解密）筛选工具
+- **数据引用**: 在接口测试（请求参数、断言、前置条件）和UI测试（测试步骤、输入数据、断言）中引用数据工厂数据
+
+**核心特性**:
+- **51个实用工具**: 覆盖字符处理、编码转换、随机数据、加密解密、测试数据、JSON处理、Crontab管理等多个场景
+- **标签管理**: 每条数据记录可添加多个标签，支持按标签筛选和管理
+- **数据引用**: 在接口测试和UI测试中通过DataFactorySelector组件引用带标签的数据
+- **历史记录**: 完整的工具使用历史，支持按工具分类、工具名称、标签等多维度查询
+- **实时预览**: JSON格式化支持树形展示、展开/折叠、实时预览（300ms防抖）
+- **状态持久化**: JSON格式化的展开/折叠状态自动保存到localStorage
+
+**数据模型**:
+- `DataFactoryRecord`: 数据工厂使用记录
+  - `tool_name`: 工具名称
+  - `tool_category`: 工具分类（string/encoding/random/encryption/test_data/json/crontab）
+  - `tool_scenario`: 使用场景（data_generate/format_convert/data_validation/encrypt）
+  - `input_data`: 输入数据（JSON）
+  - `output_data`: 输出数据（JSON）
+  - `is_saved`: 是否保存
+  - `tags`: 标签（JSON数组）
+  - `created_at`: 创建时间
+  - `updated_at`: 更新时间
+
+**API 路由**:
+- `/api/data-factory/`: 数据工厂记录管理（CRUD）
+- `/api/data-factory/execute/`: 执行工具
+- `/api/data-factory/download_static_file/{filename}/`: 下载生成的文件（条形码、二维码等）
+
+**详细使用说明**: 请查看 [数据工厂使用说明.md](./数据工厂使用说明.md) 获取完整的功能介绍、使用技巧和最佳实践。
 
 ### 5. UI 自动化测试模块 (`ui_automation`)
 
@@ -559,6 +657,7 @@ SIMPLE_JWT = {
 - **智能助手**: `dify_configs`, `assistant_sessions`, `chat_messages`
 - **API 测试**: `api_projects`, `api_collections`, `api_requests`, `api_environments`, `test_suites`, `request_history`, `api_scheduled_tasks`
 - **UI 自动化**: `ui_projects`, `ui_elements`, `element_groups`, `ui_page_objects`, `ui_test_scripts`, `ui_test_cases`, `ui_test_suites`, `ui_test_executions`, `ui_scheduled_tasks`, `ai_cases`, `ai_intelligent_mode_configs`
+- **数据工厂**: `data_factory_record` - 工具使用记录表
 - **JWT 安全**: `blacklisted_token`, `outstanding_token` - Token 黑名单管理
 
 ## 🤝 贡献指南

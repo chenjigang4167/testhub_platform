@@ -191,8 +191,8 @@ import { useI18n } from 'vue-i18n'
 export default {
   name: 'GenerationConfigView',
   setup() {
-    const { t } = useI18n()
-    return { t }
+    const { t, locale } = useI18n()
+    return { t, locale }
   },
   data() {
     return {
@@ -203,7 +203,7 @@ export default {
       isSaving: false,
       editingConfigId: null,
       configForm: {
-        name: '默认生成配置',
+        name: '',
         default_output_mode: 'stream',
         enable_auto_review: true,
         review_timeout: 1500,
@@ -213,6 +213,7 @@ export default {
   },
 
   mounted() {
+    this.configForm.name = this.t('generationConfig.defaultConfigName')
     this.loadConfigs()
   },
 
@@ -241,7 +242,7 @@ export default {
 
         console.log('Final configs count:', this.configs.length)
       } catch (error) {
-        console.error('加载配置失败:', error)
+        console.error('Failed to load config:', error)
         this.configs = []
 
         if (error.response?.status === 401) {
@@ -254,7 +255,7 @@ export default {
 
     resetForm() {
       this.configForm = {
-        name: '默认生成配置',
+        name: this.t('generationConfig.defaultConfigName'),
         default_output_mode: 'stream',
         enable_auto_review: true,
         review_timeout: 1500,
@@ -290,7 +291,7 @@ export default {
         this.closeModals()
         this.loadConfigs()
       } catch (error) {
-        console.error('保存配置失败:', error)
+        console.error('Failed to save config:', error)
         ElMessage.error(this.t('generationConfig.saveFailed') + ': ' + (error.response?.data?.error || error.message))
       } finally {
         this.isSaving = false
@@ -303,7 +304,7 @@ export default {
         ElMessage.success(this.t('generationConfig.enableSuccess'))
         this.loadConfigs()
       } catch (error) {
-        console.error('启用配置失败:', error)
+        console.error('Failed to enable config:', error)
         ElMessage.error(this.t('generationConfig.enableFailed') + ': ' + (error.response?.data?.error || error.message))
       }
     },
@@ -318,7 +319,7 @@ export default {
         ElMessage.success(this.t('generationConfig.deleteSuccess'))
         this.loadConfigs()
       } catch (error) {
-        console.error('删除配置失败:', error)
+        console.error('Failed to delete config:', error)
         ElMessage.error(this.t('generationConfig.deleteFailed') + ': ' + (error.response?.data?.error || error.message))
       }
     },
@@ -334,7 +335,7 @@ export default {
     formatDateTime(dateString) {
       if (!dateString) return ''
       const date = new Date(dateString)
-      return date.toLocaleString('zh-CN', {
+      return date.toLocaleString(this.locale === 'zh-cn' ? 'zh-CN' : 'en-US', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',

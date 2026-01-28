@@ -7,7 +7,7 @@
         <el-button type="primary" @click="editTestCase">{{ $t('common.edit') }}</el-button>
       </div>
     </div>
-    
+
     <div class="card-container" v-if="testcase">
       <el-descriptions :column="2" border>
         <el-descriptions-item :label="$t('testcase.caseTitle')" :span="2">{{ testcase.title }}</el-descriptions-item>
@@ -21,10 +21,10 @@
         <el-descriptions-item :label="$t('testcase.project')">{{ testcase.project?.name || $t('testcase.noProject') }}</el-descriptions-item>
         <el-descriptions-item :label="$t('testcase.relatedVersions')" :span="2">
           <div v-if="testcase.versions && testcase.versions.length > 0" class="version-tags">
-            <el-tag 
-              v-for="version in testcase.versions" 
-              :key="version.id" 
-              size="small" 
+            <el-tag
+              v-for="version in testcase.versions"
+              :key="version.id"
+              size="small"
               :type="version.is_baseline ? 'warning' : 'info'"
               class="version-tag"
             >

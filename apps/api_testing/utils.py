@@ -2,6 +2,7 @@ import json
 import time
 from django.utils import timezone
 from .models import RequestHistory
+from .variable_resolver import VariableResolver
 
 
 def execute_assertions(response, assertions):
@@ -111,6 +112,9 @@ def execute_test_suite(test_suite, environment, executed_by):
     import time
     
     try:
+        # 创建变量解析器
+        resolver = VariableResolver()
+        
         # 创建执行记录
         execution = TestExecution.objects.create(
             test_suite=test_suite,
@@ -139,8 +143,9 @@ def execute_test_suite(test_suite, environment, executed_by):
                 if environment:
                     variables.update(environment.variables)
                 
-                # 替换URL中的变量
+                # 替换URL中的变量（先解析动态函数，再替换环境变量）
                 url = _replace_variables(api_request.url, variables)
+                url = resolver.resolve(url)
                 
                 # 准备请求头
                 headers = {}
@@ -149,16 +154,19 @@ def execute_test_suite(test_suite, environment, executed_by):
                         if header_item.get('enabled', True) and header_item.get('key'):
                             key = header_item['key']
                             value = _replace_variables(str(header_item.get('value', '')), variables)
+                            value = resolver.resolve(value)
                             headers[key] = value
                 else:
                     headers = api_request.headers.copy()
                     for key, value in headers.items():
                         headers[key] = _replace_variables(str(value), variables)
+                        headers[key] = resolver.resolve(headers[key])
                 
                 # 准备请求参数
                 params = api_request.params.copy() if api_request.params else {}
                 for key, value in params.items():
                     params[key] = _replace_variables(str(value), variables)
+                    params[key] = resolver.resolve(params[key])
                 
                 # 准备请求体
                 body_data = None
@@ -166,6 +174,7 @@ def execute_test_suite(test_suite, environment, executed_by):
                     if api_request.body.get('type') == 'json':
                         body_data = api_request.body.get('data', {})
                         body_data = _replace_variables_in_dict(body_data, variables)
+                        body_data = _resolve_variables_in_dict(body_data, resolver)
                 
                 # 执行请求
                 start_time = time.time()
@@ -287,13 +296,17 @@ def execute_api_request(api_request, environment, executed_by):
     import time
     
     try:
+        # 创建变量解析器
+        resolver = VariableResolver()
+        
         # 解析环境变量
         variables = {}
         if environment:
             variables.update(environment.variables)
         
-        # 替换URL中的变量
+        # 替换URL中的变量（先解析动态函数，再替换环境变量）
         url = _replace_variables(api_request.url, variables)
+        url = resolver.resolve(url)
         
         # 准备请求头
         headers = {}
@@ -302,16 +315,19 @@ def execute_api_request(api_request, environment, executed_by):
                 if header_item.get('enabled', True) and header_item.get('key'):
                     key = header_item['key']
                     value = _replace_variables(str(header_item.get('value', '')), variables)
+                    value = resolver.resolve(value)
                     headers[key] = value
         else:
             headers = api_request.headers.copy()
             for key, value in headers.items():
                 headers[key] = _replace_variables(str(value), variables)
+                headers[key] = resolver.resolve(headers[key])
         
         # 准备请求参数
         params = api_request.params.copy() if api_request.params else {}
         for key, value in params.items():
             params[key] = _replace_variables(str(value), variables)
+            params[key] = resolver.resolve(params[key])
         
         # 准备请求体
         body_data = None
@@ -319,6 +335,7 @@ def execute_api_request(api_request, environment, executed_by):
             if api_request.body.get('type') == 'json':
                 body_data = api_request.body.get('data', {})
                 body_data = _replace_variables_in_dict(body_data, variables)
+                body_data = _resolve_variables_in_dict(body_data, resolver)
         
         # 执行请求
         start_time = time.time()
@@ -397,7 +414,6 @@ def _replace_variables(text, variables):
         result = result.replace(f'{{{{{key}}}}}', replacement)
     return result
 
-
 def _replace_variables_in_dict(data, variables):
     """递归替换字典中的变量"""
     if isinstance(data, dict):
@@ -406,5 +422,16 @@ def _replace_variables_in_dict(data, variables):
         return [_replace_variables_in_dict(item, variables) for item in data]
     elif isinstance(data, str):
         return _replace_variables(data, variables)
+    else:
+        return data
+
+def _resolve_variables_in_dict(data, resolver):
+    """递归解析字典中的动态函数占位符"""
+    if isinstance(data, dict):
+        return {k: _resolve_variables_in_dict(v, resolver) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [_resolve_variables_in_dict(item, resolver) for item in data]
+    elif isinstance(data, str):
+        return resolver.resolve(data)
     else:
         return data

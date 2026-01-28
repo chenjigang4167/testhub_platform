@@ -52,10 +52,6 @@
     <el-dialog
       v-model="showCreateDialog"
       :title="editingEnvironment ? $t('apiTesting.environment.editEnvironment') : $t('apiTesting.environment.createEnvironment')"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
       width="800px"
       @close="resetForm"
     >
@@ -104,7 +100,7 @@
               <div class="column">{{ $t('apiTesting.environment.currentValue') }}</div>
               <div class="column">{{ $t('apiTesting.common.operation') }}</div>
             </div>
-            
+
             <div class="variables-body">
               <div
                 v-for="(variable, index) in form.variables"
@@ -143,7 +139,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="variables-footer">
               <el-button size="small" @click="addVariable">
                 <el-icon><Plus /></el-icon>
@@ -153,7 +149,7 @@
           </div>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <el-button @click="showCreateDialog = false">{{ $t('apiTesting.common.cancel') }}</el-button>
         <el-button type="primary" @click="submitForm" :loading="submitting">
@@ -165,8 +161,7 @@
     <!-- 查看变量对话框 -->
     <el-dialog
       v-model="showViewDialog"
-      title="$t('apiTesting.environment.environmentVariableDetail')"
-      :close-on-click-modal="false"
+      :title="$t('apiTesting.environment.environmentVariableDetail')"
       width="600px"
     >
       <div v-if="viewingEnvironment" class="view-variables">
@@ -176,7 +171,7 @@
           <el-table-column prop="currentValue" :label="$t('apiTesting.environment.currentValue')" />
         </el-table>
       </div>
-      
+
       <template #footer>
         <el-button @click="showViewDialog = false">{{ $t('apiTesting.common.close') }}</el-button>
       </template>
@@ -279,11 +274,11 @@ const loadGlobalEnvironments = async () => {
 
 const loadLocalEnvironments = async () => {
   if (!selectedProject.value) return
-  
+
   loading.value = true
   try {
     const response = await api.get('/api-testing/environments/', {
-      params: { 
+      params: {
         scope: 'LOCAL',
         project: selectedProject.value
       }
@@ -371,7 +366,7 @@ const deleteEnvironment = async (environment) => {
         type: 'warning'
       }
     )
-    
+
     await api.delete(`/api-testing/environments/${environment.id}/`)
     ElMessage.success(t('apiTesting.messages.success.delete'))
 
@@ -411,7 +406,7 @@ const duplicateEnvironment = async (environment) => {
       null,
     variables: environment.variables || {}
   }
-  
+
   try {
     await api.post('/api-testing/environments/', newEnv)
     ElMessage.success(t('apiTesting.messages.success.copy'))
@@ -459,9 +454,9 @@ const submitForm = async () => {
       await api.post('/api-testing/environments/', data)
       ElMessage.success(t('apiTesting.messages.success.environmentCreated'))
     }
-    
+
     showCreateDialog.value = false
-    
+
     if (activeTab.value === 'GLOBAL') {
       await loadGlobalEnvironments()
     } else {

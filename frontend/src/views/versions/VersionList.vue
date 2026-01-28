@@ -3,9 +3,9 @@
     <div class="page-header">
       <h1 class="page-title">{{ $t('version.title') }}</h1>
       <div class="header-actions">
-        <el-button 
-          v-if="selectedVersions.length > 0" 
-          type="danger" 
+        <el-button
+          v-if="selectedVersions.length > 0"
+          type="danger"
           @click="batchDeleteVersions"
           :disabled="isDeleting">
           <el-icon><Delete /></el-icon>
@@ -17,7 +17,7 @@
         </el-button>
       </div>
     </div>
-    
+
     <div class="card-container">
       <div class="filter-bar">
         <el-row :gutter="20">
@@ -52,9 +52,9 @@
         </el-row>
       </div>
       
-      <el-table 
-        :data="versions" 
-        v-loading="loading" 
+      <el-table
+        :data="versions"
+        v-loading="loading"
         style="width: 100%"
         @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" />
@@ -70,10 +70,10 @@
         <el-table-column prop="projects" :label="$t('version.relatedProject')" width="300">
           <template #default="{ row }">
             <div v-if="row.projects && row.projects.length > 0" class="project-tags">
-              <el-tag 
-                v-for="project in row.projects.slice(0, 2)" 
-                :key="project.id" 
-                size="small" 
+              <el-tag
+                v-for="project in row.projects.slice(0, 2)"
+                :key="project.id"
+                size="small"
                 type="primary"
                 class="project-tag"
               >
@@ -120,13 +120,9 @@
     </div>
     
     <!-- 版本表单对话框 -->
-    <el-dialog 
-      v-model="versionDialogVisible" 
+    <el-dialog
+      v-model="versionDialogVisible"
       :title="isEdit ? $t('version.editVersion') : $t('version.createVersion')"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
       width="600px"
     >
       <el-form :model="versionForm" :rules="versionRules" ref="versionFormRef" label-width="120px">
@@ -158,7 +154,7 @@
             :placeholder="$t('version.versionDescriptionPlaceholder')"
           />
         </el-form-item>
-        
+
         <el-form-item>
           <el-checkbox v-model="versionForm.is_baseline">{{ $t('version.setAsBaseline') }}</el-checkbox>
         </el-form-item>
@@ -273,11 +269,11 @@ const editVersion = (version) => {
 
 const saveVersion = async () => {
   if (!versionFormRef.value) return
-  
+
   try {
     await versionFormRef.value.validate()
     saving.value = true
-    
+
     if (isEdit.value) {
       await api.put(`/versions/${editingVersionId.value}/`, versionForm)
       ElMessage.success(t('version.updateSuccess'))
@@ -285,10 +281,10 @@ const saveVersion = async () => {
       await api.post('/versions/', versionForm)
       ElMessage.success(t('version.createSuccess'))
     }
-    
+
     versionDialogVisible.value = false
     fetchVersions()
-    
+
   } catch (error) {
     if (error.response?.data) {
       const errors = Object.values(error.response.data).flat()
@@ -308,7 +304,7 @@ const deleteVersion = async (version) => {
       cancelButtonText: t('common.cancel'),
       type: 'warning'
     })
-    
+
     await api.delete(`/versions/${version.id}/`)
     ElMessage.success(t('version.deleteSuccess'))
     fetchVersions()

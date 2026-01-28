@@ -168,7 +168,7 @@
     </el-dialog>
 
     <!-- 编辑测试计划对话框 -->
-    <el-dialog title="$t('execution.editPlanDialog')" v-model="isEditPlanDialogOpen" :close-on-click-modal="false" :close-on-press-escape="false" :modal="true" :destroy-on-close="false" width="600px">
+    <el-dialog :title="$t('execution.editPlanDialog')" v-model="isEditPlanDialogOpen" width="600px">
       <el-form :model="editPlanForm" :rules="planRules" ref="editPlanFormRef" label-width="100px">
         <el-form-item :label="$t('execution.planName')" prop="name">
           <el-input v-model="editPlanForm.name" :placeholder="$t('execution.planNamePlaceholder')"></el-input>
@@ -346,18 +346,18 @@ const loadTestcasesByProjects = async (projectIds) => {
     filteredTestcases.value = []
     return
   }
-  
+
   loadingTestcases.value = true
-  
+
   try {
     const params = new URLSearchParams()
     projectIds.forEach(id => params.append('project_ids', id))
-    
+
     console.log('API URL:', `/executions/plans/testcases_by_projects/?${params.toString()}`)
-    
+
     const response = await api.get(`/executions/plans/testcases_by_projects/?${params.toString()}`)
     console.log('API Response:', response.data)
-    
+
     filteredTestcases.value = response.data.results || []
     console.log('Filtered testcases:', filteredTestcases.value)
   } catch (error) {
@@ -400,7 +400,7 @@ const createPlan = async () => {
   try {
     await planFormRef.value.validate()
     creating.value = true
-    
+
     await api.post('/executions/plans/', newPlanForm)
     ElMessage.success(t('execution.createSuccess'))
     isCreatePlanDialogOpen.value = false
@@ -424,10 +424,10 @@ const editPlan = async (plan) => {
     // 获取完整的测试计划详情
     const response = await api.get(`/executions/plans/${plan.id}/`)
     const planDetail = response.data
-    
+
     // 设置当前编辑的计划
     currentEditingPlan.value = planDetail
-    
+
     // 填充编辑表单数据
     Object.assign(editPlanForm, {
       id: planDetail.id,
@@ -442,7 +442,7 @@ const editPlan = async (plan) => {
       assignees: planDetail.assignees || [],
       is_active: planDetail.is_active
     })
-    
+
     isEditPlanDialogOpen.value = true
   } catch (error) {
     ElMessage.error(t('execution.fetchDetailFailed'))
@@ -453,7 +453,7 @@ const updatePlan = async () => {
   try {
     await editPlanFormRef.value.validate()
     updating.value = true
-    
+
     const updateData = {
       name: editPlanForm.name,
       description: editPlanForm.description,
@@ -462,7 +462,7 @@ const updatePlan = async () => {
       assignees: editPlanForm.assignees,
       is_active: editPlanForm.is_active
     }
-    
+
     await api.put(`/executions/plans/${editPlanForm.id}/`, updateData)
     ElMessage.success(t('execution.updateSuccess'))
     isEditPlanDialogOpen.value = false
@@ -497,7 +497,7 @@ const togglePlanStatus = async (plan) => {
     await ElMessageBox.confirm(t('execution.toggleStatusConfirm', { action }), t('common.confirm'), {
       type: 'warning'
     })
-    
+
     await api.patch(`/executions/plans/${plan.id}/`, {
       is_active: !plan.is_active
     })
@@ -617,7 +617,7 @@ const batchDeletePlans = async () => {
 
   } catch (error) {
     if (error !== 'cancel') {
-      console.error(`t('execution.batchDeleteFailed'):`, error);
+      console.error('批量删除失败:', error)
       ElMessage.error(t('execution.batchDeleteFailed'))
     }
   } finally {

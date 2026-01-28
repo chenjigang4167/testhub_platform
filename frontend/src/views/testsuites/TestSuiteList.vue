@@ -7,7 +7,7 @@
         {{ $t('testSuite.newSuite') }}
       </el-button>
     </div>
-    
+
     <div class="card-container">
       <div class="empty-state">
         <el-empty :description="$t('testSuite.inDevelopment')" />

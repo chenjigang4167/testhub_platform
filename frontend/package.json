@@ -11,6 +11,7 @@
   "dependencies": {
     "@element-plus/icons-vue": "^2.1.0",
     "axios": "^1.5.0",
+    "curlconverter": "^4.12.0",
     "dayjs": "^1.11.9",
     "echarts": "^5.4.3",
     "element-plus": "^2.3.9",
@@ -25,12 +26,12 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^6.0.3",
+    "@vitejs/plugin-vue": "^5.0.0",
     "@vue/eslint-config-prettier": "^8.0.0",
     "eslint": "^8.45.0",
     "eslint-plugin-vue": "^9.15.1",
     "prettier": "^3.0.0",
     "sass": "^1.64.1",
-    "vite": "^7.3.1"
+    "vite": "^5.4.21"
   }
 }

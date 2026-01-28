@@ -49,6 +49,11 @@ class VariableResolver:
             'guid': self._guid,
             'base64': self._base64,
             'md5': self._md5,
+            'sha1': self._sha1,
+            'sha256': self._sha256,
+            'random_mac': self._random_mac,
+            'random_ip': self._random_ip,
+            'random_password': self._random_password,
         }
     
     def resolve(self, text):
@@ -488,17 +493,99 @@ class VariableResolver:
     
     def _md5(self, text):
         """MD5哈希
-        
+
         Args:
             text: 要哈希的文本
-            
+
         Returns:
             MD5哈希值（32位小写）
-            
+
         Example:
             ${md5(hello)} -> "5d41402abc4b2a76b9719d911017c592"
         """
         return hashlib.md5(str(text).encode()).hexdigest()
+
+    def _sha1(self, text):
+        """SHA1哈希
+
+        Args:
+            text: 要哈希的文本
+
+        Returns:
+            SHA1哈希值（40位小写）
+
+        Example:
+            ${sha1(hello)} -> "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d"
+        """
+        import sha1
+        return hashlib.sha1(str(text).encode()).hexdigest()
+
+    def _sha256(self, text):
+        """SHA256哈希
+
+        Args:
+            text: 要哈希的文本
+
+        Returns:
+            SHA256哈希值（64位小写）
+
+        Example:
+            ${sha256(hello)} -> "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+        """
+        return hashlib.sha256(str(text).encode()).hexdigest()
+
+    def _random_mac(self):
+        """生成随机MAC地址
+
+        Returns:
+            MAC地址（格式: xx:xx:xx:xx:xx:xx）
+
+        Example:
+            ${random_mac()} -> "00:1a:2b:3c:4d:5e"
+        """
+        mac = [random.randint(0x00, 0xff) for _ in range(6)]
+        # 确保第一个字节的最低位为0（单播地址）
+        mac[0] = mac[0] & 0xfe
+        return ':'.join(f'{x:02x}' for x in mac)
+
+    def _random_ip(self, version=4):
+        """生成随机IP地址
+
+        Args:
+            version: IP版本（4或6）
+
+        Returns:
+            IP地址字符串
+
+        Example:
+            ${random_ip()} -> "192.168.1.100"
+            ${random_ip(6)} -> "2001:db8::1"
+        """
+        if version == 4:
+            return '.'.join(str(random.randint(0, 255)) for _ in range(4))
+        elif version == 6:
+            # 简化生成随机IPv6地址
+            parts = []
+            for i in range(8):
+                parts.append(f'{random.randint(0, 0xffff):04x}')
+            return ':'.join(parts)
+        else:
+            return '.'.join(str(random.randint(0, 255)) for _ in range(4))
+
+    def _random_password(self, length=12):
+        """生成随机密码
+
+        Args:
+            length: 密码长度
+
+        Returns:
+            随机密码（包含大小写字母、数字和特殊字符）
+
+        Example:
+            ${random_password(16)} -> "aB3$xY9zK@2#mN"
+        """
+        chars = string.ascii_letters + string.digits + '!@#$%^&*'
+        return ''.join(random.choices(chars, k=int(length)))
 
 
 # 全局单例

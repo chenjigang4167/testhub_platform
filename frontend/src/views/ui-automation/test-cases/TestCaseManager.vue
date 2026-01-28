@@ -200,9 +200,19 @@
                               v-model="element.input_value"
                               :placeholder="element.action_type === 'switchTab' ? $t('uiAutomation.testCase.switchTabPlaceholder') : $t('uiAutomation.testCase.inputPlaceholder')"
                               size="small"
-                            />
-                            <el-tooltip :content="$t('uiAutomation.testCase.insertVariable')" placement="top" v-if="element.action_type !== 'switchTab'">
-                              <el-button size="small" @click="openVariableHelper(element, 'input_value')">
+                            >
+                              <template #append>
+                                <el-button
+                                  size="small"
+                                  :icon="MagicStick"
+                                  @click="openDataFactorySelector(element, 'input_value')"
+                                  title="引用数据工厂"
+                                  class="data-factory-btn"
+                                />
+                              </template>
+                            </el-input>
+                            <el-tooltip content="插入动态变量" placement="top" v-if="element.action_type !== 'switchTab'">
+                              <el-button size="small" @click="openVariableHelper(element, 'input_value')" class="variable-helper-btn">
                                 <el-icon><MagicStick /></el-icon>
                               </el-button>
                             </el-tooltip>
@@ -237,9 +247,19 @@
                               :placeholder="$t('uiAutomation.testCase.expectedValue')"
                               size="small"
                               style="flex: 1"
-                            />
-                            <el-tooltip :content="$t('uiAutomation.testCase.insertVariable')" placement="top">
-                              <el-button size="small" style="margin-left: 5px" @click="openVariableHelper(element, 'assert_value')">
+                            >
+                              <template #append>
+                                <el-button
+                                  size="small"
+                                  :icon="MagicStick"
+                                  @click="openDataFactorySelector(element, 'assert_value')"
+                                  title="引用数据工厂"
+                                  class="data-factory-btn"
+                                />
+                              </template>
+                            </el-input>
+                            <el-tooltip content="插入动态变量" placement="top">
+                              <el-button size="small" style="margin-left: 5px" @click="openVariableHelper(element, 'assert_value')" class="variable-helper-btn">
                                 <el-icon><MagicStick /></el-icon>
                               </el-button>
                             </el-tooltip>
@@ -418,10 +438,7 @@
       v-model="showScreenshotPreview"
       :title="$t('uiAutomation.testCase.screenshotPreview')"
       width="80%"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
+      :close-on-click-modal="true"
     >
       <div v-if="currentScreenshot" class="screenshot-preview">
         <div class="preview-info">
@@ -437,30 +454,28 @@
 
     <!-- 变量助手对话框 -->
     <el-dialog
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
       v-model="showVariableHelper"
       :title="$t('uiAutomation.testCase.variableHelper')"
       :close-on-click-modal="false"
-      width="800px"
+      width="900px"
     >
-      <el-tabs tab-position="left" style="height: 400px">
+      <el-tabs tab-position="left" style="height: 450px">
         <el-tab-pane
           v-for="(category, index) in variableCategoriesComputed"
           :key="index"
           :label="category.label"
         >
-          <div style="height: 400px; overflow-y: auto">
-            <el-table :data="category.variables" style="width: 100%" @row-click="insertVariable" highlight-current-row cursor="pointer">
-              <el-table-column prop="name" :label="$t('uiAutomation.testCase.functionName')" width="150">
+          <div style="height: 450px; overflow-y: auto; padding: 10px;">
+            <el-table :data="category.variables" style="width: 100%" @row-click="insertVariable" highlight-current-row>
+              <el-table-column prop="name" label="函数名" width="150" show-overflow-tooltip>
                 <template #default="{ row }">
                   <el-tag size="small">{{ row.name }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="desc" :label="$t('uiAutomation.testCase.description')" width="150" />
-              <el-table-column prop="syntax" :label="$t('uiAutomation.testCase.syntax')" show-overflow-tooltip />
-              <el-table-column :label="$t('uiAutomation.common.operation')" width="80">
+              <el-table-column prop="desc" label="描述" min-width="150" />
+              <el-table-column prop="syntax" label="语法" min-width="200" show-overflow-tooltip />
+              <el-table-column prop="example" label="示例" min-width="200" show-overflow-tooltip />
+              <el-table-column label="操作" width="80" fixed="right">
                 <template #default="{ row }">
                   <el-button link type="primary" size="small">{{ $t('uiAutomation.testCase.insert') }}</el-button>
                 </template>
@@ -470,6 +485,11 @@
         </el-tab-pane>
       </el-tabs>
     </el-dialog>
+
+    <DataFactorySelector
+      v-model="showDataFactorySelector"
+      @select="handleDataFactorySelect"
+    />
   </div>
 </template>
 
@@ -481,6 +501,7 @@ import {
   Search, Plus, Edit, Delete, Check, CaretRight, ArrowUp, ArrowDown, Rank, Picture, Warning, View, ZoomIn, Refresh, WarningFilled, MagicStick, CopyDocument
 } from '@element-plus/icons-vue'
 import draggable from 'vuedraggable'
+import DataFactorySelector from '@/components/DataFactorySelector.vue'
 
 const { t } = useI18n()
 
@@ -519,6 +540,9 @@ const headlessMode = ref(false)  // 默认使用有头模式
 const showVariableHelper = ref(false)
 const currentEditingStep = ref(null)
 const currentEditingField = ref('')
+const showDataFactorySelector = ref(false)
+const currentStepForDataFactory = ref(null)
+const currentFieldForDataFactory = ref('')
 
 // 表单数据
 const testCaseForm = reactive({
@@ -852,46 +876,103 @@ const variableCategoriesComputed = computed(() => [
   {
     label: t('uiAutomation.testCase.variableCategories.randomNumber'),
     variables: [
-      { name: 'random_int', syntax: '${random_int(min, max)}', desc: t('uiAutomation.testCase.variables.randomInt'), example: '${random_int(100, 999)}' },
-      { name: 'random_float', syntax: '${random_float(min, max, decimals)}', desc: t('uiAutomation.testCase.variables.randomFloat'), example: '${random_float(0, 1, 2)}' },
-      { name: 'random_digits', syntax: '${random_digits(length)}', desc: t('uiAutomation.testCase.variables.randomDigits'), example: '${random_digits(6)}' }
+      { name: 'random_int', syntax: '${random_int(min, max, count)}', desc: '生成随机整数', example: '${random_int(100, 999, 1)}' },
+      { name: 'random_float', syntax: '${random_float(min, max, precision, count)}', desc: '生成随机浮点数', example: '${random_float(0, 1, 2, 1)}' },
+      { name: 'random_boolean', syntax: '${random_boolean(count)}', desc: '生成随机布尔值', example: '${random_boolean(1)}' },
+      { name: 'random_date', syntax: '${random_date(start_date, end_date, count, date_format)}', desc: '生成随机日期', example: '${random_date("2024-01-01", "2024-12-31", 1, "%Y-%m-%d")}' }
     ]
   },
   {
     label: t('uiAutomation.testCase.variableCategories.randomString'),
     variables: [
-      { name: 'random_string', syntax: '${random_string(length)}', desc: t('uiAutomation.testCase.variables.randomString'), example: '${random_string(8)}' },
-      { name: 'random_letters', syntax: '${random_letters(length)}', desc: t('uiAutomation.testCase.variables.randomLetters'), example: '${random_letters(8)}' },
-      { name: 'random_chinese', syntax: '${random_chinese(length)}', desc: t('uiAutomation.testCase.variables.randomChinese'), example: '${random_chinese(2)}' }
+      { name: 'random_string', syntax: '${random_string(length, char_type, count)}', desc: '生成随机字符串', example: '${random_string(8, "all", 1)}' },
+      { name: 'random_uuid', syntax: '${random_uuid(version, count)}', desc: '生成UUID', example: '${random_uuid(4, 1)}' },
+      { name: 'random_mac_address', syntax: '${random_mac_address(separator, count)}', desc: '生成MAC地址', example: '${random_mac_address(":", 1)}' },
+      { name: 'random_ip_address', syntax: '${random_ip_address(ip_version, count)}', desc: '生成IP地址', example: '${random_ip_address(4, 1)}' },
+      { name: 'random_sequence', syntax: '${random_sequence(sequence, count, unique)}', desc: '从序列中随机选择', example: '${random_sequence(["a","b","c"], 1, false)}' }
+    ]
+  },
+  {
+    label: '字符工具',
+    variables: [
+      { name: 'remove_whitespace', syntax: '${remove_whitespace(text)}', desc: '去除空格换行', example: '${remove_whitespace("hello world")}' },
+      { name: 'replace_string', syntax: '${replace_string(text, old_str, new_str, is_regex)}', desc: '字符串替换', example: '${replace_string("hello world", "world", "test", false)}' },
+      { name: 'word_count', syntax: '${word_count(text)}', desc: '字数统计', example: '${word_count("hello world")}' },
+      { name: 'regex_test', syntax: '${regex_test(pattern, text, flags)}', desc: '正则测试', example: '${regex_test("^[a-z]+\\d+$", "hello123", "gi")}' },
+      { name: 'case_convert', syntax: '${case_convert(text, convert_type)}', desc: '大小写转换', example: '${case_convert("hello", "upper")}' },
     ]
   },
   {
     label: t('uiAutomation.testCase.variableCategories.businessData'),
     variables: [
-      { name: 'random_phone', syntax: '${random_phone()}', desc: t('uiAutomation.testCase.variables.randomPhone'), example: '${random_phone()}' },
-      { name: 'random_email', syntax: '${random_email()}', desc: t('uiAutomation.testCase.variables.randomEmail'), example: '${random_email()}' },
-      { name: 'random_id_card', syntax: '${random_id_card()}', desc: t('uiAutomation.testCase.variables.randomIdCard'), example: '${random_id_card()}' },
-      { name: 'random_name', syntax: '${random_name()}', desc: t('uiAutomation.testCase.variables.randomName'), example: '${random_name()}' },
-      { name: 'random_company', syntax: '${random_company()}', desc: t('uiAutomation.testCase.variables.randomCompany'), example: '${random_company()}' },
-      { name: 'random_address', syntax: '${random_address()}', desc: t('uiAutomation.testCase.variables.randomAddress'), example: '${random_address()}' }
+      { name: 'generate_chinese_name', syntax: '${generate_chinese_name(gender, count)}', desc: '生成中文姓名', example: '${generate_chinese_name("random", 1)}' },
+      { name: 'generate_chinese_phone', syntax: '${generate_chinese_phone(count)}', desc: '生成手机号', example: '${generate_chinese_phone(1)}' },
+      { name: 'generate_chinese_email', syntax: '${generate_chinese_email(count)}', desc: '生成邮箱', example: '${generate_chinese_email(1)}' },
+      { name: 'generate_chinese_address', syntax: '${generate_chinese_address(full_address, count)}', desc: '生成地址', example: '${generate_chinese_address(true, 1)}' },
+      { name: 'generate_id_card', syntax: '${generate_id_card(count)}', desc: '生成身份证号', example: '${generate_id_card(1)}' },
+      { name: 'generate_company_name', syntax: '${generate_company_name(count)}', desc: '生成公司名称', example: '${generate_company_name(1)}' },
+      { name: 'generate_bank_card', syntax: '${generate_bank_card(count)}', desc: '生成银行卡号', example: '${generate_bank_card(1)}' },
+      { name: 'generate_hk_id_card', syntax: '${generate_hk_id_card(count)}', desc: '生成香港身份证号', example: '${generate_hk_id_card(1)}' },
+      { name: 'generate_business_license', syntax: '${generate_business_license(count)}', desc: '生成营业执照号', example: '${generate_business_license(1)}' },
+      { name: 'generate_user_profile', syntax: '${generate_user_profile(count)}', desc: '生成用户档案', example: '${generate_user_profile(1)}' },
+      { name: 'generate_coordinates', syntax: '${generate_coordinates(count)}', desc: '生成经纬度', example: '${generate_coordinates(1)}' }
     ]
   },
   {
     label: t('uiAutomation.testCase.variableCategories.dateTime'),
     variables: [
-      { name: 'timestamp', syntax: '${timestamp()}', desc: t('uiAutomation.testCase.variables.timestamp'), example: '${timestamp()}' },
-      { name: 'datetime', syntax: '${datetime(format)}', desc: t('uiAutomation.testCase.variables.datetime'), example: '${datetime(YYYY-MM-DD HH:mm:ss)}' },
-      { name: 'date', syntax: '${date(format)}', desc: t('uiAutomation.testCase.variables.date'), example: '${date(YYYY-MM-DD)}' },
-      { name: 'time', syntax: '${time(format)}', desc: t('uiAutomation.testCase.variables.time'), example: '${time(HH:mm:ss)}' },
-      { name: 'date_offset', syntax: '${date_offset(days, format)}', desc: t('uiAutomation.testCase.variables.dateOffset'), example: '${date_offset(1, YYYY-MM-DD)}' }
+      { name: 'timestamp_convert', syntax: '${timestamp_convert(timestamp, convert_type)}', desc: '时间戳转换', example: '${timestamp_convert(1234567890, "to_datetime")}' },
+      { name: 'random_date', syntax: '${random_date(start_date, end_date, count, date_format)}', desc: '生成随机日期', example: '${random_date("2024-01-01", "2024-12-31", 1, "%Y-%m-%d")}' }
+    ]
+  },
+  {
+    label: '编码转换',
+    variables: [
+      { name: 'base64_encode', syntax: '${base64_encode(text, encoding)}', desc: 'Base64编码', example: '${base64_encode("123456", "utf-8")}' },
+      { name: 'base64_decode', syntax: '${base64_decode(text, encoding)}', desc: 'Base64解码', example: '${base64_decode("MTIzNDU2", "utf-8")}' },
+      { name: 'url_encode', syntax: '${url_encode(data, encoding)}', desc: 'URL编码', example: '${url_encode("hello world", "utf-8")}' },
+      { name: 'url_decode', syntax: '${url_decode(data, encoding)}', desc: 'URL解码', example: '${url_decode("hello%20world", "utf-8")}' },
+      { name: 'unicode_convert', syntax: '${unicode_convert(text, convert_type)}', desc: 'Unicode转换', example: '${unicode_convert("你好", "to_unicode")}' },
+      { name: 'ascii_convert', syntax: '${ascii_convert(text, convert_type)}', desc: 'ASCII转换', example: '${ascii_convert("ABC", "to_ascii")}' },
+      { name: 'color_convert', syntax: '${color_convert(color, from_type, to_type)}', desc: '颜色值转换', example: '${color_convert("#ff0000", "hex", "rgb")}' },
+      { name: 'base_convert', syntax: '${base_convert(number, from_base, to_base)}', desc: '进制转换', example: '${base_convert(10, 10, 16)}' },
+      { name: 'timestamp_convert', syntax: '${timestamp_convert(timestamp, convert_type)}', desc: '时间戳转换', example: '${timestamp_convert(1234567890, "to_datetime")}' },
+      { name: 'generate_barcode', syntax: '${generate_barcode(data, format)}', desc: '生成条形码', example: '${generate_barcode("123456", "code128")}' },
+      { name: 'generate_qrcode', syntax: '${generate_qrcode(data)}', desc: '生成二维码', example: '${generate_qrcode("https://example.com")}' },
+      { name: 'decode_qrcode', syntax: '${decode_qrcode(data)}', desc: '二维码解析', example: '${decode_qrcode("/path/to/image.png")}' },
+      { name: 'image_to_base64', syntax: '${image_to_base64(image_path)}', desc: '图片转Base64', example: '${image_to_base64("/path/to/image.png")}' },
+      { name: 'base64_to_image', syntax: '${base64_to_image(base64_data, output_path)}', desc: 'Base64转图片', example: '${base64_to_image("data:image/png;base64,...", "/path/to/output.png")}' }
+    ]
+  },
+  {
+    label: '加密哈希',
+    variables: [
+      { name: 'md5_hash', syntax: '${md5_hash(text)}', desc: 'MD5加密', example: '${md5_hash("123456")}' },
+      { name: 'sha1_hash', syntax: '${sha1_hash(text)}', desc: 'SHA1加密', example: '${sha1_hash("123456")}' },
+      { name: 'sha256_hash', syntax: '${sha256_hash(text)}', desc: 'SHA256加密', example: '${sha256_hash("123456")}' },
+      { name: 'sha512_hash', syntax: '${sha512_hash(text)}', desc: 'SHA512加密', example: '${sha512_hash("123456")}' },
+      { name: 'hash_comparison', syntax: '${hash_comparison(hash1, hash2)}', desc: '哈希值比对', example: '${hash_comparison("hash1", "hash2")}' },
+      { name: 'aes_encrypt', syntax: '${aes_encrypt(text, password, mode)}', desc: 'AES加密', example: '${aes_encrypt("hello", "password", "CBC")}' },
+      { name: 'aes_decrypt', syntax: '${aes_decrypt(encrypted_text, password, mode)}', desc: 'AES解密', example: '${aes_decrypt("encrypted", "password", "CBC")}' }
+    ]
+  },
+  {
+    label: 'Crontab',
+    variables: [
+      { name: 'generate_expression', syntax: '${generate_expression(minute, hour, day, month, weekday)}', desc: '生成Crontab表达式', example: '${generate_expression("*", "*", "*", "*", "*")}' },
+      { name: 'parse_expression', syntax: '${parse_expression(expression)}', desc: '解析Crontab表达式', example: '${parse_expression("0 0 * * *")}' },
+      { name: 'get_next_runs', syntax: '${get_next_runs(expression, count)}', desc: '获取下次执行时间', example: '${get_next_runs("0 0 * * *", 5)}' },
+      { name: 'validate_expression', syntax: '${validate_expression(expression)}', desc: '验证Crontab表达式', example: '${validate_expression("0 0 * * *")}' }
     ]
   },
   {
     label: t('uiAutomation.testCase.variableCategories.other'),
     variables: [
-      { name: 'uuid', syntax: '${uuid()}', desc: t('uiAutomation.testCase.variables.uuid'), example: '${uuid()}' },
-      { name: 'base64', syntax: '${base64(text)}', desc: t('uiAutomation.testCase.variables.base64'), example: '${base64(123456)}' },
-      { name: 'md5', syntax: '${md5(text)}', desc: t('uiAutomation.testCase.variables.md5'), example: '${md5(123456)}' }
+      { name: 'random_password', syntax: '${random_password(length, include_uppercase, include_lowercase, include_digits, include_special, count)}', desc: '生成随机密码', example: '${random_password(12, true, true, true, true, 1)}' },
+      { name: 'random_color', syntax: '${random_color(format, count)}', desc: '生成随机颜色', example: '${random_color(hex, 1)}' },
+      { name: 'jwt_decode', syntax: '${jwt_decode(token, verify, secret)}', desc: 'JWT解码', example: '${jwt_decode(token, false, secret)}' },
+      { name: 'password_strength', syntax: '${password_strength(password)}', desc: '密码强度分析', example: '${password_strength(myPassword123)}' },
+      { name: 'generate_salt', syntax: '${generate_salt(length)}', desc: '生成随机盐值', example: '${generate_salt(16)}' }
     ]
   }
 ])
@@ -902,11 +983,41 @@ const openVariableHelper = (step, field) => {
   showVariableHelper.value = true
 }
 
+const openDataFactorySelector = (step, field) => {
+  currentStepForDataFactory.value = step
+  currentFieldForDataFactory.value = field
+  showDataFactorySelector.value = true
+}
+
+const handleDataFactorySelect = (record) => {
+  const step = currentStepForDataFactory.value
+  const field = currentFieldForDataFactory.value
+
+  if (record && record.output_data && step && field) {
+    let valueToSet = ''
+
+    if (typeof record.output_data === 'string') {
+      valueToSet = record.output_data
+    } else if (record.output_data.result) {
+      valueToSet = record.output_data.result
+    } else if (record.output_data.output_data) {
+      valueToSet = record.output_data.output_data
+    } else {
+      valueToSet = JSON.stringify(record.output_data)
+    }
+
+    step[field] = valueToSet
+    ElMessage.success(`已引用数据工厂数据: ${record.tool_name}`)
+  }
+
+  showDataFactorySelector.value = false
+}
+
 const insertVariable = (variable) => {
   if (currentEditingStep.value && currentEditingField.value) {
     const example = variable.example
     const currentValue = currentEditingStep.value[currentEditingField.value] || ''
-    
+
     // 简单起见，这里直接追加到末尾，或者如果为空则替换
     if (!currentValue) {
       currentEditingStep.value[currentEditingField.value] = example
@@ -1744,5 +1855,27 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   height: 100%;
+}
+
+.data-factory-btn {
+  background-color: #409eff !important;
+  border-color: #409eff !important;
+  color: white !important;
+}
+
+.data-factory-btn:hover {
+  background-color: #66b1ff !important;
+  border-color: #66b1ff !important;
+}
+
+.variable-helper-btn {
+  background-color: #67c23a;
+  border-color: #67c23a;
+  color: white;
+}
+
+.variable-helper-btn:hover {
+  background-color: #5daf34;
+  border-color: #5daf34;
 }
 </style>

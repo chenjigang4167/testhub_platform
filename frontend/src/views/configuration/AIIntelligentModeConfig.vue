@@ -179,7 +179,7 @@
         <div class="modal-body">
           <div class="test-result" :class="{ success: testResult.success, error: !testResult.success }">
             <div class="result-icon">
-              {{ testResult.success ? '✅' : '❌' }}
+              {{ testResult.success ? '' : '' }}
             </div>
             <div class="result-content">
               <h4>{{ testResult.success ? $t('configuration.aiMode.connectionSuccess') : $t('configuration.aiMode.connectionFailed') }}</h4>
@@ -236,7 +236,10 @@ const modelBaseUrlMap = {
 const shouldShowModal = computed(() => showAddModal.value || showEditModal.value)
 
 const getProviderLabel = (modelType) => {
-  return t('configuration.aiMode.providers.' + modelType) || modelType
+  const key = `configuration.aiMode.providers.${modelType}`
+  const translated = t(key)
+  // 如果翻译key存在则返回翻译，否则返回原值
+  return translated !== key ? translated : modelType
 }
 
 const loadConfigs = async () => {
@@ -320,7 +323,7 @@ const saveConfig = async () => {
   const emptyFields = requiredFields.filter(field => !field.value || (typeof field.value === 'string' && field.value.trim() === ''))
 
   if (emptyFields.length > 0) {
-    ElMessage.error(`请填写以下必填字段: ${emptyFields.map(f => f.name).join(', ')}`)
+    ElMessage.error(`${t('configuration.aiMode.messages.fillRequired')}: ${emptyFields.map(f => f.name).join(', ')}`)
     return
   }
 
@@ -399,11 +402,18 @@ const toggleActive = async (config) => {
   if (config.is_active) {
     const activeConfigs = configs.value.filter(c => c.id !== config.id && c.is_active)
     if (activeConfigs.length > 0) {
-      const activeConfigNames = activeConfigs.map(c => c.name).join('、')
-      const confirmed = confirm(
-        `启用"${config.name}"将会自动禁用以下已启用的配置:\n\n${activeConfigNames}\n\n确定要继续吗?`
-      )
-      if (!confirmed) {
+      const activeConfigNames = activeConfigs.map(c => c.name).join(', ')
+      try {
+        await ElMessageBox.confirm(
+          t('configuration.aiMode.messages.toggleConfirm', { name: config.name, configs: activeConfigNames }),
+          t('configuration.common.confirm'),
+          {
+            confirmButtonText: t('configuration.common.confirm'),
+            cancelButtonText: t('configuration.common.cancel'),
+            type: 'warning'
+          }
+        )
+      } catch {
         // 恢复开关状态
         config.is_active = false
         return

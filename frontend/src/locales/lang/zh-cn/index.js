@@ -13,6 +13,8 @@ import apiTestingModule from './api-testing.js'
 import uiAutomationModule from './ui-automation.js'
 import configurationModule from './configuration.js'
 import assistantModule from './assistant.js'
+import dataFactoryModule from './data-factory.js'
+import notificationModule from './notification.js'
 
 export default {
   // 模块化导出
@@ -59,6 +61,12 @@ export default {
 
   // AI助手模块
   assistant: assistantModule,
+
+  // 数据工厂模块
+  dataFactory: dataFactoryModule,
+
+  // 通知模块
+  notification: notificationModule,
 
   // Element Plus 语言包
   ...elementZhCn

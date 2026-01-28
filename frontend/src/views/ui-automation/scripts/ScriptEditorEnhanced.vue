@@ -218,7 +218,7 @@ const loadProjects = async () => {
     projects.value = response.data.results || response.data
   } catch (error) {
     ElMessage.error(t('uiAutomation.scriptEditor.messages.loadProjectsFailed'))
-    console.error('获取项目列表失败:', error)
+    console.error('Failed to load projects:', error)
   }
 }
 
@@ -249,16 +249,16 @@ const loadElementTree = async () => {
     // 获取所有元素
     const elements = elementsResponse.data?.results || elementsResponse.data || []
 
-    console.log('=== 智能脚本生成 - 加载元素树 ===')
-    console.log('页面节点数:', pageNodes.length)
-    console.log('元素总数:', elements.length)
+    console.log('=== Smart Script Generator - Loading Element Tree ===')
+    console.log('Page nodes count:', pageNodes.length)
+    console.log('Total elements:', elements.length)
 
     // 将元素添加到对应页面下
     const attachElementsToPages = (pages) => {
       pages.forEach(page => {
         // 找到属于当前页面的元素
         const pageElements = elements.filter(element => element.group_id === page.id)
-        console.log(`页面 ${page.name} (ID: ${page.id}) 找到 ${pageElements.length} 个元素`)
+        console.log(`Page ${page.name} (ID: ${page.id}) found ${pageElements.length} elements`)
 
         const elementNodes = pageElements.map(element => ({
           ...element,
@@ -280,7 +280,7 @@ const loadElementTree = async () => {
 
     addLog('info', t('uiAutomation.scriptEditor.messages.elementsLoaded', { count: countElements(elementTree.value) }))
   } catch (error) {
-    console.error('获取元素树失败:', error)
+    console.error('Failed to load element tree:', error)
     addLog('error', t('uiAutomation.scriptEditor.messages.loadElementTreeFailed'))
   }
 }
@@ -450,7 +450,7 @@ const saveScript = async () => {
     ElMessage.success(`${t('uiAutomation.scriptEditor.messages.saveSuccess')}: ${scriptName}`)
     addLog('success', `${t('uiAutomation.scriptEditor.messages.saveSuccess')}: ${scriptName}`)
   } catch (error) {
-    console.error('保存脚本失败:', error)
+    console.error('Failed to save script:', error)
     ElMessage.error(t('uiAutomation.scriptEditor.messages.saveFailed'))
     addLog('error', t('uiAutomation.scriptEditor.messages.saveFailed'))
   } finally {
@@ -471,7 +471,7 @@ const validateElement = async (element) => {
       addLog('error', `${t('uiAutomation.scriptEditor.messages.validateFailed')}: ${element.name} - ${result.validation_message}`)
     }
   } catch (error) {
-    console.error('验证元素失败:', error)
+    console.error('Failed to validate element:', error)
     ElMessage.error(t('uiAutomation.scriptEditor.messages.validateFailed'))
     addLog('error', `${t('uiAutomation.scriptEditor.messages.validateFailed')}: ${element.name}`)
   }

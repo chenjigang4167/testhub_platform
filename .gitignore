@@ -14,6 +14,8 @@ logs/*
 !logs/.gitkeep
 # 忽略.env
 .env
+.sql
+
 .bak
 # 忽略所有 app/*/migrations/ 目录下的所有内容 (包括文件和子目录)
 apps/*/migrations/*
@@ -34,3 +36,13 @@ media/ai_recording/*
 frontend/node_modules/
 frontend/.DS_Store
 frontend/*.log
+frontend/dist/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+nginx.conf
+.env.example
+Makefile
+build-multiplatform.sh

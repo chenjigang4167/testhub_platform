@@ -40,7 +40,7 @@
                 <button class="delete-btn" @click="deleteConfig(config.id)">{{ $t('promptConfig.delete') }}</button>
               </div>
             </div>
-            
+
             <div class="config-details">
               <div class="prompt-preview">
                 <label>{{ $t('promptConfig.contentPreview') }}</label>
@@ -113,8 +113,8 @@
             <div class="form-group">
               <label>{{ $t('promptConfig.promptContent') }} <span class="required">*</span></label>
               <div class="textarea-container">
-                <textarea 
-                  v-model="configForm.content" 
+                <textarea
+                  v-model="configForm.content"
                   class="form-textarea large"
                   rows="20"
                   :placeholder="$t('promptConfig.contentPlaceholder')"
@@ -134,8 +134,8 @@
 
             <div class="form-group">
               <label class="checkbox-label">
-                <input 
-                  v-model="configForm.is_active" 
+                <input
+                  v-model="configForm.is_active"
                   type="checkbox">
                 <span class="checkmark"></span>
                 {{ $t('promptConfig.enableConfig') }}
@@ -147,8 +147,8 @@
 
             <div class="modal-actions">
               <button type="button" class="cancel-btn" @click="closeModals">{{ $t('promptConfig.cancel') }}</button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 class="confirm-btn"
                 :disabled="isSaving">
                 <span v-if="isSaving">{{ $t('promptConfig.saving') }}</span>
@@ -202,27 +202,27 @@
         <div class="modal-body">
           <div class="defaults-content">
             <div class="tabs">
-              <button 
-                class="tab-btn" 
+              <button
+                class="tab-btn"
                 :class="{ active: activeTab === 'writer' }"
                 @click="activeTab = 'writer'">
                 {{ $t('promptConfig.writerTab') }}
               </button>
-              <button 
-                class="tab-btn" 
+              <button
+                class="tab-btn"
                 :class="{ active: activeTab === 'reviewer' }"
                 @click="activeTab = 'reviewer'">
                 {{ $t('promptConfig.reviewerTab') }}
               </button>
             </div>
-            
+
             <div class="tab-content">
               <div class="content-display">
                 <div class="content-text">{{ defaultPrompts[activeTab] || $t('promptConfig.noContent') }}</div>
               </div>
             </div>
           </div>
-          
+
           <div class="modal-actions">
             <button class="cancel-btn" @click="closeDefaultsModal">{{ $t('promptConfig.cancel') }}</button>
             <button
@@ -307,7 +307,7 @@ export default {
       } catch (error) {
         console.error(this.$t('promptConfig.loadConfigsFailed'), error)
         this.configs = [] // 确保configs始终是数组
-        
+
         if (error.response?.status === 401) {
           ElMessage.error(this.$t('promptConfig.pleaseLogin'))
         } else {
@@ -402,7 +402,7 @@ export default {
           await api.post('/requirement-analysis/prompts/', this.configForm)
           ElMessage.success(this.$t('promptConfig.addSuccess'))
         }
-        
+
         this.closeModals()
         this.loadConfigs()
       } catch (error) {

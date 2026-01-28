@@ -222,7 +222,7 @@
             <div v-for="(step, index) in currentCase.steps" :key="index" class="log-item">
               <div class="log-header">
                 <el-tag :type="step.success ? 'success' : 'danger'" size="small">
-                   {{ $t('uiAutomation.report.step') }} {{ step.step_number }}
+                  {{ $t('uiAutomation.report.step') }} {{ step.step_number }}
                 </el-tag>
                 <span class="log-action">{{ getActionText(step.action_type) }}</span>
                 <span class="log-desc">{{ step.description }}</span>

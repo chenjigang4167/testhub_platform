@@ -7,7 +7,7 @@
         {{ $t('apiTesting.project.createProject') }}
       </el-button>
     </div>
-    
+
 
     <!-- 项目列表 -->
     <el-table :data="projects" v-loading="loading" style="width: 100%">
@@ -21,7 +21,7 @@
       </el-table-column>
       <el-table-column prop="status" :label="$t('apiTesting.project.projectStatus')" width="120">
         <template #default="scope">
-          <el-tag 
+          <el-tag
             :type="getStatusType(scope.row.status)"
           >
             {{ getStatusText(scope.row.status) }}
@@ -61,10 +61,6 @@
     <el-dialog
       v-model="showCreateDialog"
       :title="editingProject ? $t('apiTesting.project.editProject') : $t('apiTesting.project.createProject')"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :modal="true"
-      :destroy-on-close="false"
       width="600px"
       @close="resetForm"
     >
@@ -159,8 +155,7 @@
     <!-- 查看项目详情对话框 -->
     <el-dialog
       v-model="showViewDialog"
-      title="$t('apiTesting.project.viewProject')"
-      :close-on-click-modal="false"
+      :title="$t('apiTesting.project.viewProject')"
       width="600px"
     >
       <el-descriptions :column="1" border>
@@ -195,7 +190,7 @@
         <el-descriptions-item :label="$t('apiTesting.project.createdAt')">{{ formatDate(viewedProject?.created_at) }}</el-descriptions-item>
         <el-descriptions-item :label="$t('apiTesting.project.updatedAt')">{{ formatDate(viewedProject?.updated_at) }}</el-descriptions-item>
       </el-descriptions>
-      
+
       <template #footer>
         <el-button @click="showViewDialog = false">{{ $t('apiTesting.common.close') }}</el-button>
         <el-button type="primary" @click="editProject(viewedProject)">{{ $t('apiTesting.common.edit') }}</el-button>
