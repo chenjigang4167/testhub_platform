@@ -80,7 +80,7 @@ export default {
     },
 
     // Title
-    title: 'TestHub 测试平台',
+    title: 'DZAI 测试平台',
     subtitle: '一站式智能化测试解决方案',
 
     // Cards

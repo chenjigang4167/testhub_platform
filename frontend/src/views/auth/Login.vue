@@ -13,7 +13,7 @@
                 <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
-            <h1 class="brand-title">TestHub</h1>
+            <h1 class="brand-title">DZAI</h1>
           </div>
           <p class="brand-subtitle">AI-Powered Testing Platform</p>
         </div>

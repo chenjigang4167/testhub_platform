@@ -4,7 +4,7 @@
       <!-- 侧边栏 -->
       <el-aside width="240px">
         <div class="logo" @click="router.push('/home')" style="cursor: pointer;">
-          <img :src="logoImage" alt="TestHub" class="logo-img" />
+          <img :src="logoImage" alt="DZAI" class="logo-img" />
         </div>
         <el-menu
           :default-active="$route.path"

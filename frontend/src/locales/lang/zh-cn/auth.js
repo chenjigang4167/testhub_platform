@@ -12,7 +12,7 @@ export default {
   loginFailed: '登录失败',
 
   // Register page
-  registerTitle: '注册 TestHub',
+  registerTitle: '注册 DZAI',
   registerSubtitle: '创建您的测试管理账号',
   username: '用户名',
   email: '邮箱',
@@ -50,7 +50,7 @@ export default {
   passwordMismatch: '两次输入的密码不一致',
 
   // Copyright
-  copyright: '© 2024 TestHub. All rights reserved.',
+  copyright: '© 2024 DZAI. All rights reserved.',
 
   // Language switcher
   languageZhCN: '简体中文',
