@@ -464,10 +464,69 @@ def get_approval_status(ctx: Context, confirm_token: str) -> dict:
                      lambda user: query_approval_status(confirm_token, user))
 
 
+def get_ui_execution(ctx: Context, execution_id: int) -> dict:
+    """查询 UI 自动化用例执行结果（confirm_run_ui_case 返回执行 ID 后轮询本工具）。
+
+    返回执行状态（pending/running/passed/failed/error）、错误信息、逐步骤结果、
+    耗时与截图元数据（不含 base64 图片数据，截图请通过平台页面查看）。
+    状态为 running/pending 时请间隔数秒后再次调用。需对执行所属 UI 项目有访问权限。
+    """
+
+    def run(user):
+        from apps.ui_automation.models import TestCaseExecution
+        execution = TestCaseExecution.objects.filter(
+            id=execution_id, project__in=act.accessible_ui_projects(user)
+        ).select_related('test_case').first()
+        if not execution:
+            raise ToolError(f'UI 执行 {execution_id} 不存在或无权限')
+
+        # execution_logs 落库为步骤结果 JSON（与 views.run 保存格式一致）；
+        # 历史文本日志或异常数据降级为 raw_logs 返回
+        steps = []
+        raw_logs = ''
+        logs = execution.execution_logs or ''
+        if logs:
+            try:
+                parsed = json.loads(logs)
+                if isinstance(parsed, list):
+                    steps = parsed
+                else:
+                    raw_logs = logs
+            except (TypeError, ValueError):
+                raw_logs = logs
+
+        result = {
+            'execution_id': execution.id,
+            'case_id': execution.test_case_id,
+            'case_name': execution.test_case.name if execution.test_case else '',
+            'status': execution.status,
+            'engine': execution.engine,
+            'browser': execution.browser,
+            'headless': execution.headless,
+            'error_message': execution.error_message or '',
+            'steps': steps,
+            'execution_time': execution.execution_time,
+            'started_at': execution.started_at,
+            'finished_at': execution.finished_at,
+            # 截图只返回元数据，base64 原图体积过大不适合 MCP 通道传输
+            'screenshots': [
+                {k: v for k, v in shot.items() if k != 'url'}
+                for shot in (execution.screenshots or []) if isinstance(shot, dict)
+            ],
+        }
+        if raw_logs:
+            result['raw_logs'] = raw_logs[:2000]
+        if execution.status in ('running', 'pending'):
+            result['hint'] = '执行尚未结束，请数秒后再次调用本工具'
+        return result
+
+    return _run_tool(ctx, 'get_ui_execution', {'execution_id': execution_id}, run)
+
+
 #: 所有工具（供 server.py 批量注册）
 ALL_TOOLS = [
     list_projects, list_testcases, list_api_requests, list_ui_cases, list_perf_scenes,
-    get_report, analyze_failure,
+    get_report, analyze_failure, get_ui_execution,
     preview_run_api_suite, confirm_run_api_suite,
     preview_run_ui_case, confirm_run_ui_case,
     preview_run_perf_scene, confirm_run_perf_scene,

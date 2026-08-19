@@ -3,6 +3,8 @@
 
 运行: python manage.py test apps.mcp.tests.test_tools
 """
+import json
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase, override_settings
@@ -177,3 +179,70 @@ class HumanApprovalToolTest(ToolBase):
         info = mcp_tools.get_approval_status(self.ctx, token)
         self.assertEqual(info['status'], 'approved')
         self.assertIn('testcase_id', info['result'])
+
+class GetUiExecutionToolTest(ToolBase):
+    """get_ui_execution：UI 执行结果查询"""
+
+    def setUp(self):
+        super().setUp()
+        from apps.ui_automation.models import UiProject, TestCase as UiCase
+        self.ui_project = UiProject.objects.create(
+            name='UI 项目', base_url='http://example.com', owner=self.user)
+        self.ui_case = UiCase.objects.create(
+            name='登录用例', project=self.ui_project, created_by=self.user)
+
+    def _create_execution(self, status='passed', logs=None, project=None,
+                          screenshots=None):
+        from apps.ui_automation.models import TestCaseExecution
+        return TestCaseExecution.objects.create(
+            test_case=self.ui_case,
+            project=project or self.ui_project,
+            status=status,
+            engine='playwright',
+            browser='chrome',
+            headless=True,
+            execution_logs=logs or '',
+            screenshots=screenshots or [],
+            created_by=self.user,
+        )
+
+    def test_returns_passed_result_with_steps(self):
+        steps = [{'step_number': 1, 'action_type': 'click',
+                  'description': '点击登录', 'success': True, 'error': None}]
+        execution = self._create_execution(
+            logs=json.dumps(steps, ensure_ascii=False),
+            screenshots=[{'url': 'data:image/png;base64,AAA',
+                          'description': '步骤 1 截图', 'step_number': 1}],
+        )
+        result = mcp_tools.get_ui_execution(self.ctx, execution_id=execution.id)
+        self.assertEqual(result['status'], 'passed')
+        self.assertEqual(result['case_name'], '登录用例')
+        self.assertEqual(result['steps'], steps)
+        # 截图元数据返回，但不含 base64 原图
+        self.assertEqual(result['screenshots'][0]['description'], '步骤 1 截图')
+        self.assertNotIn('url', result['screenshots'][0])
+        self.assertNotIn('hint', result)
+
+    def test_running_returns_polling_hint(self):
+        execution = self._create_execution(status='running')
+        result = mcp_tools.get_ui_execution(self.ctx, execution_id=execution.id)
+        self.assertEqual(result['status'], 'running')
+        self.assertIn('hint', result)
+
+    def test_legacy_text_logs_fallback_to_raw(self):
+        execution = self._create_execution(logs='纯文本历史日志')
+        result = mcp_tools.get_ui_execution(self.ctx, execution_id=execution.id)
+        self.assertEqual(result['steps'], [])
+        self.assertEqual(result['raw_logs'], '纯文本历史日志')
+
+    def test_permission_denied_for_foreign_project(self):
+        from apps.ui_automation.models import UiProject
+        foreign = UiProject.objects.create(
+            name='别人项目', base_url='http://b.com', owner=self.other)
+        execution = self._create_execution(project=foreign)
+        with self.assertRaises(ToolError):
+            mcp_tools.get_ui_execution(self.ctx, execution_id=execution.id)
+
+    def test_not_found(self):
+        with self.assertRaises(ToolError):
+            mcp_tools.get_ui_execution(self.ctx, execution_id=999999)
