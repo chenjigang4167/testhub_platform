@@ -1,0 +1,34 @@
+.gitignore
+  h_ef2af05e886a25 7-8
+apps/core/tests.py
+  h_ef2af05e886a25 1-115
+apps/mcp/registry.py
+  h_ef2af05e886a25 61,65,131-141
+apps/mcp/tests/test_tools.py
+  h_ef2af05e886a25 6-7,182-248
+apps/mcp/tools.py
+  h_ef2af05e886a25 467-525,529
+apps/testcases/tests.py
+  h_ef2af05e886a25 1-131
+apps/ui_automation/mcp_runner.py
+  h_ef2af05e886a25 1-272
+backend/asgi.py
+  h_ef2af05e886a25 17-41,48,59-63
+backend/test_settings.py
+  h_ef2af05e886a25 1-34
+frontend/package-lock.json
+  h_ef2af05e886a25 19,3006-3017
+pytest.ini
+  h_ef2af05e886a25 1-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d95ae07e5b485ecae9a8eb149050f1ee7bc524f0",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
