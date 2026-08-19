@@ -1,0 +1,20 @@
+.gitignore
+  h_ef2af05e886a25 71-74
+apps/core/management/commands/run_all_scheduled_tasks.py
+  h_ef2af05e886a25 14,36,56-59,61,604-682
+apps/perf_testing/engines/locust_engine.py
+  h_ef2af05e886a25 190,210-212,214-218,249-251
+backend/asgi.py
+  h_ef2af05e886a25 46-52,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "089662876561d431fc62619fa7db635cf37648d6",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
