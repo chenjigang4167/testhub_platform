@@ -4,6 +4,8 @@ venv/
 venv_py310/
 .idea/
 .claude/
+.qoder
+.workbuddy
 .vscode/
 .trae/
 __pycache__/

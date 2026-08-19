@@ -58,11 +58,11 @@ class ToolMeta:
 
 
 # --------------------------------------------------------------------- #
-# 工具登记（与 tools.ALL_TOOLS 一一对应，共 16 个）
+# 工具登记（与 tools.ALL_TOOLS 一一对应，共 17 个）
 # --------------------------------------------------------------------- #
 
 _TOOLS = [
-    # ------------------------- 只读工具（7） ------------------------- #
+    # ------------------------- 只读工具（8） ------------------------- #
     ToolMeta(
         name='list_projects', title='项目列表', category=CATEGORY_READ,
         domain='project',
@@ -125,6 +125,17 @@ _TOOLS = [
                     '未命中时投递 Celery 异步分析任务并返回 status=accepted，'
                     '约 30 秒后再次调用本工具获取结果。依赖 Celery，不可用时报错并提示改用页面 SSE 入口。',
         read_only=False, idempotent=False, open_world=True,
+        examples=({'execution_id': 42},),
+    ),
+
+    ToolMeta(
+        name='get_ui_execution', title='UI 执行结果查询', category=CATEGORY_READ,
+        domain='ui-automation',
+        summary='查询 UI 自动化用例执行结果',
+        description='查询 UI 自动化用例执行结果：confirm_run_ui_case 返回执行 ID 后用本工具轮询。'
+                    '返回状态（pending/running/passed/failed/error）、错误信息、逐步骤结果、'
+                    '耗时与截图元数据（不含 base64 图片数据）。'
+                    '状态为 running/pending 时请间隔数秒后再次调用。',
         examples=({'execution_id': 42},),
     ),
 
