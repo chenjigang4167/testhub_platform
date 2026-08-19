@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = '运行所有模块的定时任务调度器（API测试 + UI自动化 + APP自动化）'
+    help = '运行所有模块的定时任务调度器（API测试 + UI自动化 + APP自动化 + 性能测试）'
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -33,7 +33,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"{'='*60}"))
         self.stdout.write(self.style.SUCCESS("启动统一定时任务调度器"))
         self.stdout.write(self.style.SUCCESS(f"检查间隔: {interval}秒"))
-        self.stdout.write(self.style.SUCCESS(f"调度模块: API测试 + UI自动化 + APP自动化"))
+        self.stdout.write(self.style.SUCCESS(f"调度模块: API测试 + UI自动化 + APP自动化 + 性能测试"))
         self.stdout.write(self.style.SUCCESS(f"{'='*60}"))
 
         while True:
@@ -53,9 +53,12 @@ class Command(BaseCommand):
                 # 调度 APP 自动化模块的定时任务
                 app_count = self.schedule_app_tasks()
 
-                total_count = api_count + ui_count + app_count
+                # 调度性能测试模块的定时任务
+                perf_count = self.schedule_perf_tasks()
+
+                total_count = api_count + ui_count + app_count + perf_count
                 if total_count > 0:
-                    self.stdout.write(self.style.SUCCESS(f"✓ 本次调度执行了 {total_count} 个任务 (API: {api_count}, UI: {ui_count}, APP: {app_count})"))
+                    self.stdout.write(self.style.SUCCESS(f"✓ 本次调度执行了 {total_count} 个任务 (API: {api_count}, UI: {ui_count}, APP: {app_count}, 性能: {perf_count})"))
                 else:
                     self.stdout.write("  没有需要执行的任务")
 
@@ -597,4 +600,83 @@ class Command(BaseCommand):
         except Exception as e:
             logger.error(f"调度APP任务时出错: {e}", exc_info=True)
             self.stdout.write(self.style.ERROR(f"[APP] 调度失败: {e}"))
+            return 0
+
+    def schedule_perf_tasks(self):
+        """调度性能测试模块的定时压测任务。
+
+        压测是异步长任务，调度器只负责「到点拉起子进程」：
+        - 派发成功后调用 task.mark_dispatched() 累加 run_count、推进 next_run_at
+          （ONCE 任务自动暂停）；
+        - 真正的 success_count/fail_count 由压测子进程收尾时回写
+          （见 services/executor._update_task_stats），避免两处重复计数。
+        """
+        try:
+            from apps.perf_testing.models import PerfScheduledTask
+            from apps.perf_testing.services import executor
+
+            active_tasks = PerfScheduledTask.objects.filter(status='ACTIVE').select_related('scenario', 'created_by')
+            executed_count = 0
+
+            if active_tasks.exists():
+                now = timezone.now()
+                self.stdout.write(f"  [性能] 活跃任务数: {active_tasks.count()}")
+                for task in active_tasks:
+                    if task.next_run_at:
+                        time_diff = (task.next_run_at - now).total_seconds()
+                        if time_diff > 0:
+                            self.stdout.write(f"        - {task.name}: 距下次执行还有 {int(time_diff)} 秒")
+                        else:
+                            self.stdout.write(f"        - {task.name}: 应该立即执行！")
+                    else:
+                        self.stdout.write(f"        - {task.name}: 未设置下次执行时间")
+
+            for task in active_tasks:
+                if not task.should_run_now():
+                    continue
+
+                self.stdout.write(f"  [性能] 执行任务: {task.name}")
+                self.stdout.write(f"       触发方式: {task.get_trigger_type_display()}")
+                try:
+                    scenario = task.scenario
+                    if scenario.has_active_execution():
+                        # 场景已有正在执行的压测，跳过本轮，不推进 next_run_at，
+                        # 下个调度周期再尝试，避免重复加压。
+                        self.stdout.write(self.style.WARNING(
+                            f"    ! 任务 {task.name} 所属场景已有执行中的压测，本轮跳过"))
+                        continue
+
+                    # trigger_type 固定 SCHEDULED，便于执行记录归属与通知判定
+                    execution, check = executor.start_execution(
+                        scenario, user=task.created_by,
+                        trigger_type='SCHEDULED', scheduled_task=task)
+
+                    if execution is None:
+                        # preflight 未通过，属于派发阶段失败
+                        errors = (check or {}).get('errors') or []
+                        error_msg = '; '.join(errors) if errors else '执行前检查未通过'
+                        task.mark_dispatched(error=error_msg)
+                        self.stdout.write(self.style.ERROR(
+                            f"    ✗ 任务 {task.name} 前置检查未通过: {error_msg}"))
+                        continue
+
+                    task.mark_dispatched()
+                    executed_count += 1
+                    self.stdout.write(self.style.SUCCESS(
+                        f"    ✓ 任务 {task.name} 已启动 (执行 {execution.execution_no})"))
+
+                except Exception as e:
+                    logger.error(f"执行性能任务 {task.name} 时出错: {e}", exc_info=True)
+                    # 派发阶段异常，计入失败并推进调度，避免卡死
+                    try:
+                        task.mark_dispatched(error=str(e))
+                    except Exception:  # noqa: BLE001
+                        logger.error(f"回写性能任务 {task.name} 失败状态时出错", exc_info=True)
+                    self.stdout.write(self.style.ERROR(f"    ✗ 任务 {task.name} 执行失败: {e}"))
+
+            return executed_count
+
+        except Exception as e:
+            logger.error(f"调度性能任务时出错: {e}", exc_info=True)
+            self.stdout.write(self.style.ERROR(f"[性能] 调度失败: {e}"))
             return 0

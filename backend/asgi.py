@@ -43,11 +43,18 @@ try:
     from channels.auth import AuthMiddlewareStack
     from channels.routing import ProtocolTypeRouter, URLRouter
     from apps.app_automation import routing as app_automation_routing
+    from apps.perf_testing import routing as perf_testing_routing
+
+    # 合并各模块 WebSocket 路由：APP 自动化执行进度 + 性能测试实时监控
+    websocket_urlpatterns = (
+        app_automation_routing.websocket_urlpatterns
+        + perf_testing_routing.websocket_urlpatterns
+    )
 
     application = ProtocolTypeRouter({
         "http": _HttpRouter(django_asgi_app),
         "websocket": AuthMiddlewareStack(
-            URLRouter(app_automation_routing.websocket_urlpatterns)
+            URLRouter(websocket_urlpatterns)
         ),
     })
     logger.info("ASGI 已启用 WebSocket 支持 (需通过 Daphne 启动)")
