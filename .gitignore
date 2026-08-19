@@ -8,6 +8,7 @@ venv_py310/
 .workbuddy
 .vscode/
 .trae/
+.hermes
 __pycache__/
 .DS_Store
 .pytest_cache
@@ -67,6 +68,10 @@ media/app-automation/screenshots/*
 # 忽略APP自动化模板文件
 apps/app_automation/Template/**
 !apps/app_automation/Template/
+
+# 忽略性能测试模块生成文件
+media/perf-testing
+perf_workspace
 
 # 忽略前端文件
 frontend/node_modules/

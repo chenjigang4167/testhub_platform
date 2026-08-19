@@ -187,6 +187,7 @@ class LocustEngine(BaseEngine):
         self.raw_csv_path = raw_csv_path
         self.work_dir = work_dir or make_run_dir('locust')
         self.load_config = snapshot.get('load_config') or {}
+        self.base_url = (snapshot.get('env_config') or {}).get('base_url') or ''
         self.locustfile = os.path.join(self.work_dir, 'locustfile.py')
         self.csv_prefix = os.path.join(self.work_dir, 'locust')
         self.process = None
@@ -206,8 +207,15 @@ class LocustEngine(BaseEngine):
         if not steps:
             raise EngineError('场景没有可执行的业务步骤')
         base_url = (self.snapshot.get('env_config') or {}).get('base_url')
+        self.base_url = base_url
+        # 仅当存在相对路径步骤时才要求 base_url；步骤均为绝对 http(s):// URL 时无需配置
+        # （与 preflight / 内置引擎保持一致，Locust 对绝对 URL 会直连而忽略 host）
         if not base_url:
-            raise EngineError('Locust 引擎要求场景配置环境基址 base_url')
+            for step in steps:
+                url = (step.get('url') or '').strip()
+                if url and not url.startswith(('http://', 'https://')):
+                    raise EngineError(
+                        f'步骤「{step.get("name")}」使用相对路径，但未配置环境基址 base_url')
 
         os.makedirs(self.work_dir, exist_ok=True)
         variables = list(self.snapshot.get('variables') or [])
@@ -237,8 +245,10 @@ class LocustEngine(BaseEngine):
             '-r', str(max(round(spawn_rate, 2), 0.1)),
             '-t', f'{duration}s',
             '--csv', self.csv_prefix,
-            '--host', (self.snapshot.get('env_config') or {}).get('base_url'),
         ]
+        # host 仅在配置了环境基址时传入；步骤全部为绝对 URL 时 Locust 会直连目标，无需 host
+        if self.base_url:
+            cmd.extend(['--host', self.base_url])
         self.log(f'启动 Locust：{" ".join(cmd)}')
         self._start_ts = time.time()
         self._last_emit_ts = 0.0  # 重置节流计时器
