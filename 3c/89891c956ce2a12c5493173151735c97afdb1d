@@ -1,0 +1,14 @@
+.gitignore
+  h_ef2af05e886a25 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "3c89891c956ce2a12c5493173151735c97afdb1d",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
