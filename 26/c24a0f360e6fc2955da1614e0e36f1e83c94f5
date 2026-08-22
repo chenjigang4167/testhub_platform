@@ -1,0 +1,18 @@
+README.md
+  h_ef2af05e886a25 16,331-336,668,672-673,675-676
+AGENTS.md
+  h_ef2af05e886a25 45-52,55
+apps/llm_judge/management/commands/init_judge_rubrics.py
+  h_ef2af05e886a25 1-266
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "26c24a0f360e6fc2955da1614e0e36f1e83c94f5",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
