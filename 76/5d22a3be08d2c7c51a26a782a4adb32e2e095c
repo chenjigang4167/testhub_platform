@@ -1,0 +1,14 @@
+README.md
+  h_ef2af05e886a25 12-16,251-252
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "765d22a3be08d2c7c51a26a782a4adb32e2e095c",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
