@@ -1,0 +1,14 @@
+apps/requirement_analysis/models.py
+  h_ef2af05e886a25 6,445-451,455,462-472,474-491,524,528,543-544,547,586-589,651-652,683-701,731-732
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8f6757fd254653fbd54ef1dc28735d29da1b9f25",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
