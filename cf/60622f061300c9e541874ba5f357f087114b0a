@@ -1,0 +1,18 @@
+apps/api_testing/views.py
+  h_ef2af05e886a25 16,2434,2530,2597,2668,2750
+apps/requirement_analysis/models.py
+  h_ef2af05e886a25 5,445-446,448,494,513-514,556-557,621
+apps/ui_automation/views_config.py
+  h_ef2af05e886a25 199,391-397,426,428,470-476,507,509
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cf60622f061300c9e541874ba5f357f087114b0a",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
