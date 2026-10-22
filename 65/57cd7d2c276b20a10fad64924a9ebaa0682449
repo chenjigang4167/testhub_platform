@@ -1,0 +1,14 @@
+apps/core/ai_endpoints.py
+  h_ef2af05e886a25 1-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6557cd7d2c276b20a10fad64924a9ebaa0682449",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
