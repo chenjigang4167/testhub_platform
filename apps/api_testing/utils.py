@@ -5,6 +5,130 @@ from .models import RequestHistory
 from .variable_resolver import VariableResolver
 
 
+def _iter_sse_events(text):
+    """按 SSE 协议切分报文，产出 (事件名, data 内容)"""
+    event_name = None
+    buf = []
+    for line in (text or "").splitlines():
+        if not line.strip():
+            if event_name or buf:
+                yield event_name, "\n".join(buf)
+            event_name, buf = None, []
+            continue
+        if line.startswith("event:"):
+            event_name = line[6:].strip()
+        elif line.startswith("data:"):
+            buf.append(line[5:].strip())
+    if event_name or buf:
+        yield event_name, "\n".join(buf)
+
+
+def _parse_sse_body(text):
+    """解析 SSE 报文，返回第一个带 error 字段的业务对象；没有则退回首个可解析对象"""
+    fallback = None
+    for _name, payload in _iter_sse_events(text):
+        try:
+            obj = json.loads(payload)
+        except Exception:
+            continue
+        if isinstance(obj, dict) and "error" in obj:
+            return obj
+        if fallback is None:
+            obj_any = obj
+            fallback = obj_any
+    return fallback
+
+
+def parse_response_body(response):
+    """统一解析响应体：SSE 走事件解析，其余优先 JSON，都失败返回文本"""
+    content_type = (response.headers.get("content-type") or "").lower()
+    if "text/event-stream" in content_type:
+        parsed = _parse_sse_body(response.text or "")
+        return parsed if parsed is not None else (response.text or "")
+    try:
+        return json.loads(response.text)
+    except Exception:
+        return response.text
+
+
+def _json_query(data, path):
+    """按 JSONPath 取值：单命中返回值，多命中返回列表，无命中返回 None"""
+    from jsonpath_ng import parse as jsonpath_parse
+
+    matches = jsonpath_parse(path).find(data)
+    if not matches:
+        return None
+    if len(matches) == 1:
+        return matches[0].value
+    return [m.value for m in matches]
+
+
+def apply_extract_rules(api_request, response, runtime_vars):
+    """按请求上配置的 extract_rules 从响应中提取变量，写入套件级 runtime_vars
+
+    规则结构（列表）：
+        {"name": "变量名", "source": "body|cookies|headers|status_code",
+         "path": "data.article.logId", "default": "兜底值", "join": ","}
+
+    - 路径解析出多个值时，配置了 join 就拼接成字符串，否则取第一个
+    - 取不到值且配置了 default 时使用 default，否则记为失败但不抛异常
+    """
+    rules = getattr(api_request, "extract_rules", None) or []
+    if not rules:
+        return []
+
+    body_cache = {}
+    results = []
+    for rule in rules:
+        name = str(rule.get("name") or "").strip()
+        if not name:
+            continue
+        source = str(rule.get("source") or "body").strip().lower()
+        path = str(rule.get("path") or "").strip()
+        value = None
+        error = ""
+        try:
+            if source == "body":
+                if "v" not in body_cache:
+                    body_cache["v"] = parse_response_body(response)
+                parsed = body_cache["v"]
+                if isinstance(parsed, str):
+                    raise ValueError("响应不是 JSON/SSE，无法按 body 提取")
+                value = _json_query(parsed, path) if path else parsed
+            elif source == "cookies":
+                value = response.cookies.get(path) if path else dict(response.cookies)
+            elif source == "headers":
+                value = response.headers.get(path)
+            elif source == "status_code":
+                value = response.status_code
+            else:
+                error = "不支持的 source: %s" % source
+        except Exception as exc:
+            error = "%s: %s" % (type(exc).__name__, exc)
+
+        # 多值结果处理：配置了 join 就统一拼成字符串（单命中也要拼），否则取第一个
+        if rule.get("join") is not None:
+            if isinstance(value, list):
+                value = str(rule.get("join")).join(str(v) for v in value)
+            elif value is not None:
+                value = str(value)
+        elif isinstance(value, list):
+            value = value[0] if value else None
+
+        if value is None or value == "":
+            if rule.get("default") is not None:
+                value = rule.get("default")
+                error = ""
+            else:
+                results.append({"name": name, "success": False, "value": None,
+                                "error": error or "未取到值"})
+                continue
+
+        runtime_vars[name] = value
+        results.append({"name": name, "success": True, "value": value, "error": error})
+    return results
+
+
 def execute_assertions(response, assertions):
     """执行断言验证"""
     results = []
@@ -47,12 +171,11 @@ def execute_assertions(response, assertions):
                 passed = False
                 
                 try:
-                    # 检查响应是否为JSON格式
-                    content_type = response.headers.get('content-type', '').lower()
-                    if 'application/json' not in content_type:
-                        raise ValueError(f"响应不是JSON格式，Content-Type: {content_type}")
-                    
-                    response_json = json.loads(response.text)
+                    # 统一解析响应体：JSON / SSE / 文本 都能拿到业务对象
+                    response_json = parse_response_body(response)
+                    if isinstance(response_json, str):
+                        content_type = response.headers.get('content-type', '')
+                        raise ValueError(f"响应既不是 JSON 也不是可解析的 SSE 报文，Content-Type: {content_type}")
                     
                     # 检查JSONPath表达式是否为空
                     if not json_path:
@@ -133,15 +256,19 @@ def execute_test_suite(test_suite, environment, executed_by):
         passed_count = 0
         failed_count = 0
         
+        # 套件级运行时变量：由上游请求的 extract_rules 写入，供下游请求使用
+        runtime_vars = {}
+        
         # 执行每个请求
         for suite_request in suite_requests:
             api_request = suite_request.request
             
             try:
-                # 解析环境变量
+                # 解析环境变量；运行时变量优先级更高，可覆盖同名环境变量
                 variables = {}
                 if environment:
                     variables.update(environment.variables)
+                variables.update(runtime_vars)
                 
                 # 替换URL中的变量（先解析动态函数，再替换环境变量）
                 url = _replace_variables(api_request.url, variables)
@@ -169,12 +296,19 @@ def execute_test_suite(test_suite, environment, executed_by):
                     params[key] = resolver.resolve(params[key])
                 
                 # 准备请求体
-                body_data = None
+                json_data = None
+                form_data = None
                 if api_request.body and api_request.method in ['POST', 'PUT', 'PATCH']:
-                    if api_request.body.get('type') == 'json':
-                        body_data = api_request.body.get('data', {})
-                        body_data = _replace_variables_in_dict(body_data, variables)
-                        body_data = _resolve_variables_in_dict(body_data, resolver)
+                    body_type = api_request.body.get('type')
+                    if body_type == 'json':
+                        json_data = api_request.body.get('data', {})
+                        json_data = _replace_variables_in_dict(json_data, variables)
+                        json_data = _resolve_variables_in_dict(json_data, resolver)
+                    elif body_type in ('form', 'form-data', 'x-www-form-urlencoded', 'data'):
+                        form_data = api_request.body.get('data', {})
+                        form_data = _replace_variables_in_dict(form_data, variables)
+                        form_data = _resolve_variables_in_dict(form_data, resolver)
+                body_data = json_data if json_data is not None else form_data
                 
                 # 执行请求
                 start_time = time.time()
@@ -183,7 +317,8 @@ def execute_test_suite(test_suite, environment, executed_by):
                     url=url,
                     headers=headers,
                     params=params,
-                    json=body_data,
+                    json=json_data,
+                    data=form_data,
                     timeout=30
                 )
                 end_time = time.time()
@@ -196,6 +331,9 @@ def execute_test_suite(test_suite, environment, executed_by):
                         assertion['actual_time'] = response_time
                 
                 assertions_results = execute_assertions(response, assertions)
+                
+                # 响应提取：把变量写入套件级 runtime_vars，供后续请求使用
+                extract_results = apply_extract_rules(api_request, response, runtime_vars)
                 
                 # 检查所有断言是否通过
                 passed = True
@@ -231,7 +369,8 @@ def execute_test_suite(test_suite, environment, executed_by):
                     'response_time': response_time,
                     'passed': passed,
                     'error': error_message,
-                    'assertions_results': assertions_results
+                    'assertions_results': assertions_results,
+                    'extract_results': extract_results
                 })
                 
                 # 保存请求历史
@@ -330,12 +469,19 @@ def execute_api_request(api_request, environment, executed_by):
             params[key] = resolver.resolve(params[key])
         
         # 准备请求体
-        body_data = None
+        json_data = None
+        form_data = None
         if api_request.body and api_request.method in ['POST', 'PUT', 'PATCH']:
-            if api_request.body.get('type') == 'json':
-                body_data = api_request.body.get('data', {})
-                body_data = _replace_variables_in_dict(body_data, variables)
-                body_data = _resolve_variables_in_dict(body_data, resolver)
+            body_type = api_request.body.get('type')
+            if body_type == 'json':
+                json_data = api_request.body.get('data', {})
+                json_data = _replace_variables_in_dict(json_data, variables)
+                json_data = _resolve_variables_in_dict(json_data, resolver)
+            elif body_type in ('form', 'form-data', 'x-www-form-urlencoded', 'data'):
+                form_data = api_request.body.get('data', {})
+                form_data = _replace_variables_in_dict(form_data, variables)
+                form_data = _resolve_variables_in_dict(form_data, resolver)
+        body_data = json_data if json_data is not None else form_data
         
         # 执行请求
         start_time = time.time()
@@ -344,7 +490,8 @@ def execute_api_request(api_request, environment, executed_by):
             url=url,
             headers=headers,
             params=params,
-            json=body_data,
+            json=json_data,
+            data=form_data,
             timeout=30
         )
         end_time = time.time()
