@@ -1711,18 +1711,31 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                 else:
                     raise ValueError(f"未知的任务类型: {task.task_type}")
                 
+                # 判定真实结果：执行过程没抛异常，不等于所有断言都通过。
+                # 原实现无条件按成功处理，导致断言全失败的套件也推送成功通知，
+                # 任务的成功次数也统计错了。
+                _result_failed = 0
+                _result_ok = True
+                if isinstance(result, dict):
+                    _result_failed = result.get('failed_count') or 0
+                    _result_ok = bool(result.get('success', True))
+                assertions_passed = _result_ok and _result_failed == 0
+
                 # 更新执行结果
-                execution_log.status = 'COMPLETED'
+                execution_log.status = 'COMPLETED' if assertions_passed else 'FAILED'
                 execution_log.end_time = timezone.now()
                 execution_log.result = result
+                if not assertions_passed and not execution_log.error_message:
+                    execution_log.error_message = '%d 个请求断言未通过' % _result_failed
                 execution_log.save()
                 
                 # 更新任务统计
-                task.update_run_stats(success=True)
+                task.update_run_stats(success=assertions_passed)
                 task.last_result = result
                 task.save()
                 
-                logger.info("=== 开始检查发送成功通知 ===")
+                logger.info("=== 开始检查发送通知（实际结果: %s）==="
+                            % ('成功' if assertions_passed else '失败'))
                 # 发送通知（如果配置了）
                 # 检查任务是否有通知设置
                 notification_setting = None
@@ -1742,15 +1755,18 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                     logger.info("任务没有notification_settings属性")
                 
                 if notification_setting and notification_setting.is_enabled:
-                    logger.info("通知设置已启用，准备发送成功通知")
-                    if notification_setting.notify_on_success:
-                        logger.info("调用 _send_notification 方法发送成功通知")
-                        self._send_notification(task, execution_log, success=True)
+                    _want_notify = (notification_setting.notify_on_success
+                                    if assertions_passed
+                                    else notification_setting.notify_on_failure)
+                    if _want_notify:
+                        logger.info("按实际结果发送通知: success=%s" % assertions_passed)
+                        self._send_notification(task, execution_log,
+                                               success=assertions_passed)
                     else:
-                        logger.info("通知设置中未启用成功通知")
+                        logger.info("通知设置中未启用该结果的通知")
                 else:
-                    logger.info("通知设置未启用或不存在，跳过成功通知")
-                logger.info("=== 结束检查发送成功通知 ===")
+                    logger.info("通知设置未启用或不存在，跳过通知")
+                logger.info("=== 结束检查发送通知 ===")
                 
             except Exception as e:
                 # 记录执行失败
