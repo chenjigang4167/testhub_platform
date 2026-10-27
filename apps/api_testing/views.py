@@ -2109,21 +2109,57 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                 '**任务类型**: %s' % task_type_text,
             ]
 
-            # 失败明细最多列 5 条
-            _failed_items = [
-                _it for _it in (result_data.get('results') or [])
-                if isinstance(_it, dict) and not _it.get('passed', True)
-            ]
-            if _failed_items:
-                _lines.append('')
-                _lines.append('**失败请求**（共 %d 条%s）:' % (
-                    len(_failed_items),
-                    '，仅显示前 5 条' if len(_failed_items) > 5 else ''))
-                for _idx, _item in enumerate(_failed_items[:5], 1):
-                    _nm = _item.get('name') or _item.get('url') or '未知请求'
-                    _err = str(_item.get('error') or '')[:80]
-                    _lines.append('%d. %s%s' % (_idx, _nm, (' — ' + _err) if _err else ''))
+            # 逐条用例明细：按执行顺序列出每条用例与状态（✅ 通过 / ❌ 失败）
+            _MAX_CASE_LINES = 60
+            _all_items = [_it for _it in (result_data.get('results') or []) if isinstance(_it, dict)]
+            _case_lines = []
+
+            def _fmt_case(_no, _it):
+                _ok = bool(_it.get('passed', True))
+                _nm = _it.get('name') or _it.get('url') or '未命名请求'
+                _line = '%s %02d %s' % ('\u2705' if _ok else '\u274c', _no, _nm)
+                if not _ok:
+                    _line += ' \u2014 ' + _describe_failure(_it)
+                return _line
+
+            def _describe_failure(_it):
+                # 断言不通过时执行器不填 error（值为 None），改从断言明细拼「期望/实际」
+                for _ar in (_it.get('assertions_results') or []):
+                    if isinstance(_ar, dict) and not _ar.get('passed', True):
+                        _an = _ar.get('name') or ''
+                        _an = '' if _an in ('', '未命名断言') else '「%s」' % _an
+                        return ('断言%s不通过：期望 %s，实际 %s' % (
+                            _an, _ar.get('expected'), _ar.get('actual')))[:60]
+                _err = str(_it.get('error') or '').replace('\n', ' ').strip()
+                for _tail in ('- None', '- 断言不通过'):
+                    if _err.endswith(_tail):
+                        _err = _err[:-len(_tail)].strip()
+                return (_err or '失败原因未记录')[:60]
+
+            if _all_items:
+                _case_lines.append('**用例明细**（共 %d 条，\u2705 通过 / \u274c 失败）:' % len(_all_items))
+                _failed_items = [_it for _it in _all_items if not _it.get('passed', True)]
+                _ok_items = [_it for _it in _all_items if _it.get('passed', True)]
+                if len(_all_items) <= _MAX_CASE_LINES:
+                    for _no, _it in enumerate(_all_items, 1):
+                        _case_lines.append(_fmt_case(_no, _it))
+                else:
+                    # 超长时优先保留全部失败用例，通过用例补足到上限
+                    _ok_room = max(_MAX_CASE_LINES - len(_failed_items), 0)
+                    for _no, _it in enumerate(_all_items, 1):
+                        if not _it.get('passed', True):
+                            _case_lines.append(_fmt_case(_no, _it))
+                    _ok_shown = 0
+                    for _no, _it in enumerate(_all_items, 1):
+                        if _it.get('passed', True) and _ok_shown < _ok_room:
+                            _case_lines.append(_fmt_case(_no, _it))
+                            _ok_shown += 1
+                    if len(_ok_items) > _ok_room:
+                        _case_lines.append('\u2026 其余 %d 条通过用例未列出' % (len(_ok_items) - _ok_room))
+
+            cases_content = '\n'.join(_case_lines)
             detail_content = '\n'.join(_lines)
+            _full_content = detail_content + (('\n\n' + cases_content) if cases_content else '')
 
             # 为不同的机器人平台准备消息格式
             for bot in all_webhook_bots:
@@ -2140,20 +2176,25 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                     message_data = {
                         "msgtype": "markdown",
                         "markdown": {
-                            "content": f"**定时任务执行{status_text}**\n\n{detail_content}"
+                            "content": f"**定时任务执行{status_text}**\n\n{_full_content}"
                         }
                     }
                 elif bot_type == 'feishu':  # 飞书
+                    _feishu_head = '**定时任务执行%s**\n\n%s' % (status_text, detail_content)
+                    _feishu_elements = [{
+                        "tag": "div",
+                        "text": {"content": _feishu_head, "tag": "lark_md"}
+                    }]
+                    if cases_content:
+                        _feishu_elements.append({"tag": "hr"})
+                        _feishu_elements.append({
+                            "tag": "div",
+                            "text": {"content": cases_content, "tag": "lark_md"}
+                        })
                     message_data = {
                         "msg_type": "interactive",
                         "card": {
-                            "elements": [{
-                                "tag": "div",
-                                "text": {
-                                    "content": f"**定时任务执行{status_text}**\n\n{detail_content}",
-                                    "tag": "lark_md"
-                                }
-                            }],
+                            "elements": _feishu_elements,
                             "header": {
                                 "title": {
                                     "content": f"定时任务执行{status_text}",
@@ -2168,7 +2209,7 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                         "msgtype": "markdown",
                         "markdown": {
                             "title": f"定时任务执行{status_text}",
-                            "text": f"**定时任务执行{status_text}**\n\n{detail_content}"
+                            "text": f"**定时任务执行{status_text}**\n\n{_full_content}"
                         }
                     }
 
@@ -2202,7 +2243,7 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                         logger.info("钉钉机器人未配置签名密钥，使用无签名模式")
                 else:  # 通用格式
                     message_data = {
-                        "text": f"定时任务执行{status_text}\n{detail_content.replace('**', '')}"
+                        "text": f"定时任务执行{status_text}\n{_full_content.replace('**', '')}"
                     }
 
                 # 发送webhook请求

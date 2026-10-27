@@ -2617,6 +2617,9 @@ class UiScheduledTaskViewSet(viewsets.ModelViewSet):
             success_count = last_result.get('success_count', 0)
             failed_count = last_result.get('failed_count', 0)
 
+            # 用例明细只查一次，多个机器人复用
+            _ui_cases_content = None
+
             # 为不同的机器人平台准备消息格式
             for bot in all_webhook_bots:
                 if not bot.get('enabled', True) or not bot.get('webhook_url'):
@@ -2667,34 +2670,78 @@ class UiScheduledTaskViewSet(viewsets.ModelViewSet):
                 if result_message:
                     _lines.append('**执行结果**: %s' % result_message)
 
-                # 失败用例明细：从本次执行时间点之后的用例执行记录里取，最多 5 条
-                if failed_count:
+                # 逐条用例明细：按本次执行窗口取出每条用例与状态（✅ 通过 / ❌ 失败）
+                _MAX_CASE_LINES = 60
+                if _ui_cases_content is None:
+                    _case_lines = []
                     try:
                         from datetime import timedelta
                         from apps.ui_automation.models import TestCaseExecution as _UiCaseExec
-                        _since = (task.last_run_time or timezone.now()) - timedelta(minutes=10)
-                        _rows = (_UiCaseExec.objects
-                                 .filter(test_suite_id=task.test_suite_id, status='failed',
-                                         created_at__gte=_since)
-                                 .select_related('test_case')
-                                 .order_by('-id')[:5])
-                        _names = []
-                        for _row in _rows:
+                        from apps.ui_automation.models import TestExecution as _UiSuiteExec
+
+                        _suite_exec = (_UiSuiteExec.objects
+                                       .filter(test_suite_id=task.test_suite_id)
+                                       .order_by('-id')
+                                       .first())
+                        _q = _UiCaseExec.objects.filter(test_suite_id=task.test_suite_id)
+                        if _suite_exec:
+                            _win_start = _suite_exec.started_at or _suite_exec.created_at
+                            _win_end = _suite_exec.finished_at or _suite_exec.created_at
+                            if _win_end < _win_start:
+                                _win_end = _win_start
+                            _q = _q.filter(created_at__gte=_win_start - timedelta(seconds=60),
+                                           created_at__lte=_win_end + timedelta(seconds=60))
+                        else:
+                            _q = _q.filter(created_at__gte=(task.last_run_time or timezone.now())
+                                           - timedelta(minutes=10))
+                        _rows = list(_q.select_related('test_case').order_by('created_at', 'id'))
+
+                        _marks = {'passed': '\u2705', 'failed': '\u274c', 'error': '\u274c',
+                                  'running': '\u23f3', 'pending': '\u23f3'}
+
+                        def _is_bad_row(_row):
+                            return (_row.status or '').lower() in ('failed', 'error')
+
+                        def _fmt_ui_case(_no, _row):
+                            _st = (_row.status or '').lower()
                             _nm = getattr(getattr(_row, 'test_case', None), 'name', '') \
                                 or ('用例ID %s' % _row.test_case_id)
-                            _err = (_row.error_message or '')[:60]
-                            _names.append('%s%s' % (_nm, (' — ' + _err) if _err else ''))
-                        if _names:
-                            _lines.append('')
-                            _lines.append('**失败用例**（共 %d 条%s）:' % (
-                                failed_count,
-                                '，仅显示前 %d 条' % len(_names) if failed_count > len(_names) else ''))
-                            for _idx, _nm in enumerate(_names, 1):
-                                _lines.append('%d. %s' % (_idx, _nm))
-                    except Exception as _exc:
-                        logger.warning(f"获取 UI 失败用例明细失败: {_exc}")
+                            _line = '%s %02d %s' % (_marks.get(_st, '\u2754'), _no, _nm)
+                            if _is_bad_row(_row):
+                                _err = str(_row.error_message or '').replace('\n', ' ').strip()
+                                for _tail in ('- None', '- 断言不通过'):
+                                    if _err.endswith(_tail):
+                                        _err = _err[:-len(_tail)].strip()
+                                if _err:
+                                    _line += ' \u2014 ' + _err[:60]
+                            return _line
 
+                        if _rows:
+                            _case_lines.append('**用例明细**（共 %d 条，\u2705 通过 / \u274c 失败）:' % len(_rows))
+                            if len(_rows) <= _MAX_CASE_LINES:
+                                for _no, _row in enumerate(_rows, 1):
+                                    _case_lines.append(_fmt_ui_case(_no, _row))
+                            else:
+                                _bad_rows = [_row for _row in _rows if _is_bad_row(_row)]
+                                _ok_room = max(_MAX_CASE_LINES - len(_bad_rows), 0)
+                                for _no, _row in enumerate(_rows, 1):
+                                    if _is_bad_row(_row):
+                                        _case_lines.append(_fmt_ui_case(_no, _row))
+                                _ok_shown = 0
+                                for _no, _row in enumerate(_rows, 1):
+                                    if not _is_bad_row(_row) and _ok_shown < _ok_room:
+                                        _case_lines.append(_fmt_ui_case(_no, _row))
+                                        _ok_shown += 1
+                                if len(_rows) - len(_bad_rows) > _ok_room:
+                                    _case_lines.append('\u2026 其余 %d 条通过用例未列出' % (
+                                        len(_rows) - len(_bad_rows) - _ok_room))
+                    except Exception as _exc:
+                        logger.warning(f"获取 UI 用例明细失败: {_exc}")
+                    _ui_cases_content = '\n'.join(_case_lines)
+
+                cases_content = _ui_cases_content
                 detail_content = '\n'.join(_lines)
+                _full_content = detail_content + (('\n\n' + cases_content) if cases_content else '')
 
                 # 根据机器人类型构造消息格式
                 if bot_type == 'wechat':  # 企业微信
@@ -2703,20 +2750,25 @@ class UiScheduledTaskViewSet(viewsets.ModelViewSet):
                         "markdown": {
                             "content": f"""**UI自动化定时任务执行{status_text}**
 
-{detail_content}"""
+{_full_content}"""
                         }
                     }
                 elif bot_type == 'feishu':  # 飞书
+                    _feishu_head = '**UI自动化定时任务执行%s**\n\n%s' % (status_text, detail_content)
+                    _feishu_elements = [{
+                        "tag": "div",
+                        "text": {"content": _feishu_head, "tag": "lark_md"}
+                    }]
+                    if cases_content:
+                        _feishu_elements.append({"tag": "hr"})
+                        _feishu_elements.append({
+                            "tag": "div",
+                            "text": {"content": cases_content, "tag": "lark_md"}
+                        })
                     message_data = {
                         "msg_type": "interactive",
                         "card": {
-                            "elements": [{
-                                "tag": "div",
-                                "text": {
-                                    "content": f"**UI自动化定时任务执行{status_text}**\n\n{detail_content}",
-                                    "tag": "lark_md"
-                                }
-                            }],
+                            "elements": _feishu_elements,
                             "header": {
                                 "title": {
                                     "content": f"UI自动化定时任务执行{status_text}",
@@ -2733,7 +2785,7 @@ class UiScheduledTaskViewSet(viewsets.ModelViewSet):
                             "title": f"UI自动化定时任务执行{status_text}",
                             "text": f"""**UI自动化定时任务执行{status_text}**
 
-{detail_content}"""
+{_full_content}"""
                         }
                     }
 
