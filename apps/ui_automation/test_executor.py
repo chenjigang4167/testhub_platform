@@ -642,8 +642,40 @@ class TestExecutor:
         }
 
         try:
-            # 获取元素定位器
-            if step_data['element']:
+            # navigate 动作：整页跳转，不依赖元素定位，必须放在元素分支之前处理。
+            # 目标 URL 取步骤的 input_value：
+            #   - 填 http(s):// 开头的绝对地址 → 原样使用
+            #   - 其余一律按「相对站点根」解析，例如 /admin/article 或 admin/article
+            #   - 支持 {{变量}} 替换
+            if step_data['action_type'] == 'navigate':
+                import re
+                from urllib.parse import urljoin, urlparse
+
+                raw_url = (step_data.get('input_value') or '').strip()
+                if not raw_url:
+                    step_result['error'] = '✗ 导航失败: 步骤未填写目标 URL（请填写在“输入值”中）'
+                else:
+                    target_url = resolve_variables(raw_url).strip()
+                    if not re.match(r'^[a-zA-Z][a-zA-Z0-9+.\-]*://', target_url):
+                        project_base = (self.test_suite.project.base_url or '').strip()
+                        parsed = urlparse(project_base)
+                        if not parsed.netloc:
+                            raise ValueError(
+                                '项目未配置有效的 base_url，无法解析相对路径: %s' % target_url
+                            )
+                        origin = '%s://%s' % (parsed.scheme, parsed.netloc)
+                        target_url = urljoin(origin + '/', target_url.lstrip('/'))
+
+                    nav_timeout = max(int(step_data.get('wait_time') or 0), 15000)
+                    print(f"🧭 页面导航: {target_url} (超时 {nav_timeout}ms)")
+                    self.current_page.goto(target_url, wait_until='networkidle', timeout=nav_timeout)
+
+                    step_result['success'] = True
+                    step_result['result'] = self.current_page.url
+                    print(f"✓ 页面导航成功，当前 URL: {self.current_page.url}")
+
+            elif step_data['element']:
+                # 获取元素定位器
                 element = step_data['element']
                 locator_value = element['locator_value']
                 locator_strategy = element['locator_strategy'].lower()
@@ -980,10 +1012,28 @@ class TestExecutor:
                             log += f"  - 实际: '{text}'"
                             step_result['error'] = log
                     elif step_data['assert_type'] == 'isVisible':
-                        is_visible = self.current_page.is_visible(selector)
+                        # 带超时重试：原实现用 page.is_visible() 瞬时判断，SPA 页面
+                        # 还没渲染完就直接判定失败，逼得用例里到处硬插 wait。
+                        # 这里改为在超时窗口内轮询等待元素可见，超时才失败。
+                        visible_timeout = max(int(step_data.get('wait_time') or 0), 5000)
+                        is_visible = False
+                        try:
+                            self.current_page.locator(selector).first.wait_for(
+                                state='visible', timeout=visible_timeout
+                            )
+                            is_visible = True
+                        except Exception as wait_exc:
+                            print(f"  ⏱ 元素 '{element_name}' 在 {visible_timeout}ms 内未变为可见: "
+                                  f"{str(wait_exc).splitlines()[0] if str(wait_exc) else ''}")
+
                         step_result['success'] = is_visible
-                        if not is_visible:
-                            step_result['error'] = f"✗ 断言失败: 元素 '{element_name}' 不可见"
+                        if is_visible:
+                            print(f"  ✓ 元素 '{element_name}' 可见（{visible_timeout}ms 窗口内确认）")
+                        else:
+                            step_result['error'] = (
+                                f"✗ 断言失败: 元素 '{element_name}' 在 {visible_timeout}ms 内未变为可见\n"
+                                f"  - 定位: {locator_strategy}={locator_value}"
+                            )
                     elif step_data['assert_type'] == 'exists':
                         count = self.current_page.locator(selector).count()
                         step_result['success'] = count > 0
