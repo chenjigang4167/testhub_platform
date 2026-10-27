@@ -2075,6 +2075,56 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
             status_text = '成功' if success else '失败'
             status_color = 'green' if success else 'red'
 
+            # 执行统计：通过率、耗时、失败用例，各平台共用同一份正文
+            result_data = execution_log.result if isinstance(execution_log.result, dict) else {}
+            total_count = result_data.get('total_count') or 0
+            passed_count = result_data.get('passed_count') or 0
+            failed_count = result_data.get('failed_count') or 0
+            pass_rate = (passed_count * 100.0 / total_count) if total_count else 0.0
+
+            # 耗时优先用 duration 字段，缺失时用起止时间相减
+            duration_text = '未知'
+            if getattr(execution_log, 'duration', None):
+                duration_text = '%.1fs' % execution_log.duration
+            elif execution_log.end_time and execution_log.start_time:
+                duration_text = '%.1fs' % (execution_log.end_time - execution_log.start_time).total_seconds()
+
+            # 库里存 UTC，卡片上按本地时区展示
+            from django.utils import timezone as _notify_tz
+            _run_time = execution_log.created_at
+            if _notify_tz.is_naive(_run_time):
+                _run_time = _notify_tz.make_aware(_run_time, _notify_tz.utc)
+            run_time_text = _notify_tz.localtime(_run_time).strftime('%Y-%m-%d %H:%M:%S')
+
+            _suite = getattr(task, 'test_suite', None)
+            suite_name = getattr(_suite, 'name', '') or task.name
+            task_type_text = '测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'
+
+            _lines = [
+                '**套件**: %s' % suite_name,
+                '**结果**: %s %d/%d 通过（%.0f%%）' % (
+                    '✅' if success else '❌', passed_count, total_count, pass_rate),
+                '**耗时**: %s' % duration_text,
+                '**执行时间**: %s' % run_time_text,
+                '**任务类型**: %s' % task_type_text,
+            ]
+
+            # 失败明细最多列 5 条
+            _failed_items = [
+                _it for _it in (result_data.get('results') or [])
+                if isinstance(_it, dict) and not _it.get('passed', True)
+            ]
+            if _failed_items:
+                _lines.append('')
+                _lines.append('**失败请求**（共 %d 条%s）:' % (
+                    len(_failed_items),
+                    '，仅显示前 5 条' if len(_failed_items) > 5 else ''))
+                for _idx, _item in enumerate(_failed_items[:5], 1):
+                    _nm = _item.get('name') or _item.get('url') or '未知请求'
+                    _err = str(_item.get('error') or '')[:80]
+                    _lines.append('%d. %s%s' % (_idx, _nm, (' — ' + _err) if _err else ''))
+            detail_content = '\n'.join(_lines)
+
             # 为不同的机器人平台准备消息格式
             for bot in all_webhook_bots:
                 if not bot.get('enabled', True) or not bot.get('webhook_url'):
@@ -2090,15 +2140,7 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                     message_data = {
                         "msgtype": "markdown",
                         "markdown": {
-                            "content": f"""**定时任务执行{status_text}**
-
-任务名称: {task.name}
-
-执行状态: {status_text}
-
-执行时间: {execution_log.created_at.strftime('%Y-%m-%d %H:%M:%S')}
-
-任务类型: {'测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'}"""
+                            "content": f"**定时任务执行{status_text}**\n\n{detail_content}"
                         }
                     }
                 elif bot_type == 'feishu':  # 飞书
@@ -2108,7 +2150,7 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                             "elements": [{
                                 "tag": "div",
                                 "text": {
-                                    "content": f"**定时任务执行{status_text}**\n任务名称: {task.name}\n执行状态: {status_text}\n执行时间: {execution_log.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n任务类型: {'测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'}",
+                                    "content": f"**定时任务执行{status_text}**\n\n{detail_content}",
                                     "tag": "lark_md"
                                 }
                             }],
@@ -2126,15 +2168,7 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                         "msgtype": "markdown",
                         "markdown": {
                             "title": f"定时任务执行{status_text}",
-                            "text": f"""**定时任务执行{status_text}**
-
-任务名称: {task.name}
-
-执行状态: {status_text}
-
-执行时间: {execution_log.created_at.strftime('%Y-%m-%d %H:%M:%S')}
-
-任务类型: {'测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'}"""
+                            "text": f"**定时任务执行{status_text}**\n\n{detail_content}"
                         }
                     }
 
@@ -2168,7 +2202,7 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                         logger.info("钉钉机器人未配置签名密钥，使用无签名模式")
                 else:  # 通用格式
                     message_data = {
-                        "text": f"定时任务执行{status_text}\n任务名称: {task.name}\n执行状态: {status_text}\n执行时间: {execution_log.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n任务类型: {'测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'}"
+                        "text": f"定时任务执行{status_text}\n{detail_content.replace('**', '')}"
                     }
 
                 # 发送webhook请求

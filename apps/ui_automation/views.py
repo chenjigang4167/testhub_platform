@@ -2631,23 +2631,70 @@ class UiScheduledTaskViewSet(viewsets.ModelViewSet):
                 # 转换执行时间到本地时区
                 local_run_time = timezone.localtime(task.last_run_time).strftime(
                     '%Y-%m-%d %H:%M:%S') if task.last_run_time else '未知'
-                detail_content = f"""任务名称: {task.name}
+                # 两条执行路径写的 last_result 结构不同（run_now 只写 message），
+                # 计数为 0 时回落到执行记录表取本次真实统计
+                _duration_text = '未知'
+                if not (success_count or failed_count):
+                    try:
+                        from datetime import timedelta
+                        from apps.ui_automation.models import TestExecution as _UiExec
+                        _since = (task.last_run_time or timezone.now()) - timedelta(minutes=10)
+                        _exec = (_UiExec.objects
+                                 .filter(test_suite_id=task.test_suite_id, created_at__gte=_since)
+                                 .order_by('-id')
+                                 .first())
+                        if _exec:
+                            success_count = _exec.passed_cases or 0
+                            failed_count = _exec.failed_cases or 0
+                            if _exec.duration:
+                                _duration_text = '%.1fs' % _exec.duration
+                    except Exception as _exc:
+                        logger.warning(f"获取 UI 执行统计失败: {_exc}")
 
-执行状态: {status_text}
+                _total = success_count + failed_count
+                _rate = (success_count * 100.0 / _total) if _total else 0.0
 
-执行时间: {local_run_time}
-
-任务类型: {task_type_text}
-
-执行引擎: {task.engine.upper()}
-
-浏览器: {task.browser.capitalize()}"""
-
+                _lines = [
+                    '**任务**: %s' % task.name,
+                    '**结果**: %s %d/%d 通过（%.0f%%）' % (
+                        '✅' if success else '❌', success_count, _total, _rate),
+                    '**耗时**: %s' % _duration_text,
+                    '**执行时间**: %s' % local_run_time,
+                    '**任务类型**: %s' % task_type_text,
+                    '**执行引擎**: %s' % task.engine.upper(),
+                    '**浏览器**: %s' % task.browser.capitalize(),
+                ]
                 if result_message:
-                    detail_content += f"\n\n执行结果: {result_message}"
+                    _lines.append('**执行结果**: %s' % result_message)
 
-                if success_count > 0 or failed_count > 0:
-                    detail_content += f"\n\n成功: {success_count} 个，失败: {failed_count} 个"
+                # 失败用例明细：从本次执行时间点之后的用例执行记录里取，最多 5 条
+                if failed_count:
+                    try:
+                        from datetime import timedelta
+                        from apps.ui_automation.models import TestCaseExecution as _UiCaseExec
+                        _since = (task.last_run_time or timezone.now()) - timedelta(minutes=10)
+                        _rows = (_UiCaseExec.objects
+                                 .filter(test_suite_id=task.test_suite_id, status='failed',
+                                         created_at__gte=_since)
+                                 .select_related('test_case')
+                                 .order_by('-id')[:5])
+                        _names = []
+                        for _row in _rows:
+                            _nm = getattr(getattr(_row, 'test_case', None), 'name', '') \
+                                or ('用例ID %s' % _row.test_case_id)
+                            _err = (_row.error_message or '')[:60]
+                            _names.append('%s%s' % (_nm, (' — ' + _err) if _err else ''))
+                        if _names:
+                            _lines.append('')
+                            _lines.append('**失败用例**（共 %d 条%s）:' % (
+                                failed_count,
+                                '，仅显示前 %d 条' % len(_names) if failed_count > len(_names) else ''))
+                            for _idx, _nm in enumerate(_names, 1):
+                                _lines.append('%d. %s' % (_idx, _nm))
+                    except Exception as _exc:
+                        logger.warning(f"获取 UI 失败用例明细失败: {_exc}")
+
+                detail_content = '\n'.join(_lines)
 
                 # 根据机器人类型构造消息格式
                 if bot_type == 'wechat':  # 企业微信
