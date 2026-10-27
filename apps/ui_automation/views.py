@@ -2702,11 +2702,16 @@ class UiScheduledTaskViewSet(viewsets.ModelViewSet):
                         def _is_bad_row(_row):
                             return (_row.status or '').lower() in ('failed', 'error')
 
+                        # 用例名自带编号时不再补序号
+                        def _has_serial(_nm):
+                            return bool(re.search(r'\d', _nm[:15]))
+
                         def _fmt_ui_case(_no, _row):
                             _st = (_row.status or '').lower()
                             _nm = getattr(getattr(_row, 'test_case', None), 'name', '') \
                                 or ('用例ID %s' % _row.test_case_id)
-                            _line = '%s %02d %s' % (_marks.get(_st, '\u2754'), _no, _nm)
+                            _sn = '' if _has_serial(_nm) else '%02d ' % _no
+                            _line = '%s %s%s' % (_marks.get(_st, '\u2754'), _sn, _nm)
                             if _is_bad_row(_row):
                                 _err = str(_row.error_message or '').replace('\n', ' ').strip()
                                 for _tail in ('- None', '- 断言不通过'):
@@ -2717,7 +2722,9 @@ class UiScheduledTaskViewSet(viewsets.ModelViewSet):
                             return _line
 
                         if _rows:
-                            _case_lines.append('**用例明细**（共 %d 条，\u2705 通过 / \u274c 失败）:' % len(_rows))
+                            _bad_rows = [_row for _row in _rows if _is_bad_row(_row)]
+                            _case_lines.append('**用例明细**（共 %d 条：\u2705 %d / \u274c %d）:' % (
+                                len(_rows), len(_rows) - len(_bad_rows), len(_bad_rows)))
                             if len(_rows) <= _MAX_CASE_LINES:
                                 for _no, _row in enumerate(_rows, 1):
                                     _case_lines.append(_fmt_ui_case(_no, _row))
@@ -2754,10 +2761,10 @@ class UiScheduledTaskViewSet(viewsets.ModelViewSet):
                         }
                     }
                 elif bot_type == 'feishu':  # 飞书
-                    _feishu_head = '**UI自动化定时任务执行%s**\n\n%s' % (status_text, detail_content)
+                    # 标题已由卡片 header 呈现，正文不再重复一遍
                     _feishu_elements = [{
                         "tag": "div",
-                        "text": {"content": _feishu_head, "tag": "lark_md"}
+                        "text": {"content": detail_content, "tag": "lark_md"}
                     }]
                     if cases_content:
                         _feishu_elements.append({"tag": "hr"})

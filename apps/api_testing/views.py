@@ -2114,10 +2114,17 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
             _all_items = [_it for _it in (result_data.get('results') or []) if isinstance(_it, dict)]
             _case_lines = []
 
+            import re as _re
+
+            # 用例名自带编号（#01 / UI-LOGIN-01）时不再补序号，避免出现 "01 #01 xx"
+            def _has_serial(_nm):
+                return bool(_re.search(r'\d', _nm[:15]))
+
             def _fmt_case(_no, _it):
                 _ok = bool(_it.get('passed', True))
                 _nm = _it.get('name') or _it.get('url') or '未命名请求'
-                _line = '%s %02d %s' % ('\u2705' if _ok else '\u274c', _no, _nm)
+                _sn = '' if _has_serial(_nm) else '%02d ' % _no
+                _line = '%s %s%s' % ('\u2705' if _ok else '\u274c', _sn, _nm)
                 if not _ok:
                     _line += ' \u2014 ' + _describe_failure(_it)
                 return _line
@@ -2137,9 +2144,10 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                 return (_err or '失败原因未记录')[:60]
 
             if _all_items:
-                _case_lines.append('**用例明细**（共 %d 条，\u2705 通过 / \u274c 失败）:' % len(_all_items))
                 _failed_items = [_it for _it in _all_items if not _it.get('passed', True)]
                 _ok_items = [_it for _it in _all_items if _it.get('passed', True)]
+                _case_lines.append('**用例明细**（共 %d 条：\u2705 %d / \u274c %d）:' % (
+                    len(_all_items), len(_ok_items), len(_failed_items)))
                 if len(_all_items) <= _MAX_CASE_LINES:
                     for _no, _it in enumerate(_all_items, 1):
                         _case_lines.append(_fmt_case(_no, _it))
@@ -2180,10 +2188,10 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                         }
                     }
                 elif bot_type == 'feishu':  # 飞书
-                    _feishu_head = '**定时任务执行%s**\n\n%s' % (status_text, detail_content)
+                    # 标题已由卡片 header 呈现，正文不再重复一遍
                     _feishu_elements = [{
                         "tag": "div",
-                        "text": {"content": _feishu_head, "tag": "lark_md"}
+                        "text": {"content": detail_content, "tag": "lark_md"}
                     }]
                     if cases_content:
                         _feishu_elements.append({"tag": "hr"})
