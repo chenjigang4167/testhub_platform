@@ -1272,6 +1272,35 @@ class TestCaseViewSet(viewsets.ModelViewSet):
                 started_at=timezone.now()
             )
 
+            # 0 个步骤等于什么都没验，直接判失败，不启动浏览器
+            if not test_case.steps.exists():
+                logger.warning(f"测试用例 {test_case.id} 未定义任何步骤，拒绝执行")
+                execution.status = 'failed'
+                execution.error_message = '用例没有定义任何步骤，无法执行'
+                execution.execution_logs = (
+                    '用例未定义任何步骤，本次执行判定为失败。\n\n'
+                    '0 个步骤的执行不会验证任何内容，为避免产生「通过」的假结果，这里直接判失败。\n'
+                    '请先在用例编辑页添加步骤后重试。'
+                )
+                execution.finished_at = timezone.now()
+                execution.execution_time = 0
+                execution.save()
+
+                return Response({
+                    'success': False,
+                    'logs': execution.execution_logs,
+                    'screenshots': [],
+                    'execution_time': 0,
+                    'errors': [{
+                        'message': '用例没有定义任何步骤',
+                        'details': '0 个步骤的执行不会验证任何内容，请先在用例编辑页添加步骤',
+                        'step_number': None,
+                        'action_type': '执行前检查',
+                        'element': '',
+                        'description': '用例步骤校验'
+                    }]
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             # 根据引擎类型导入对应的执行引擎
             if engine_type == 'selenium':
                 from .selenium_engine import SeleniumTestEngine
@@ -1579,8 +1608,10 @@ class TestCaseViewSet(viewsets.ModelViewSet):
                             execution_logs.append(f"========== 执行完成 ({step_count} 个步骤全部通过) ==========")
                             return True
                         else:
-                            execution_logs.append("警告: 测试用例没有定义任何步骤")
-                            return True
+                            execution_logs.append("错误: 测试用例没有定义任何步骤，判定为失败")
+                            execution_result['status'] = 'failed'
+                            execution_result['error_message'] = '用例没有定义任何步骤，无法执行'
+                            return False
 
                     finally:
                         execution_logs.append("")
@@ -1786,8 +1817,10 @@ class TestCaseViewSet(viewsets.ModelViewSet):
                                 return True
 
                             else:
-                                execution_logs.append("警告: 测试用例没有定义任何步骤")
-                                return True
+                                execution_logs.append("错误: 测试用例没有定义任何步骤，判定为失败")
+                                execution_result['status'] = 'failed'
+                                execution_result['error_message'] = '用例没有定义任何步骤，无法执行'
+                                return False
 
                         finally:
                             # 关闭浏览器
