@@ -2173,9 +2173,28 @@ class UiScheduledTaskViewSet(viewsets.ModelViewSet):
                         )
                         executor.run()
 
+                        # executor.run() 内部会吞掉失败，必须回读执行记录判定结果
+                        execution = getattr(executor, 'execution', None)
+                        if execution is None:
+                            raise RuntimeError('执行记录未创建，判定任务失败')
+                        if execution.status != 'SUCCESS':
+                            raise RuntimeError(
+                                '套件执行失败: 通过 %s 条 / 失败 %s 条%s' % (
+                                    execution.passed_cases,
+                                    execution.failed_cases,
+                                    ('，' + execution.error_message[:200]) if execution.error_message else ''
+                                )
+                            )
+
                         # 更新任务执行结果
                         task.successful_runs += 1
-                        task.last_result = {'status': 'success', 'message': '测试套件执行成功'}
+                        task.last_result = {
+                            'status': 'success',
+                            'message': '测试套件执行成功',
+                            'execution_id': execution.id,
+                            'passed_count': execution.passed_cases,
+                            'failed_count': execution.failed_cases
+                        }
                         task.error_message = ''
                         task.save()
 

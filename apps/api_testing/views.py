@@ -41,7 +41,7 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 
-from .utils import execute_assertions
+from .utils import execute_assertions, describe_assertion_failure
 from .operation_logger import log_operation
 from .variable_resolver import VariableResolver
 from .serializers import (
@@ -795,7 +795,7 @@ class TestSuiteViewSet(viewsets.ModelViewSet):
                         for assertion_result in assertions_results:
                             if not assertion_result.get('passed', True):
                                 passed = False
-                                error_message = f"断言失败: {assertion_result.get('name', '未命名断言')} - {assertion_result.get('error', '断言不通过')}"
+                                error_message = f"断言失败: {assertion_result.get('name') or '未命名断言'} - {describe_assertion_failure(assertion_result)}"
                                 break
                     
                     if passed:
