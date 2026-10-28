@@ -2143,11 +2143,26 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                         _err = _err[:-len(_tail)].strip()
                 return (_err or '失败原因未记录')[:60]
 
+            # 套件内 order 是按集合分组导入的，可能和用例名自带的 #NN 编号不一致，
+            # 按执行顺序直出会得到 #01 #08 #22 #10 这种跳跃序列。
+            # 只要能解析出统一编号，就按编号升序展示（同编号保持原执行顺序）。
+            def _serial_of(_nm):
+                _m = _re.match(r'^\s*#?\s*(\d{1,4})\b', _nm or '')
+                return int(_m.group(1)) if _m else None
+
+            _serials = [_serial_of(_it.get('name') or _it.get('url') or '') for _it in _all_items]
+            _sorted_by_serial = bool(_all_items) and all(_s is not None for _s in _serials)
+            if _sorted_by_serial:
+                _order = sorted(range(len(_all_items)), key=lambda _i: (_serials[_i], _i))
+                _all_items = [_all_items[_i] for _i in _order]
+
             if _all_items:
                 _failed_items = [_it for _it in _all_items if not _it.get('passed', True)]
                 _ok_items = [_it for _it in _all_items if _it.get('passed', True)]
-                _case_lines.append('**用例明细**（共 %d 条：\u2705 %d / \u274c %d）:' % (
-                    len(_all_items), len(_ok_items), len(_failed_items)))
+                _case_lines.append('**用例明细**（共 %d 条%s：\u2705 %d / \u274c %d）:' % (
+                    len(_all_items),
+                    '，按用例编号排序' if _sorted_by_serial else '',
+                    len(_ok_items), len(_failed_items)))
                 if len(_all_items) <= _MAX_CASE_LINES:
                     for _no, _it in enumerate(_all_items, 1):
                         _case_lines.append(_fmt_case(_no, _it))
