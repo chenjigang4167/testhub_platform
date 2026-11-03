@@ -1,0 +1,14 @@
+apps/users/management/commands/send_test_sms.py
+  h_ef2af05e886a25 1-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bb41abd9ff8843203cc7881d8c79bdb34cb18f8f",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
