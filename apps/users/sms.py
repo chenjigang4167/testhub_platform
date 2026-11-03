@@ -1,7 +1,12 @@
 """
-阿里云短信发送模块
-复用 zhiqiong 项目的短信通道配置
-包含发送频率限制（同一手机号 60 秒内只能发一次）
+阿里云验证码短信发送模块
+
+支持两条互不通用的通道，由 settings.SMS_PROVIDER 选择：
+- dysms: 短信服务，Action=SendSms，参数为 PhoneNumbers（复数）
+- dypns: 号码认证服务「短信认证」，Action=SendSmsVerifyCode，参数为 PhoneNumber（单数）
+
+两条通道都只作发送通道：验证码由本地生成、存 Redis、本地校验，
+切换 provider 不影响已发出的验证码。包含发送频率限制（同一手机号 60 秒内只能发一次）。
 """
 import json
 import hmac
@@ -42,44 +47,94 @@ def _build_signature(params, access_key_secret):
     return _sign(access_key_secret + '&', string_to_sign)
 
 
-def send_sms(phone_number, template_code, template_param, sign_name=None):
+# 两条通道的 RPC 接入点差异：域名 / Action / 手机号参数名（签名算法同为 V1 HMAC-SHA1）
+SMS_PROVIDERS = {
+    'dysms': {
+        'endpoint': 'https://dysmsapi.aliyuncs.com/',
+        'action': 'SendSms',
+        'version': '2017-05-25',
+        'phone_param': 'PhoneNumbers',
+    },
+    'dypns': {
+        'endpoint': 'https://dypnsapi.aliyuncs.com/',
+        'action': 'SendSmsVerifyCode',
+        'version': '2017-05-25',
+        'phone_param': 'PhoneNumber',
+    },
+}
+
+
+def resolve_provider(provider=None):
+    """解析短信通道名，未指定时使用 settings.SMS_PROVIDER"""
+    name = (provider or settings.SMS_PROVIDER or '').strip().lower()
+    if name not in SMS_PROVIDERS:
+        raise ValueError(
+            f'未知的短信通道 {name or "(空)"}，可选 {" / ".join(sorted(SMS_PROVIDERS))}'
+        )
+    return name
+
+
+def _provider_config(provider):
+    """取该通道的 AccessKey、签名、模板与模板附加占位符"""
+    if provider == 'dypns':
+        return {
+            'access_key_id': settings.DYPNS_ACCESS_KEY_ID,
+            'access_key_secret': settings.DYPNS_ACCESS_KEY_SECRET,
+            'sign_name': settings.DYPNS_SIGN_NAME,
+            'template_code': settings.DYPNS_TEMPLATE_CODE,
+            'template_extra': settings.DYPNS_TEMPLATE_PARAM_EXTRA,
+        }
+    return {
+        'access_key_id': settings.SMS_ACCESS_KEY_ID,
+        'access_key_secret': settings.SMS_ACCESS_KEY_SECRET,
+        'sign_name': settings.SMS_SIGN_NAME,
+        'template_code': settings.SMS_REGISTER_TEMPLATE_CODE,
+        'template_extra': {},
+    }
+
+
+def send_sms(phone_number, verify_code, provider=None):
     """
-    通过阿里云 SMS 发送短信
+    通过阿里云发送验证码短信（验证码本地生成，阿里云只作通道）
 
     Args:
         phone_number: 手机号
-        template_code: 短信模板编号
-        template_param: 模板参数 dict，如 {'code': '123456'}
-        sign_name: 签名名称，默认使用配置中的 SMS_SIGN_NAME
+        verify_code: 本地生成的验证码
+        provider: 短信通道 dysms | dypns，默认取 settings.SMS_PROVIDER
+
+    Returns:
+        (success: bool, result: dict)
     """
-    access_key_id = settings.SMS_ACCESS_KEY_ID
-    access_key_secret = settings.SMS_ACCESS_KEY_SECRET
-    if sign_name is None:
-        sign_name = settings.SMS_SIGN_NAME
+    provider = resolve_provider(provider)
+    api = SMS_PROVIDERS[provider]
+    cfg = _provider_config(provider)
+
+    missing = [key for key in ('access_key_id', 'access_key_secret', 'sign_name', 'template_code')
+               if not cfg[key]]
+    if missing:
+        return False, {'Message': f'{provider} 通道配置缺失: {", ".join(missing)}'}
+
+    template_param = {'code': verify_code}
+    template_param.update(cfg['template_extra'])
 
     params = {
-        'AccessKeyId': access_key_id,
-        'Action': 'SendSms',
+        'AccessKeyId': cfg['access_key_id'],
+        'Action': api['action'],
         'Format': 'JSON',
-        'PhoneNumbers': phone_number,
-        'SignName': sign_name,
+        api['phone_param']: phone_number,
+        'SignName': cfg['sign_name'],
         'SignatureMethod': 'HMAC-SHA1',
         'SignatureNonce': str(uuid.uuid4()),
         'SignatureVersion': '1.0',
-        'TemplateCode': template_code,
+        'TemplateCode': cfg['template_code'],
         'TemplateParam': json.dumps(template_param, ensure_ascii=False),
         'Timestamp': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
-        'Version': '2017-05-25',
+        'Version': api['version'],
     }
 
-    signature = _build_signature(params, access_key_secret)
-    params['Signature'] = signature
+    params['Signature'] = _build_signature(params, cfg['access_key_secret'])
 
-    response = requests.post(
-        'https://dysmsapi.aliyuncs.com/',
-        data=params,
-        timeout=10
-    )
+    response = requests.post(api['endpoint'], data=params, timeout=10)
     result = response.json()
     return result.get('Code') == 'OK', result
 
@@ -121,6 +176,12 @@ def send_register_verify_code(phone_number, captcha_token, captcha_code):
     if not validate_captcha(captcha_token, captcha_code):
         return {'success': False, 'error': '图形验证码错误或已过期'}
 
+    # 通道配置错误要早于 Redis 写入失败返回，否则会给该手机号留下 60 秒频控锁
+    try:
+        provider = resolve_provider()
+    except ValueError as exc:
+        return {'success': False, 'error': str(exc)}
+
     # 校验发送频率
     allowed, remaining = check_rate_limit(phone_number)
     if not allowed:
@@ -140,8 +201,8 @@ def send_register_verify_code(phone_number, captcha_token, captcha_code):
     # 发送短信
     success, result = send_sms(
         phone_number=phone_number,
-        template_code=settings.SMS_REGISTER_TEMPLATE_CODE,
-        template_param={'code': code},
+        verify_code=code,
+        provider=provider,
     )
 
     if not success:

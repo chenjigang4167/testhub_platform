@@ -2,6 +2,8 @@
 
 from pathlib import Path
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
+import json
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -338,11 +340,35 @@ CHANNEL_LAYERS = {
     },
 }
 
-# SMS Configuration (阿里云短信)
+# SMS Configuration (阿里云验证码短信，双通道)
+# SMS_PROVIDER: dypns=号码认证服务「短信认证」(个人) | dysms=短信服务(企业签名)
+# 两套 AccessKey/签名/模板互不通用；改 SMS_PROVIDER 需重启进程生效
+SMS_PROVIDER = config('SMS_PROVIDER', default='dypns')
+
+# 短信服务 dysms (SendSms)
 SMS_ACCESS_KEY_ID = config('SMS_ACCESS_KEY_ID', default='')
 SMS_ACCESS_KEY_SECRET = config('SMS_ACCESS_KEY_SECRET', default='')
 SMS_SIGN_NAME = config('SMS_SIGN_NAME', default='杭州智穹云启科技')
 SMS_REGISTER_TEMPLATE_CODE = config('SMS_REGISTER_TEMPLATE_CODE', default='SMS_133001115')
+
+# 号码认证服务 dypns (SendSmsVerifyCode)
+DYPNS_ACCESS_KEY_ID = config('DYPNS_ACCESS_KEY_ID', default='')
+DYPNS_ACCESS_KEY_SECRET = config('DYPNS_ACCESS_KEY_SECRET', default='')
+DYPNS_SIGN_NAME = config('DYPNS_SIGN_NAME', default='')
+DYPNS_TEMPLATE_CODE = config('DYPNS_TEMPLATE_CODE', default='')
+
+# 模板中除 code 之外的占位符，如时长占位 {"min":"5"}；以控制台模板内容为准
+_DYPNS_EXTRA_RAW = config('DYPNS_TEMPLATE_PARAM_EXTRA', default='{}')
+try:
+    DYPNS_TEMPLATE_PARAM_EXTRA = json.loads(_DYPNS_EXTRA_RAW)
+except ValueError:
+    raise ImproperlyConfigured(
+        f'DYPNS_TEMPLATE_PARAM_EXTRA 需是 JSON 对象字符串，如 {{"min":"5"}}，当前为 {_DYPNS_EXTRA_RAW!r}'
+    )
+if not isinstance(DYPNS_TEMPLATE_PARAM_EXTRA, dict):
+    raise ImproperlyConfigured(
+        f'DYPNS_TEMPLATE_PARAM_EXTRA 需是 JSON 对象，当前为 {_DYPNS_EXTRA_RAW!r}'
+    )
 
 # Cache Configuration
 CACHES = {
