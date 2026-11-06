@@ -41,6 +41,7 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 
+from .utils import execute_assertions, apply_extract_rules
 from .utils import execute_assertions, describe_assertion_failure
 from .operation_logger import log_operation
 from .variable_resolver import VariableResolver
@@ -417,7 +418,7 @@ class ApiRequestViewSet(viewsets.ModelViewSet):
                         body_data = resolver.resolve(body_data)
                     else:
                         body_data = body_content
-                elif body_type in ['form-data', 'x-www-form-urlencoded']:
+                elif body_type in ['form', 'form-data', 'x-www-form-urlencoded']:
                     if isinstance(body_content, list):
                         body_data = self._replace_variables_in_dict(body_content, variables)
                         body_data = self._resolve_variables_in_dict(body_data, resolver)
@@ -430,8 +431,8 @@ class ApiRequestViewSet(viewsets.ModelViewSet):
             start_time = time.time()
 
             # 根据请求体类型决定使用 data 还是 json 参数
-            if body_type == 'raw':
-                # raw 类型使用 data 参数，发送原始字符串
+            if body_type in ('raw', 'form', 'form-data', 'x-www-form-urlencoded'):
+                # raw / 表单类型必须走 data 参数，否则请求体不会被发送
                 response = requests.request(
                     method=request_method,
                     url=url,
@@ -709,15 +710,19 @@ class TestSuiteViewSet(viewsets.ModelViewSet):
             # 创建变量解析器
             resolver = VariableResolver()
 
+            # 套件级运行时变量：由上游请求的 extract_rules 写入，供下游请求使用
+            runtime_vars = {}
+
             # 执行每个请求
             for suite_request in suite_requests:
                 api_request = suite_request.request
                 
                 try:
-                    # 解析环境变量
+                    # 解析环境变量；运行时变量优先级更高，可覆盖同名环境变量
                     variables = {}
                     if test_suite.environment:
                         variables.update(test_suite.environment.variables)
+                    variables.update(runtime_vars)
                     
                     # 替换URL中的变量（先解析动态函数，再替换环境变量）
                     url = self._replace_variables(api_request.url, variables)
@@ -746,12 +751,19 @@ class TestSuiteViewSet(viewsets.ModelViewSet):
                         params[key] = self._replace_variables(str(value), variables)
                         params[key] = resolver.resolve(params[key])
 
-                    body_data = None
+                    json_data = None
+                    form_data = None
                     if api_request.body and api_request.method in ['POST', 'PUT', 'PATCH']:
-                        if api_request.body.get('type') == 'json':
-                            body_data = api_request.body.get('data', {})
-                            body_data = self._replace_variables_in_dict(body_data, variables)
-                            body_data = self._resolve_variables_in_dict(body_data, resolver)
+                        body_type = api_request.body.get('type')
+                        if body_type == 'json':
+                            json_data = api_request.body.get('data', {})
+                            json_data = self._replace_variables_in_dict(json_data, variables)
+                            json_data = self._resolve_variables_in_dict(json_data, resolver)
+                        elif body_type in ('form', 'form-data', 'x-www-form-urlencoded', 'data'):
+                            form_data = api_request.body.get('data', {})
+                            form_data = self._replace_variables_in_dict(form_data, variables)
+                            form_data = self._resolve_variables_in_dict(form_data, resolver)
+                    body_data = json_data if json_data is not None else form_data
 
                     # 执行请求
                     start_time = time.time()
@@ -760,11 +772,15 @@ class TestSuiteViewSet(viewsets.ModelViewSet):
                         url=url,
                         headers=headers,
                         params=params,
-                        json=body_data,
+                        json=json_data,
+                        data=form_data,
                         timeout=30
                     )
                     end_time = time.time()
                     response_time = (end_time - start_time) * 1000
+                    
+                    # 响应提取：把变量写入套件级 runtime_vars，供后续请求使用
+                    extract_results = apply_extract_rules(api_request, response, runtime_vars)
                     
                     # 执行断言验证
                     assertions = api_request.assertions or []
@@ -811,7 +827,8 @@ class TestSuiteViewSet(viewsets.ModelViewSet):
                         'response_time': response_time,
                         'passed': passed,
                         'error': error_message,
-                        'assertions_results': assertions_results
+                        'assertions_results': assertions_results,
+                        'extract_results': extract_results
                     })
                     
                     # 保存请求历史
