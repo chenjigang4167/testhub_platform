@@ -42,6 +42,7 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 from .utils import execute_assertions, apply_extract_rules
+from .utils import execute_assertions, describe_assertion_failure
 from .operation_logger import log_operation
 from .variable_resolver import VariableResolver
 from .serializers import (
@@ -810,7 +811,7 @@ class TestSuiteViewSet(viewsets.ModelViewSet):
                         for assertion_result in assertions_results:
                             if not assertion_result.get('passed', True):
                                 passed = False
-                                error_message = f"断言失败: {assertion_result.get('name', '未命名断言')} - {assertion_result.get('error', '断言不通过')}"
+                                error_message = f"断言失败: {assertion_result.get('name') or '未命名断言'} - {describe_assertion_failure(assertion_result)}"
                                 break
                     
                     if passed:
@@ -1727,18 +1728,31 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                 else:
                     raise ValueError(f"未知的任务类型: {task.task_type}")
                 
+                # 判定真实结果：执行过程没抛异常，不等于所有断言都通过。
+                # 原实现无条件按成功处理，导致断言全失败的套件也推送成功通知，
+                # 任务的成功次数也统计错了。
+                _result_failed = 0
+                _result_ok = True
+                if isinstance(result, dict):
+                    _result_failed = result.get('failed_count') or 0
+                    _result_ok = bool(result.get('success', True))
+                assertions_passed = _result_ok and _result_failed == 0
+
                 # 更新执行结果
-                execution_log.status = 'COMPLETED'
+                execution_log.status = 'COMPLETED' if assertions_passed else 'FAILED'
                 execution_log.end_time = timezone.now()
                 execution_log.result = result
+                if not assertions_passed and not execution_log.error_message:
+                    execution_log.error_message = '%d 个请求断言未通过' % _result_failed
                 execution_log.save()
                 
                 # 更新任务统计
-                task.update_run_stats(success=True)
+                task.update_run_stats(success=assertions_passed)
                 task.last_result = result
                 task.save()
                 
-                logger.info("=== 开始检查发送成功通知 ===")
+                logger.info("=== 开始检查发送通知（实际结果: %s）==="
+                            % ('成功' if assertions_passed else '失败'))
                 # 发送通知（如果配置了）
                 # 检查任务是否有通知设置
                 notification_setting = None
@@ -1758,15 +1772,18 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                     logger.info("任务没有notification_settings属性")
                 
                 if notification_setting and notification_setting.is_enabled:
-                    logger.info("通知设置已启用，准备发送成功通知")
-                    if notification_setting.notify_on_success:
-                        logger.info("调用 _send_notification 方法发送成功通知")
-                        self._send_notification(task, execution_log, success=True)
+                    _want_notify = (notification_setting.notify_on_success
+                                    if assertions_passed
+                                    else notification_setting.notify_on_failure)
+                    if _want_notify:
+                        logger.info("按实际结果发送通知: success=%s" % assertions_passed)
+                        self._send_notification(task, execution_log,
+                                               success=assertions_passed)
                     else:
-                        logger.info("通知设置中未启用成功通知")
+                        logger.info("通知设置中未启用该结果的通知")
                 else:
-                    logger.info("通知设置未启用或不存在，跳过成功通知")
-                logger.info("=== 结束检查发送成功通知 ===")
+                    logger.info("通知设置未启用或不存在，跳过通知")
+                logger.info("=== 结束检查发送通知 ===")
                 
             except Exception as e:
                 # 记录执行失败
@@ -2091,6 +2108,115 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
             status_text = '成功' if success else '失败'
             status_color = 'green' if success else 'red'
 
+            # 执行统计：通过率、耗时、失败用例，各平台共用同一份正文
+            result_data = execution_log.result if isinstance(execution_log.result, dict) else {}
+            total_count = result_data.get('total_count') or 0
+            passed_count = result_data.get('passed_count') or 0
+            failed_count = result_data.get('failed_count') or 0
+            pass_rate = (passed_count * 100.0 / total_count) if total_count else 0.0
+
+            # 耗时优先用 duration 字段，缺失时用起止时间相减
+            duration_text = '未知'
+            if getattr(execution_log, 'duration', None):
+                duration_text = '%.1fs' % execution_log.duration
+            elif execution_log.end_time and execution_log.start_time:
+                duration_text = '%.1fs' % (execution_log.end_time - execution_log.start_time).total_seconds()
+
+            # 库里存 UTC，卡片上按本地时区展示
+            from django.utils import timezone as _notify_tz
+            _run_time = execution_log.created_at
+            if _notify_tz.is_naive(_run_time):
+                _run_time = _notify_tz.make_aware(_run_time, _notify_tz.utc)
+            run_time_text = _notify_tz.localtime(_run_time).strftime('%Y-%m-%d %H:%M:%S')
+
+            _suite = getattr(task, 'test_suite', None)
+            suite_name = getattr(_suite, 'name', '') or task.name
+            task_type_text = '测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'
+
+            _lines = [
+                '**套件**: %s' % suite_name,
+                '**结果**: %s %d/%d 通过（%.0f%%）' % (
+                    '✅' if success else '❌', passed_count, total_count, pass_rate),
+                '**耗时**: %s' % duration_text,
+                '**执行时间**: %s' % run_time_text,
+                '**任务类型**: %s' % task_type_text,
+            ]
+
+            # 逐条用例明细：按执行顺序列出每条用例与状态（✅ 通过 / ❌ 失败）
+            _MAX_CASE_LINES = 60
+            _all_items = [_it for _it in (result_data.get('results') or []) if isinstance(_it, dict)]
+            _case_lines = []
+
+            import re as _re
+
+            # 用例名自带编号（#01 / UI-LOGIN-01）时不再补序号，避免出现 "01 #01 xx"
+            def _has_serial(_nm):
+                return bool(_re.search(r'\d', _nm[:15]))
+
+            def _fmt_case(_no, _it):
+                _ok = bool(_it.get('passed', True))
+                _nm = _it.get('name') or _it.get('url') or '未命名请求'
+                _sn = '' if _has_serial(_nm) else '%02d ' % _no
+                _line = '%s %s%s' % ('\u2705' if _ok else '\u274c', _sn, _nm)
+                if not _ok:
+                    _line += ' \u2014 ' + _describe_failure(_it)
+                return _line
+
+            def _describe_failure(_it):
+                # 断言不通过时执行器不填 error（值为 None），改从断言明细拼「期望/实际」
+                for _ar in (_it.get('assertions_results') or []):
+                    if isinstance(_ar, dict) and not _ar.get('passed', True):
+                        _an = _ar.get('name') or ''
+                        _an = '' if _an in ('', '未命名断言') else '「%s」' % _an
+                        return ('断言%s不通过：期望 %s，实际 %s' % (
+                            _an, _ar.get('expected'), _ar.get('actual')))[:60]
+                _err = str(_it.get('error') or '').replace('\n', ' ').strip()
+                for _tail in ('- None', '- 断言不通过'):
+                    if _err.endswith(_tail):
+                        _err = _err[:-len(_tail)].strip()
+                return (_err or '失败原因未记录')[:60]
+
+            # 套件内 order 是按集合分组导入的，可能和用例名自带的 #NN 编号不一致，
+            # 按执行顺序直出会得到 #01 #08 #22 #10 这种跳跃序列。
+            # 只要能解析出统一编号，就按编号升序展示（同编号保持原执行顺序）。
+            def _serial_of(_nm):
+                _m = _re.match(r'^\s*#?\s*(\d{1,4})\b', _nm or '')
+                return int(_m.group(1)) if _m else None
+
+            _serials = [_serial_of(_it.get('name') or _it.get('url') or '') for _it in _all_items]
+            _sorted_by_serial = bool(_all_items) and all(_s is not None for _s in _serials)
+            if _sorted_by_serial:
+                _order = sorted(range(len(_all_items)), key=lambda _i: (_serials[_i], _i))
+                _all_items = [_all_items[_i] for _i in _order]
+
+            if _all_items:
+                _failed_items = [_it for _it in _all_items if not _it.get('passed', True)]
+                _ok_items = [_it for _it in _all_items if _it.get('passed', True)]
+                _case_lines.append('**用例明细**（共 %d 条%s：\u2705 %d / \u274c %d）:' % (
+                    len(_all_items),
+                    '，按用例编号排序' if _sorted_by_serial else '',
+                    len(_ok_items), len(_failed_items)))
+                if len(_all_items) <= _MAX_CASE_LINES:
+                    for _no, _it in enumerate(_all_items, 1):
+                        _case_lines.append(_fmt_case(_no, _it))
+                else:
+                    # 超长时优先保留全部失败用例，通过用例补足到上限
+                    _ok_room = max(_MAX_CASE_LINES - len(_failed_items), 0)
+                    for _no, _it in enumerate(_all_items, 1):
+                        if not _it.get('passed', True):
+                            _case_lines.append(_fmt_case(_no, _it))
+                    _ok_shown = 0
+                    for _no, _it in enumerate(_all_items, 1):
+                        if _it.get('passed', True) and _ok_shown < _ok_room:
+                            _case_lines.append(_fmt_case(_no, _it))
+                            _ok_shown += 1
+                    if len(_ok_items) > _ok_room:
+                        _case_lines.append('\u2026 其余 %d 条通过用例未列出' % (len(_ok_items) - _ok_room))
+
+            cases_content = '\n'.join(_case_lines)
+            detail_content = '\n'.join(_lines)
+            _full_content = detail_content + (('\n\n' + cases_content) if cases_content else '')
+
             # 为不同的机器人平台准备消息格式
             for bot in all_webhook_bots:
                 if not bot.get('enabled', True) or not bot.get('webhook_url'):
@@ -2106,28 +2232,25 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                     message_data = {
                         "msgtype": "markdown",
                         "markdown": {
-                            "content": f"""**定时任务执行{status_text}**
-
-任务名称: {task.name}
-
-执行状态: {status_text}
-
-执行时间: {execution_log.created_at.strftime('%Y-%m-%d %H:%M:%S')}
-
-任务类型: {'测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'}"""
+                            "content": f"**定时任务执行{status_text}**\n\n{_full_content}"
                         }
                     }
                 elif bot_type == 'feishu':  # 飞书
+                    # 标题已由卡片 header 呈现，正文不再重复一遍
+                    _feishu_elements = [{
+                        "tag": "div",
+                        "text": {"content": detail_content, "tag": "lark_md"}
+                    }]
+                    if cases_content:
+                        _feishu_elements.append({"tag": "hr"})
+                        _feishu_elements.append({
+                            "tag": "div",
+                            "text": {"content": cases_content, "tag": "lark_md"}
+                        })
                     message_data = {
                         "msg_type": "interactive",
                         "card": {
-                            "elements": [{
-                                "tag": "div",
-                                "text": {
-                                    "content": f"**定时任务执行{status_text}**\n任务名称: {task.name}\n执行状态: {status_text}\n执行时间: {execution_log.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n任务类型: {'测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'}",
-                                    "tag": "lark_md"
-                                }
-                            }],
+                            "elements": _feishu_elements,
                             "header": {
                                 "title": {
                                     "content": f"定时任务执行{status_text}",
@@ -2142,15 +2265,7 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                         "msgtype": "markdown",
                         "markdown": {
                             "title": f"定时任务执行{status_text}",
-                            "text": f"""**定时任务执行{status_text}**
-
-任务名称: {task.name}
-
-执行状态: {status_text}
-
-执行时间: {execution_log.created_at.strftime('%Y-%m-%d %H:%M:%S')}
-
-任务类型: {'测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'}"""
+                            "text": f"**定时任务执行{status_text}**\n\n{_full_content}"
                         }
                     }
 
@@ -2184,7 +2299,7 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
                         logger.info("钉钉机器人未配置签名密钥，使用无签名模式")
                 else:  # 通用格式
                     message_data = {
-                        "text": f"定时任务执行{status_text}\n任务名称: {task.name}\n执行状态: {status_text}\n执行时间: {execution_log.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n任务类型: {'测试套件执行' if task.task_type == 'TEST_SUITE' else 'API请求执行'}"
+                        "text": f"定时任务执行{status_text}\n{_full_content.replace('**', '')}"
                     }
 
                 # 发送webhook请求

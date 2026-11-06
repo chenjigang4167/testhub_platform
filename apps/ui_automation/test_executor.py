@@ -430,6 +430,13 @@ class TestExecutor:
             'screenshots': []
         }
 
+        # 0 个步骤等于什么都没验，直接判失败，避免产出「通过」的假结果
+        if not case_data.get('steps'):
+            result['status'] = 'failed'
+            result['error'] = '用例没有定义任何步骤，无法执行'
+            result['end_time'] = datetime.now().isoformat()
+            return result
+
         try:
             # 遍历预先准备好的步骤数据
             just_switched_tab = False  # 跟踪是否刚切换了标签页
@@ -1769,6 +1776,13 @@ class TestExecutor:
             'start_time': datetime.now().isoformat(),
             'screenshots': []
         }
+
+        # 0 个步骤等于什么都没验，直接判失败，避免产出「通过」的假结果
+        if not case_data.get('steps'):
+            result['status'] = 'failed'
+            result['error'] = '用例没有定义任何步骤，无法执行'
+            result['end_time'] = datetime.now().isoformat()
+            return result
 
         try:
             # 遍历预先准备好的步骤数据

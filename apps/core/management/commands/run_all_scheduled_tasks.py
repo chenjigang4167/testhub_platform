@@ -200,7 +200,9 @@ class Command(BaseCommand):
                             import threading
                             from apps.ui_automation.test_executor import TestExecutor
 
-                            def run_test():
+                            # 注意：闭包默认参数必须显式绑定循环变量，
+                            # 否则线程启动后 task/test_suite 会串到本轮循环的最后一个任务
+                            def run_test(task=task, test_suite=test_suite, test_case_count=test_case_count):
                                 try:
                                     executor = TestExecutor(
                                         test_suite=test_suite,
@@ -211,12 +213,29 @@ class Command(BaseCommand):
                                     )
                                     executor.run()
 
+                                    # executor.run() 内部会把失败消化掉（不抛异常），
+                                    # 因此必须回读执行记录判定，不能靠「没抛异常」当成功
+                                    execution = getattr(executor, 'execution', None)
+                                    if execution is None:
+                                        raise RuntimeError('执行记录未创建，判定任务失败')
+                                    if execution.status != 'SUCCESS':
+                                        raise RuntimeError(
+                                            '套件执行失败: 通过 %s 条 / 失败 %s 条%s' % (
+                                                execution.passed_cases,
+                                                execution.failed_cases,
+                                                ('，' + execution.error_message[:200]) if execution.error_message else ''
+                                            )
+                                        )
+
                                     # 测试完成后，重新加载任务并更新结果和下次运行时间
                                     task.refresh_from_db()
                                     task.successful_runs += 1
                                     task.last_result = {
                                         'status': 'success',
-                                        'test_case_count': test_case_count
+                                        'test_case_count': test_case_count,
+                                        'execution_id': execution.id,
+                                        'passed_count': execution.passed_cases,
+                                        'failed_count': execution.failed_cases
                                     }
                                     # 重新计算下次运行时间
                                     task.next_run_time = task.calculate_next_run()
@@ -340,7 +359,8 @@ class Command(BaseCommand):
                             from apps.ui_automation.models import TestSuite
                             from apps.ui_automation.test_executor import TestExecutor
 
-                            def run_test_cases():
+                            def run_test_cases(task=task, test_cases_list=test_cases_list,
+                                               test_case_count=test_case_count):
                                 success_count = 0
                                 failed_count = 0
                                 results = []
@@ -371,28 +391,42 @@ class Command(BaseCommand):
                                         )
                                         executor.run()
 
-                                        # 检查执行结果
-                                        temp_suite.refresh_from_db()
-                                        suite_executions = temp_suite.executions.all()
+                                        # 检查执行结果：直接回读执行器写下的执行记录，
+                                        # 拿不到执行记录一律判失败（此前会两边都不计数 -> 误报成功）
+                                        execution = getattr(executor, 'execution', None)
+                                        case_ok = bool(
+                                            execution is not None
+                                            and execution.status == 'SUCCESS'
+                                            and not execution.failed_cases
+                                        )
 
-                                        if suite_executions.exists():
-                                            last_execution = suite_executions.first()
-
-                                            if last_execution.status == 'SUCCESS':
-                                                success_count += 1
-                                                results.append({
-                                                    'case_id': test_case.id,
-                                                    'case_name': test_case.name,
-                                                    'status': 'success'
-                                                })
-                                            else:
-                                                failed_count += 1
-                                                results.append({
-                                                    'case_id': test_case.id,
-                                                    'case_name': test_case.name,
-                                                    'status': 'failed',
-                                                    'error': last_execution.error_message
-                                                })
+                                        if case_ok:
+                                            success_count += 1
+                                            results.append({
+                                                'case_id': test_case.id,
+                                                'case_name': test_case.name,
+                                                'status': 'success'
+                                            })
+                                        else:
+                                            failed_count += 1
+                                            case_error = ''
+                                            if execution is not None:
+                                                case_error = (execution.error_message or '').strip()
+                                                if not case_error:
+                                                    # 执行器写执行记录时没传 error_msg，
+                                                    # 真实原因在 result_data 的用例明细里
+                                                    for _item in ((execution.result_data or {}).get('test_cases') or []):
+                                                        if (isinstance(_item, dict)
+                                                                and _item.get('test_case_id') == test_case.id
+                                                                and _item.get('status') != 'passed'):
+                                                            case_error = str(_item.get('error') or '').strip()
+                                                            break
+                                            results.append({
+                                                'case_id': test_case.id,
+                                                'case_name': test_case.name,
+                                                'status': 'failed',
+                                                'error': case_error or '执行记录未标记成功'
+                                            })
 
                                     except Exception as e:
                                         logger.error(f"执行测试用例 {test_case.name} 失败: {e}")
@@ -410,14 +444,21 @@ class Command(BaseCommand):
 
                                 # 更新任务执行结果
                                 task.refresh_from_db()
-                                task.successful_runs += 1
+                                if failed_count == 0 and success_count > 0:
+                                    task.successful_runs += 1
+                                    run_status = 'success'
+                                else:
+                                    task.failed_runs += 1
+                                    run_status = 'failed' if success_count == 0 else 'partial_success'
                                 task.last_result = {
-                                    'status': 'success' if failed_count == 0 else 'partial_success',
+                                    'status': run_status,
                                     'test_case_count': test_case_count,
                                     'success_count': success_count,
                                     'failed_count': failed_count,
                                     'results': results
                                 }
+                                task.error_message = '' if run_status == 'success' else (
+                                    '%s 个用例执行失败' % failed_count)
                                 # 重新计算下次运行时间
                                 task.next_run_time = task.calculate_next_run()
                                 task.save()
