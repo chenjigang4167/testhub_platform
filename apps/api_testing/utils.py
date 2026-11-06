@@ -105,6 +105,27 @@ def execute_assertions(response, assertions):
     return results
 
 
+def describe_assertion_failure(assertion_result):
+    """断言未通过时给出可读原因
+
+    执行器主路径（断言条件不成立）不会写 error 字段，只有 JSON 解析异常等分支才赋值，
+    所以上层直接取 error 会拿到 None，最终显示成「未命名断言 - None」。这里统一兜底。
+    """
+    if not isinstance(assertion_result, dict):
+        return '断言不通过'
+
+    error = assertion_result.get('error')
+    if error:
+        return str(error)[:120]
+
+    expected = assertion_result.get('expected')
+    actual = assertion_result.get('actual')
+    if expected is not None or actual is not None:
+        return ('期望 %s，实际 %s' % (expected, actual))[:120]
+
+    return '断言不通过'
+
+
 def execute_test_suite(test_suite, environment, executed_by):
     """执行测试套件并返回结果"""
     from .models import TestExecution, RequestHistory
@@ -215,7 +236,7 @@ def execute_test_suite(test_suite, environment, executed_by):
                     for assertion_result in assertions_results:
                         if not assertion_result.get('passed', True):
                             passed = False
-                            error_message = f"断言失败: {assertion_result.get('name', '未命名断言')} - {assertion_result.get('error', '断言不通过')}"
+                            error_message = f"断言失败: {assertion_result.get('name') or '未命名断言'} - {describe_assertion_failure(assertion_result)}"
                             break
                 
                 if passed:
