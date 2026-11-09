@@ -204,6 +204,69 @@ def execute_assertions(response, assertions):
                     result['error'] = f"执行错误: {str(e)}"
                     result['actual'] = actual
                     
+            elif assertion_type == 'sse_event':
+                # SSE 事件断言：指定事件（留空=任意带 data 的事件）至少出现 min_count 次
+                event_name = str(assertion.get('event') or '').strip()
+                try:
+                    min_count = int(assertion.get('min_count') or 1)
+                    if min_count < 1:
+                        min_count = 1
+                except (TypeError, ValueError):
+                    min_count = 1
+                events = list(_iter_sse_events(response.text or ''))
+                if event_name:
+                    actual = sum(1 for _n, _p in events if (_n or '').strip() == event_name)
+                else:
+                    actual = sum(1 for _n, _p in events if _p)
+                passed = actual >= min_count
+                result['expected'] = min_count
+                result['actual'] = actual
+                if not events and 'text/event-stream' not in (
+                    response.headers.get('content-type') or ''
+                ).lower():
+                    result['error'] = '响应不是 SSE 报文，Content-Type: %s' % (
+                        response.headers.get('content-type'))
+                elif not events:
+                    result['error'] = 'SSE 流中未解析到任何事件（响应体为空或格式异常）'
+
+            elif assertion_type == 'sse_path':
+                # SSE 路径断言：在事件 data 上执行 JSONPath，任一命中值等于期望即通过；
+                # 期望留空时只校验「能取到值」，用于断言字段存在
+                event_name = str(assertion.get('event') or '').strip()
+                json_path = str(assertion.get('json_path') or '').strip()
+                if not json_path:
+                    raise ValueError("JSON路径表达式不能为空")
+
+                from jsonpath_ng import parse as _jp_parse
+                values = []
+                event_total = 0
+                for _n, _p in _iter_sse_events(response.text or ''):
+                    if not _p:
+                        continue
+                    event_total += 1
+                    if event_name and (_n or '').strip() != event_name:
+                        continue
+                    try:
+                        _obj = json.loads(_p)
+                    except Exception:
+                        continue
+                    for _m in _jp_parse(json_path).find(_obj):
+                        values.append(_m.value)
+
+                actual = values[0] if len(values) == 1 else (values or None)
+                if expected is None or str(expected) == '':
+                    passed = bool(values)
+                else:
+                    passed = any(str(_v) == str(expected) for _v in values)
+                result['actual'] = actual
+                if not event_total and 'text/event-stream' not in (
+                    response.headers.get('content-type') or ''
+                ).lower():
+                    result['error'] = '响应不是 SSE 报文，Content-Type: %s' % (
+                        response.headers.get('content-type'))
+                elif not values:
+                    result['error'] = 'SSE 流中未匹配到该 JSONPath 的值'
+
             elif assertion_type == 'header':
                 header_name = assertion.get('header_name', '')
                 expected_value = assertion.get('expected_value')
