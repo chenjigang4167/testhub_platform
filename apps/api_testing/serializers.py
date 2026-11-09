@@ -165,7 +165,7 @@ class RequestHistorySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'request', 'environment', 'request_data', 'response_data',
             'status_code', 'response_time', 'error_message', 'assertions_results',
-            'executed_by', 'executed_at'
+            'extract_results', 'executed_by', 'executed_at'
         ]
 
 

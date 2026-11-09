@@ -582,6 +582,69 @@
                   </div>
                 </div>
               </el-tab-pane>
+
+              <el-tab-pane :label="$t('apiTesting.interface.extractVars')" name="extract">
+                <div class="extract-editor">
+                  <div class="extract-header">
+                    <el-button size="small" type="primary" @click="addExtractRule">
+                      <el-icon><Plus /></el-icon>
+                      {{ $t('apiTesting.interface.addExtractRule') }}
+                    </el-button>
+                    <span class="extract-hint">{{ $t('apiTesting.interface.extractHint') }}</span>
+                  </div>
+
+                  <div v-if="extractRules.length" class="extract-table">
+                    <div class="extract-row extract-row-head">
+                      <span>{{ $t('apiTesting.interface.extractVarName') }}</span>
+                      <span>{{ $t('apiTesting.interface.extractSource') }}</span>
+                      <span>{{ $t('apiTesting.interface.extractPath') }}</span>
+                      <span>{{ $t('apiTesting.interface.extractDefault') }}</span>
+                      <span>{{ $t('apiTesting.interface.extractJoin') }}</span>
+                      <span></span>
+                    </div>
+                    <div v-for="(rule, index) in extractRules" :key="index" class="extract-row">
+                      <el-input
+                        v-model="rule.name"
+                        size="small"
+                        :placeholder="$t('apiTesting.interface.extractVarNamePlaceholder')"
+                      />
+                      <el-select v-model="rule.source" size="small">
+                        <el-option label="Body" value="body" />
+                        <el-option label="Cookies" value="cookies" />
+                        <el-option label="Headers" value="headers" />
+                        <el-option label="Status Code" value="status_code" />
+                      </el-select>
+                      <el-input
+                        v-model="rule.path"
+                        size="small"
+                        :disabled="rule.source === 'status_code'"
+                        :placeholder="rule.source === 'status_code' ? '-' : $t('apiTesting.interface.extractPathPlaceholder')"
+                      />
+                      <el-input
+                        v-model="rule.default"
+                        size="small"
+                        :placeholder="$t('apiTesting.interface.extractDefaultPlaceholder')"
+                      />
+                      <el-input
+                        v-model="rule.join"
+                        size="small"
+                        :placeholder="$t('apiTesting.interface.extractJoinPlaceholder')"
+                      />
+                      <el-button link type="danger" size="small" @click="removeExtractRule(index)">
+                        {{ $t('apiTesting.common.delete') }}
+                      </el-button>
+                    </div>
+                  </div>
+
+                  <div v-else class="no-assertions">
+                    <p>{{ $t('apiTesting.interface.noExtractRules') }}</p>
+                    <el-button size="small" type="primary" @click="addExtractRule">
+                      <el-icon><Plus /></el-icon>
+                      {{ $t('apiTesting.interface.addFirstExtractRule') }}
+                    </el-button>
+                  </div>
+                </div>
+              </el-tab-pane>
             </template>
 
             <!-- WebSocket接口专用标签页 -->
@@ -754,6 +817,38 @@
                           <div class="result-row" v-if="result.error">
                             <span class="label">{{ $t('apiTesting.interface.error') }}</span>
                             <span class="value error">{{ result.error }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </el-tab-pane>
+
+                  <el-tab-pane
+                    :label="$t('apiTesting.interface.extractResults')"
+                    name="extract"
+                    v-if="response.extract_results && response.extract_results.length > 0"
+                  >
+                    <div class="extract-results">
+                      <div
+                        v-for="(item, index) in response.extract_results"
+                        :key="index"
+                        class="assertion-result-item"
+                        :class="{ 'passed': item.success, 'failed': !item.success }"
+                      >
+                        <div class="assertion-result-header">
+                          <el-tag :type="item.success ? 'success' : 'danger'" size="small">
+                            {{ item.success ? $t('apiTesting.interface.extracted') : $t('apiTesting.interface.failed') }}
+                          </el-tag>
+                          <span class="assertion-name">{{ item.name }}</span>
+                        </div>
+                        <div class="assertion-result-details">
+                          <div class="result-row">
+                            <span class="label">{{ $t('apiTesting.interface.extractValue') }}</span>
+                            <span class="value">{{ item.success ? String(item.value) : $t('apiTesting.interface.notObtained') }}</span>
+                          </div>
+                          <div class="result-row" v-if="item.error">
+                            <span class="label">{{ $t('apiTesting.interface.error') }}</span>
+                            <span class="value error">{{ item.error }}</span>
                           </div>
                         </div>
                       </div>
@@ -1376,6 +1471,7 @@ const createEmptyRequest = () => {
     pre_request_script: '',
     post_request_script: '',
     assertions: [],
+    extract_rules: [],
     request_type: 'HTTP'
   }
 
@@ -1431,6 +1527,7 @@ const addRequest = () => {
     pre_request_script: '',
     post_request_script: '',
     assertions: [],
+    extract_rules: [],
     request_type: 'HTTP'
   }
 
@@ -1790,6 +1887,7 @@ const sendRequest = async () => {
       method: selectedRequest.value.method,
       params: convertKeyValueArrayToObject(selectedRequest.value.params || []),
       headers: selectedRequest.value.headers,
+      extract_rules: buildExtractRules(),
       environment_id: selectedEnvironment.value
     }
     
@@ -1890,7 +1988,8 @@ const saveRequest = async () => {
     const requestData = {
       ...selectedRequest.value,
       params: Array.isArray(selectedRequest.value.params) ? convertKeyValueArrayToObject(selectedRequest.value.params || []) : selectedRequest.value.params,
-      headers: finalHeaders
+      headers: finalHeaders,
+      extract_rules: buildExtractRules()
     }
     
     // 对于GET请求，不包含body字段
@@ -1980,6 +2079,53 @@ const removeAssertion = (index) => {
   if (!selectedRequest.value || !selectedRequest.value.assertions) return
 
   selectedRequest.value.assertions.splice(index, 1)
+}
+
+// ===== 变量提取规则 =====
+const extractRules = computed(() => selectedRequest.value?.extract_rules || [])
+
+const addExtractRule = () => {
+  if (!selectedRequest.value) return
+
+  if (!Array.isArray(selectedRequest.value.extract_rules)) {
+    selectedRequest.value.extract_rules = []
+  }
+
+  selectedRequest.value.extract_rules.push({
+    name: '',
+    source: 'body',
+    path: '',
+    default: '',
+    join: ''
+  })
+}
+
+const removeExtractRule = (index) => {
+  if (!selectedRequest.value || !Array.isArray(selectedRequest.value.extract_rules)) return
+
+  selectedRequest.value.extract_rules.splice(index, 1)
+}
+
+// 提交给后端前做清洗：丢掉没填变量名的空行，空字符串的 default/join 不下发
+// （后端把 default 为空字符串当成有效兜底值，会把失败显示成成功）
+const buildExtractRules = () => {
+  const rules = selectedRequest.value?.extract_rules || []
+  return rules
+    .filter(rule => rule && String(rule.name || '').trim())
+    .map(rule => {
+      const item = {
+        name: String(rule.name).trim(),
+        source: rule.source || 'body',
+        path: String(rule.path || '').trim()
+      }
+      if (rule.default !== undefined && rule.default !== null && String(rule.default) !== '') {
+        item.default = rule.default
+      }
+      if (rule.join !== undefined && rule.join !== null && String(rule.join) !== '') {
+        item.join = rule.join
+      }
+      return item
+    })
 }
 
 const onAssertionTypeChange = (assertion) => {
@@ -3709,6 +3855,61 @@ const useLocalVariableCategories = () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* 变量提取编辑器 */
+.extract-editor {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.extract-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.extract-header .el-button {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.extract-hint {
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.extract-table {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.extract-row {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr 1.6fr 0.9fr 0.9fr 56px;
+  gap: 10px;
+  align-items: center;
+}
+
+.extract-row-head {
+  color: #606266;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 2px;
+}
+
+.extract-results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
 }
 
 /* 断言项 */

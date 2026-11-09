@@ -20,6 +20,7 @@ import json
 import logging
 import uuid
 import subprocess
+from types import SimpleNamespace
 from datetime import datetime, timedelta
 
 from .models import (
@@ -41,8 +42,7 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 
-from .utils import execute_assertions, apply_extract_rules
-from .utils import execute_assertions, describe_assertion_failure
+from .utils import execute_assertions, apply_extract_rules, describe_assertion_failure
 from .operation_logger import log_operation
 from .variable_resolver import VariableResolver
 from .serializers import (
@@ -461,7 +461,22 @@ class ApiRequestViewSet(viewsets.ModelViewSet):
                 if assertion.get('type') == 'response_time':
                     assertion['actual_time'] = response_time
             assertions_results = execute_assertions(response, assertions)
-            
+
+            # 变量提取：按请求配置（或本次传入）的规则从响应中取值，
+            # 提取结果随历史一起落库，前端在响应卡片「提取结果」中回显
+            extract_rules = request.data.get('extract_rules', api_request.extract_rules) or []
+            extract_results = []
+            try:
+                extract_results = apply_extract_rules(
+                    SimpleNamespace(extract_rules=extract_rules),
+                    response,
+                    {},
+                )
+            except Exception as exc:  # 提取异常不影响请求本身的结果
+                logger.warning(f"请求 {api_request.id} 变量提取异常: {exc}")
+                extract_results = [{'name': '-', 'success': False, 'value': None,
+                                    'error': str(exc)}]
+
             # 保存请求历史
             history = RequestHistory.objects.create(
                 request=api_request,
@@ -480,6 +495,8 @@ class ApiRequestViewSet(viewsets.ModelViewSet):
                 },
                 status_code=response.status_code,
                 response_time=response_time,
+                assertions_results=assertions_results,
+                extract_results=extract_results,
                 executed_by=request.user
             )
             
@@ -495,6 +512,7 @@ class ApiRequestViewSet(viewsets.ModelViewSet):
             # 返回包含断言结果的数据
             history_data = RequestHistorySerializer(history).data
             history_data['assertions_results'] = assertions_results
+            history_data['extract_results'] = extract_results
             
             return Response(history_data)
             
@@ -850,6 +868,7 @@ class TestSuiteViewSet(viewsets.ModelViewSet):
                         status_code=response.status_code,
                         response_time=response_time,
                         assertions_results=assertions_results,
+                        extract_results=extract_results,
                         executed_by=request.user
                     )
                     
