@@ -147,6 +147,7 @@ class RequestHistory(models.Model):
     response_time = models.FloatField(null=True, blank=True, verbose_name='响应时间(ms)')
     error_message = models.TextField(blank=True, verbose_name='错误信息')
     assertions_results = models.JSONField(null=True, blank=True, verbose_name='断言结果')
+    extract_results = models.JSONField(null=True, blank=True, verbose_name='变量提取结果')
     executed_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='执行者')
     executed_at = models.DateTimeField(auto_now_add=True, verbose_name='执行时间')
 

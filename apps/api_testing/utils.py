@@ -106,18 +106,27 @@ def apply_extract_rules(api_request, response, runtime_vars):
         except Exception as exc:
             error = "%s: %s" % (type(exc).__name__, exc)
 
+        # 空字符串等价于「没配」：前端保存时已剔除，但 Admin / 老数据可能带空串，
+        # 若当成有效配置会出现「提取失败却显示成功（值为空串）」「多值被空串拼接」的误判
+        join_with = rule.get("join")
+        if join_with is not None and str(join_with) == "":
+            join_with = None
+        default_value = rule.get("default")
+        if default_value is not None and str(default_value) == "":
+            default_value = None
+
         # 多值结果处理：配置了 join 就统一拼成字符串（单命中也要拼），否则取第一个
-        if rule.get("join") is not None:
+        if join_with is not None:
             if isinstance(value, list):
-                value = str(rule.get("join")).join(str(v) for v in value)
+                value = str(join_with).join(str(v) for v in value)
             elif value is not None:
                 value = str(value)
         elif isinstance(value, list):
             value = value[0] if value else None
 
         if value is None or value == "":
-            if rule.get("default") is not None:
-                value = rule.get("default")
+            if default_value is not None:
+                value = default_value
                 error = ""
             else:
                 results.append({"name": name, "success": False, "value": None,
@@ -476,6 +485,7 @@ def execute_test_suite(test_suite, environment, executed_by):
                     status_code=response.status_code,
                     response_time=response_time,
                     assertions_results=assertions_results,
+                    extract_results=extract_results,
                     executed_by=executed_by
                 )
                 
