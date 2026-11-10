@@ -423,6 +423,8 @@
                           <el-option :label="$t('apiTesting.interface.assertionTypes.responseTime')" value="response_time" />
                           <el-option :label="$t('apiTesting.interface.assertionTypes.contains')" value="contains" />
                           <el-option :label="$t('apiTesting.interface.assertionTypes.jsonPath')" value="json_path" />
+                          <el-option :label="$t('apiTesting.interface.assertionTypes.ssePath')" value="sse_path" />
+                          <el-option :label="$t('apiTesting.interface.assertionTypes.sseEvent')" value="sse_event" />
                           <el-option :label="$t('apiTesting.interface.assertionTypes.header')" value="header" />
                           <el-option :label="$t('apiTesting.interface.assertionTypes.equals')" value="equals" />
                         </el-select>
@@ -507,6 +509,56 @@
                                 </el-button>
                               </el-tooltip>
                             </div>
+                          </div>
+
+                          <!-- SSE 路径断言 -->
+                          <div v-else-if="assertion.type === 'sse_path'">
+                            <el-input
+                              v-model="assertion.event"
+                              :placeholder="$t('apiTesting.interface.sseEventOptionalPlaceholder')"
+                              size="small"
+                              class="assertion-input"
+                            />
+                            <el-input
+                              v-model="assertion.json_path"
+                              :placeholder="$t('apiTesting.interface.ssePathPlaceholder')"
+                              size="small"
+                              class="assertion-input"
+                            />
+                            <div style="display: flex; align-items: center; width: 100%">
+                              <el-input
+                                v-model="assertion.expected"
+                                :placeholder="$t('apiTesting.interface.ssePathExpectedPlaceholder')"
+                                size="small"
+                                style="flex: 1"
+                              >
+                                <template #append>
+                                  <el-button
+                                    size="small"
+                                    :icon="MagicStick"
+                                    @click="openDataFactorySelector(assertion, 'expected', index)"
+                                    :title="$t('apiTesting.interface.referDataFactory')"
+                                    class="data-factory-btn"
+                                  />
+                                </template>
+                              </el-input>
+                            </div>
+                          </div>
+
+                          <!-- SSE 事件断言 -->
+                          <div v-else-if="assertion.type === 'sse_event'">
+                            <el-input
+                              v-model="assertion.event"
+                              :placeholder="$t('apiTesting.interface.sseEventOptionalPlaceholder')"
+                              size="small"
+                              class="assertion-input"
+                            />
+                            <el-input-number
+                              v-model="assertion.min_count"
+                              :min="1"
+                              size="small"
+                              :placeholder="$t('apiTesting.interface.sseEventMinCount')"
+                            />
                           </div>
 
                           <!-- 响应头断言 -->
@@ -1993,6 +2045,15 @@ const onAssertionTypeChange = (assertion) => {
   } else if (assertion.type === 'json_path') {
     assertion.json_path = ''
     assertion.expected = ''
+  } else if (assertion.type === 'sse_path') {
+    assertion.event = ''
+    assertion.json_path = ''
+    assertion.expected = ''
+  } else if (assertion.type === 'sse_event') {
+    assertion.event = ''
+    assertion.min_count = 1
+    // 新建断言默认带 expected=200，切到事件断言后要清掉，否则脏字段会一起落库
+    delete assertion.expected
   } else if (assertion.type === 'header') {
     assertion.header_name = ''
     assertion.expected_value = ''
