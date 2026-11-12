@@ -1,0 +1,30 @@
+apps/core/variable_resolver.py
+  h_ef2af05e886a25 114-123
+apps/llm_judge/judge_engine/rules.py
+  h_ef2af05e886a25 21-89,128-129,133-151,167,169-180,321-352,360
+apps/perf_testing/services/targets_eval.py
+  h_ef2af05e886a25 23-36,43-45,65,76,87,100
+apps/perf_testing/tests/test_targets_eval.py
+  h_ef2af05e886a25 74-94
+apps/ui_automation/playwright_engine.py
+  h_ef2af05e886a25 801-807,810-812
+apps/ui_automation/selenium_engine.py
+  h_ef2af05e886a25 816-822,825-827
+apps/ui_automation/views.py
+  h_ef2af05e886a25 1917-1919
+frontend/src/api/api-testing.js
+  h_ef2af05e886a25 176-192
+frontend/src/views/notification/NotificationLogs.vue
+  h_ef2af05e886a25 279,337,385
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d75025e0cc84a1b4b3a172e57b386570b25eba25",
+  "prompts": {},
+  "humans": {
+    "h_ef2af05e886a25": {
+      "author": "chenjigang <15252162668@163.com>"
+    }
+  }
+}
