@@ -71,6 +71,27 @@ class TestEvaluateTargets(unittest.TestCase):
         self.assertEqual(verdict, PASSED)
         self.assertEqual(len(details), 0)  # 无步骤检查 + 无 TPS 目标
 
+    def test_real_request_stats_keys(self):
+        """回归：metrics.to_stat() 产出的键名（p95_rt / avg_rt）必须能被判定。
+
+        历史缺陷：评估器只认旧键 p95 / avg_response_time，取不到就 or 0，
+        导致实际值恒为 0、恒小于阈值 → 验收恒 PASS。
+        """
+        targets = {'max_p95_rt': 2000, 'max_avg_rt': 1000}
+
+        ok_stats = [{'step_name': '登录', 'avg_rt': 850, 'p95_rt': 1800, 'error_rate': 0.2}]
+        self.assertEqual(evaluate_targets(targets, ok_stats, {'tps': 120})[0], PASSED)
+
+        slow_p95 = [{'step_name': '登录', 'avg_rt': 850, 'p95_rt': 2600, 'error_rate': 0.2}]
+        verdict, details = evaluate_targets(targets, slow_p95, {'tps': 120})
+        self.assertEqual(verdict, FAILED)
+        p95_row = [d for d in details if d['metric'] == 'P95响应时间'][0]
+        self.assertEqual(p95_row['actual'], 2600)
+        self.assertEqual(p95_row['result'], 'FAIL')
+
+        slow_avg = [{'step_name': '登录', 'avg_rt': 1500, 'p95_rt': 1800, 'error_rate': 0.2}]
+        self.assertEqual(evaluate_targets(targets, slow_avg, {'tps': 120})[0], FAILED)
+
 
 if __name__ == '__main__':
     unittest.main()

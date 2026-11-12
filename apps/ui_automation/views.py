@@ -1914,35 +1914,9 @@ class TestCaseViewSet(viewsets.ModelViewSet):
                 'errors': [{'message': str(e), 'stack': traceback.format_exc()}]
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'])
-    def batch_run(self, request):
-        """批量运行测试用例"""
-        test_case_ids = request.data.get('test_case_ids', [])
-        project_id = request.data.get('project_id')
-
-        if not test_case_ids:
-            return Response({'error': '请选择要运行的测试用例'}, status=status.HTTP_400_BAD_REQUEST)
-
-        results = []
-        for test_case_id in test_case_ids:
-            try:
-                test_case = TestCase.objects.get(id=test_case_id)
-                # 这里调用单个运行逻辑
-                # 简化处理，实际应该异步执行
-                results.append({
-                    'test_case_id': test_case_id,
-                    'test_case_name': test_case.name,
-                    'status': 'passed'
-                })
-            except TestCase.DoesNotExist:
-                results.append({
-                    'test_case_id': test_case_id,
-                    'test_case_name': '未知',
-                    'status': 'error',
-                    'error': '测试用例不存在'
-                })
-
-        return Response({'results': results})
+    # 说明：原 batch_run 是占位实现，不启动浏览器直接把每个用例标记为 passed，
+    # 会产出假通过率，已移除。批量执行请走 TestSuite.run_suite（真实执行），
+    # 或基于 test_executor 自行实现异步批量入口。
 
     def perform_destroy(self, instance):
         # 记录操作（在删除前记录）

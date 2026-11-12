@@ -111,12 +111,16 @@ class VariableResolver:
             'validate_expression': self._call_crontab_tool,
             
             # 时间日期函数
-            'timestamp': self._timestamp,
-            'timestamp_sec': self._timestamp_sec,
-            'datetime': self._datetime,
-            'date': self._date,
-            'time': self._time,
-            'date_offset': self._date_offset,
+            # 注意：函数表统一按 (func_name, args) 调用（见 _evaluate_expression），
+            # 而时间函数按位置参数实现，这里用适配器把两种约定对齐，
+            # 否则会把 func_name 当成第一个参数传进方法，抛 TypeError 后被
+            # resolve() 静默吞掉、原样返回 ${...} 占位符。
+            'timestamp': lambda _name, _args: self._timestamp(),
+            'timestamp_sec': lambda _name, _args: self._timestamp_sec(),
+            'datetime': lambda _name, args: self._datetime(*args),
+            'date': lambda _name, args: self._date(*args),
+            'time': lambda _name, args: self._time(*args),
+            'date_offset': lambda _name, args: self._date_offset(*args),
         }
     
     def resolve(self, text):

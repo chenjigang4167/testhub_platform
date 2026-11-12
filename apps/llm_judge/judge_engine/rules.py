@@ -18,6 +18,75 @@ from .rubric import Rubric
 
 SEV_PENALTY = {"info": 0, "warn": 10, "critical": 35}
 
+# 未配置时使用的兜底错误话术（低于这个粒度的检测交给 LLM）
+DEFAULT_EMPTY_PHRASES = ["系统错误", "未知异常", "服务不可用", "内部报错", "无法回答"]
+
+# 内置披露日历：当 rubric 只给了 calendar_code（ORM 路径就是这样）时使用
+BUILTIN_CALENDARS = {
+    "CN_A_SHARE": {
+        "market": "A股",
+        "periods": {
+            "Q1": {"deadline_month": 4, "deadline_day": 30},
+            "H1": {"deadline_month": 8, "deadline_day": 31},
+            "Q3": {"deadline_month": 10, "deadline_day": 31},
+            "FY": {"deadline_month": 4, "deadline_day": 30, "next_year": True},
+        },
+    },
+}
+
+
+def normalize_rules(raw: dict) -> dict:
+    """把 rules 的多种写法归一成检查函数直接可用的扁平形状。
+
+    现状里同时存在三种写法，只认一种就会静默失效：
+
+    1. 扁平（finance 模板）：absolute_words / empty_phrases /
+       recommendation_words / disclaimer_keywords 全是 list
+    2. 嵌套（qa 模板、ORM 加载器）：absolute_words 是 {words, extra_regex}，
+       disclaimer 是 {required_keywords, allowed_patterns}
+    3. 带扩展字段的单条规则（severity / is_veto / fallback_mode）
+
+    归一后保证存在以下键且类型正确：
+    absolute_words(list)、absolute_words_extra_regex(list)、empty_phrases(list)、
+    recommendation_words(list)、disclaimer_keywords(list)、require_disclaimer(bool)、
+    custom_regex(list)
+    """
+    out = dict(raw or {})
+
+    # --- 绝对化词 ---
+    aw = out.get("absolute_words")
+    if isinstance(aw, dict):
+        out["absolute_words"] = [w for w in (aw.get("words") or []) if isinstance(w, str)]
+        extra = [p for p in (aw.get("extra_regex") or []) if isinstance(p, str)]
+    else:
+        out["absolute_words"] = [w for w in (aw or []) if isinstance(w, str)]
+        extra = []
+    merged = list(out.get("absolute_words_extra_regex") or []) + extra
+    out["absolute_words_extra_regex"] = list(dict.fromkeys(merged))
+
+    # --- 免责声明 ---
+    disc = out.get("disclaimer")
+    if isinstance(disc, dict):
+        # required_keywords 与 disclaimer_keywords 同义；allowed_patterns 一并当关键词兜底
+        kw = list(disc.get("required_keywords") or []) + list(disc.get("allowed_patterns") or [])
+        if kw:
+            out["disclaimer_keywords"] = list(
+                dict.fromkeys(list(out.get("disclaimer_keywords") or []) + kw))
+    out["disclaimer_keywords"] = list(out.get("disclaimer_keywords") or [])
+    out["recommendation_words"] = list(out.get("recommendation_words") or [])
+    out["require_disclaimer"] = bool(out.get("require_disclaimer", True))
+
+    # --- 错误话术 ---
+    if not out.get("empty_phrases"):
+        out["empty_phrases"] = list(DEFAULT_EMPTY_PHRASES)
+
+    # --- 自定义正则 ---
+    cr = out.get("custom_regex")
+    out["custom_regex"] = cr if isinstance(cr, list) else []
+
+    return out
+
+
 PERIOD_PATTERNS: list[tuple[re.Pattern, str]] = [
     (re.compile(r"(20\d{2})\s*年\s*(?:一季报|一季度)"), "Q1"),
     (re.compile(r"(20\d{2})\s*年\s*(?:中报|半年报|二季报|二季度)"), "H1"),
@@ -56,12 +125,30 @@ def extract_periods(text: str) -> list[tuple[int, str]]:
 class RuleEngine:
     def __init__(self, rubric: Rubric):
         self.rubric = rubric
-        self.rules = rubric.rules
+        # 三种写法（扁平 / 嵌套 / ORM）在这里统一，后面所有检查只面对一种形状
+        self.rules = normalize_rules(rubric.rules)
         self.calendar = self._load_calendar()
 
     def _load_calendar(self) -> dict:
-        markets = self.rubric.timeliness.get("disclosure_calendar", [])
-        return markets[0] if markets else {"periods": {}}
+        cal = self.rubric.timeliness or {}
+
+        # 1. 显式给了披露日历（finance 模板）
+        markets = cal.get("disclosure_calendar") or []
+        if markets:
+            return markets[0]
+
+        # 2. 只给了 calendar_code（ORM 路径），用内置日历
+        code = cal.get("calendar_code") or ""
+        if code in BUILTIN_CALENDARS:
+            return BUILTIN_CALENDARS[code]
+
+        # 3. 只给了市场名
+        market = cal.get("market") or ""
+        for item in BUILTIN_CALENDARS.values():
+            if market and item.get("market") == market:
+                return item
+
+        return {"periods": {}}
 
     # ---------- 规则检查 ----------
 
@@ -77,8 +164,20 @@ class RuleEngine:
         return []
 
     def _check_absolute_words(self, answer: str) -> list[RuleFinding]:
+        text = answer or ""
         words = self.rules.get("absolute_words", [])
-        hit = [w for w in words if w in (answer or "")]
+        hit = [w for w in words if w in text]
+
+        # 正则补充（如「必.{0,2}涨」这类变形写法），此前配置了但从未生效
+        for pattern in self.rules.get("absolute_words_extra_regex", []) or []:
+            try:
+                for m in re.finditer(pattern, text):
+                    matched = m.group(0)
+                    if matched and matched not in hit:
+                        hit.append(matched)
+            except re.error:
+                continue
+
         if hit:
             return [RuleFinding(
                 rule="absolute_words",
@@ -219,6 +318,38 @@ class RuleEngine:
                 ))
         return findings
 
+    def _check_custom_regex(self, answer: str) -> list[RuleFinding]:
+        """自定义正则规则：此前 loader 会写入 custom_regex，但引擎没有对应检查。"""
+        findings: list[RuleFinding] = []
+        text = answer or ""
+        for item in self.rules.get("custom_regex") or []:
+            if not isinstance(item, dict):
+                continue
+            pattern = item.get("pattern")
+            if not pattern:
+                continue
+            try:
+                m = re.search(pattern, text)
+            except re.error:
+                continue
+            if not m:
+                continue
+            group = item.get("group", 0)
+            try:
+                matched = m.group(group if isinstance(group, int) else 0)
+            except (IndexError, ValueError):
+                matched = m.group(0)
+            message = (item.get("message_template") or "命中 {matched}").replace(
+                "{matched}", str(matched))
+            severity = item.get("severity")
+            findings.append(RuleFinding(
+                rule="custom_regex",
+                severity=severity if severity in SEV_PENALTY else "warn",
+                message=message,
+                detail={"pattern": pattern, "matched": str(matched)},
+            ))
+        return findings
+
     # ---------- 汇总 ----------
 
     def run(self, req: ScoreRequest) -> RuleReport:
@@ -226,6 +357,7 @@ class RuleEngine:
         findings: list[RuleFinding] = []
         findings += self._check_empty(req.answer)
         findings += self._check_absolute_words(req.answer)
+        findings += self._check_custom_regex(req.answer)
         findings += self._check_disclaimer(req.question, req.answer)
         findings += self._check_timeliness(req.answer, today)
         findings += self._check_numeric_gt(req.answer, req.ground_truth)

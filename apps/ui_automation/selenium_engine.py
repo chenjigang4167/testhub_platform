@@ -813,11 +813,18 @@ class SeleniumTestEngine:
                     log = f"✓ 断言通过: 元素 '{element_name}' 存在"
                     return True, log, None
 
-
+                else:
+                    # 未实现的断言类型必须判失败：既不返回 True（假通过），
+                    # 也不能落到函数末尾返回 None（调用方解包会 TypeError）
+                    log = (f"✗ 断言失败: 断言类型 '{step.assert_type}' 尚未实现\n"
+                           f"  - 已支持: textContains / textEquals / isVisible / exists\n"
+                           f"  - 元素: '{element_name}'")
+                    return False, log, None
 
             else:
-                log = f"⚠ 未知的操作类型: {action_type}"
-                return True, log, None
+                # 未知操作类型同样按失败处理，避免用例被判通过
+                log = f"✗ 执行失败: 未知的操作类型 '{action_type}'（引擎未实现，按失败处理）"
+                return False, log, None
 
         except TimeoutException as e:
             execution_time = round(time.time() - start_time, 2)

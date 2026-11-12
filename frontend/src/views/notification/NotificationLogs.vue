@@ -276,7 +276,7 @@ import {Search} from '@element-plus/icons-vue'
 import {ref, reactive, onMounted, computed} from 'vue'
 import {useI18n} from 'vue-i18n'
 import {ElMessage} from 'element-plus'
-import axios from 'axios'
+import {getApiNotificationLogs, getApiNotificationLogDetail} from '@/api/api-testing'
 
 export default {
   name: 'NotificationLogs',
@@ -334,7 +334,7 @@ export default {
           params.status = searchForm.status
         }
 
-        const response = await axios.get('/api/api-testing/notification-logs/', {params})
+        const response = await getApiNotificationLogs(params)
         logsData.value = response.data.results || []
         pagination.total = response.data.count || 0
       } catch (error) {
@@ -382,7 +382,7 @@ export default {
     // 查看详情
     const viewDetail = async (row) => {
       try {
-        const response = await axios.get(`/api/api-testing/notification-logs/${row.id}/detail/`)
+        const response = await getApiNotificationLogDetail(row.id)
         selectedLog.value = response.data
         detailDialogVisible.value = true
       } catch (error) {

@@ -173,3 +173,20 @@ export function getOperationLogs(params) {
     params
   })
 }
+
+// 获取通知日志列表
+export function getApiNotificationLogs(params) {
+  return request({
+    url: '/api-testing/notification-logs/',
+    method: 'get',
+    params
+  })
+}
+
+// 获取通知日志详情
+export function getApiNotificationLogDetail(id) {
+  return request({
+    url: `/api-testing/notification-logs/${id}/detail/`,
+    method: 'get'
+  })
+}
